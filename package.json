@@ -2,6 +2,9 @@
   "name": "doggy-growth-plan-api",
   "version": 2,
   "private": true,
+  "builds": [
+    { "src": "api/**/*.js", "use": "@vercel/node" }
+  ],
   "dependencies": {
     "firebase-admin": "^12.0.0",
     "@google/generative-ai": "^0.2.1",
