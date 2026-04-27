@@ -1,15 +1,21 @@
-const { auth } = require('../lib/firebaseAdmin');
+const { getFirebase } = require('../lib/firebaseAdmin');
 
-module.exports = async (req, res, next) => {
-  const header = req.headers.authorization;
-  if (!header?.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Missing token' });
-  }
-  try {
-    const decoded = await auth.verifyIdToken(header.split(' ')[1]);
-    req.user = { uid: decoded.uid, email: decoded.email };
-    next();
-  } catch {
-    res.status(401).json({ error: 'Invalid token' });
-  }
-};
+function requireAuth(req, res) {
+  return new Promise((resolve, reject) => {
+    const fb = getFirebase();
+    if (!fb) { reject(new Error('Firebase not configured')); return; }
+    const header = req.headers.authorization;
+    if (!header?.startsWith('Bearer ')) { reject(new Error('Missing token')); return; }
+    fb.auth.verifyIdToken(header.split(' ')[1])
+      .then(decoded => { req.user = { uid: decoded.uid, email: decoded.email }; resolve(); })
+      .catch(() => reject(new Error('Invalid token')));
+  });
+}
+
+function toDate(ts) {
+  return ts?.toDate?.()?.toISOString() || ts || null;
+}
+
+function uid(req) { return req.user?.uid; }
+
+module.exports = { requireAuth, toDate, uid, getFirebase };
