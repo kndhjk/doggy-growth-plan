@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth, authErrorText } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 
 export default function LoginPage() {
@@ -14,7 +14,7 @@ export default function LoginPage() {
     e.preventDefault();
     setBusy(true);
     try { await login(email, pass); nav('/'); }
-    catch { toast.error('邮箱或密码错误'); }
+    catch (err) { toast.error(authErrorText(err, '登录失败，请重试')); }
     finally { setBusy(false); }
   };
 

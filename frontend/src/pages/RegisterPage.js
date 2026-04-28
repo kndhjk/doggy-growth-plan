@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth, authErrorText } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 
 export default function RegisterPage() {
@@ -17,7 +17,7 @@ export default function RegisterPage() {
     if (pass.length < 6)  { toast.error('密码至少6位');   return; }
     setBusy(true);
     try { await register(email, pass); toast.success('注册成功！快来创建你的宝贝 🐾'); nav('/'); }
-    catch { toast.error('注册失败，请检查邮箱格式'); }
+    catch (err) { toast.error(authErrorText(err, '注册失败，请重试')); }
     finally { setBusy(false); }
   };
 
