@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePet } from '../context/PetContext';
-import { computeStatusesV2, STATUS_META } from '../utils/statusDecayV2';
+import { computeStatusesV2, STATUS_META } from './statusDecayV2';
 import toast from 'react-hot-toast';
 import SceneDecor     from '../components/Pet/SceneDecor';
 import DogCharacter   from '../components/Pet/DogCharacter';
