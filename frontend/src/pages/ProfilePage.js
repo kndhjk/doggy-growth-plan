@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { usePet }  from '../context/PetContext';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import PetEditCard from '../components/Profile/PetEditCard';
 
 export default function ProfilePage() {
   const { currentUser, logout } = useAuth();
@@ -29,23 +30,8 @@ export default function ProfilePage() {
       </div>
 
       <div style={{ padding:'16px', maxWidth:480, margin:'0 auto' }}>
-        {/* Pet info */}
-        {pet && (
-          <div style={card}>
-            <p style={cardTitle}>🐾 宠物信息</p>
-            {[
-              ['名字', pet.name],
-              ['品种', pet.breed],
-              ['生日', pet.birthday || '未设置'],
-            ].map(([k,v]) => (
-              <div key={k} style={{ display:'flex', justifyContent:'space-between',
-                                    padding:'10px 0', borderBottom:'1px solid #fdf2f8' }}>
-                <span style={{ fontSize:13, color:'#9ca3af' }}>{k}</span>
-                <span style={{ fontSize:13, fontWeight:700, color:'#9d174d' }}>{v}</span>
-              </div>
-            ))}
-          </div>
-        )}
+        {/* Pet management */}
+        <PetEditCard />
 
         {/* Menu */}
         <div style={{ ...card, padding:0, overflow:'hidden' }}>
@@ -88,6 +74,7 @@ export default function ProfilePage() {
   );
 }
 
-const card = { background:'white', borderRadius:18, padding:16, marginBottom:12,
-               border:'1px solid #fce7f3', boxShadow:'0 2px 10px rgba(244,114,182,0.08)' };
-const cardTitle = { fontWeight:800, color:'#9d174d', fontSize:14, marginBottom:12 };
+const card = {
+  background:'white', borderRadius:18, padding:16, marginBottom:12,
+  border:'1px solid #fce7f3', boxShadow:'0 2px 10px rgba(244,114,182,0.08)',
+};
