@@ -1,16 +1,31 @@
 const router  = require('express').Router();
 const { db }  = require('../services/firebaseAdmin');
 const auth    = require('../middleware/auth');
+const validateBody = require('../middleware/validateBody');
 const { FieldValue } = require('firebase-admin/firestore');
 
 router.use(auth);
 
-const VALID = ['feed','health','walk','social'];
+// Full activity catalog — must stay in sync with frontend's MAIN_ACTIONS +
+// SECONDARY_ACTIONS in components/Pet/ActionRing.js. Earlier versions only
+// listed 4 main types, so secondary clicks (bath / vaccine / play …) silently
+// failed with HTTP 400 from the user's perspective.
+const VALID = [
+  'feed', 'water', 'walk',                          // main
+  'health', 'social',                               // legacy aggregates
+  'bath', 'medicine', 'vaccine', 'play', 'playdate' // secondary
+];
 
-router.post('/', async (req, res, next) => {
+const NOTE_MAX = 500;
+
+router.post('/',
+  validateBody({
+    type: { required: true, oneOf: VALID },
+    note: { type: 'string', maxLength: NOTE_MAX, default: '' },
+  }),
+  async (req, res, next) => {
   try {
     const { type, note } = req.body;
-    if (!VALID.includes(type)) return res.status(400).json({ error: `type must be one of ${VALID}` });
 
     const uid = req.user.uid;
     const ts  = FieldValue.serverTimestamp();

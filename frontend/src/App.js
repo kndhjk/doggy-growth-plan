@@ -6,7 +6,7 @@ import { PetProvider } from './context/PetContext';
 import Layout       from './components/Layout/Layout';
 import LoginPage    from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
-import PetPage      from './pages/PetPage';
+import PetPageV2    from './sandbox/PetPageV2';
 import AIPage       from './pages/AIPage';
 import MapPage      from './pages/MapPage';
 import CommunityPage from './pages/CommunityPage';
@@ -29,7 +29,7 @@ export default function App() {
             <Route path="/login"    element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/" element={<Private><Layout /></Private>}>
-              <Route index          element={<PetPage />} />
+              <Route index          element={<PetPageV2 />} />
               <Route path="ai"      element={<AIPage />} />
               <Route path="map"     element={<MapPage />} />
               <Route path="community" element={<CommunityPage />} />
