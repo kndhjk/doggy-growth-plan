@@ -4,7 +4,10 @@ import { doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../context/AuthContext';
 import { usePet } from '../../context/PetContext';
+import { clearPetLocal } from '../../services/petLocalStore';
 import toast from 'react-hot-toast';
+import AvatarPicker from '../Pet/AvatarPicker';
+import { DEFAULT_AVATAR_KEY, getAvatar } from '../../data/petAvatars';
 
 const BREEDS = [
   '金毛寻回犬', '拉布拉多', '柴犬', '边境牧羊犬', '法国斗牛犬',
@@ -17,16 +20,22 @@ export default function PetEditCard() {
   const [editing, setEditing]           = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [draft, setDraft] = useState(() => ({
-    name:     pet?.name     || '',
-    breed:    pet?.breed    || '',
-    birthday: pet?.birthday || '',
+    name:      pet?.name           || '',
+    breed:     pet?.breed          || '',
+    birthday:  pet?.birthday       || '',
+    avatarKey: pet?.avatar?.key    || DEFAULT_AVATAR_KEY,
   }));
   const [busy, setBusy] = useState(false);
 
   if (!pet) return null;
 
   const startEdit = () => {
-    setDraft({ name: pet.name || '', breed: pet.breed || '', birthday: pet.birthday || '' });
+    setDraft({
+      name:      pet.name        || '',
+      breed:     pet.breed       || '',
+      birthday:  pet.birthday    || '',
+      avatarKey: pet.avatar?.key || DEFAULT_AVATAR_KEY,
+    });
     setEditing(true);
   };
 
@@ -51,12 +60,14 @@ export default function PetEditCard() {
       name:     draft.name.trim(),
       breed:    draft.breed,
       birthday: draft.birthday || null,
+      avatar:   { ...(pet.avatar || {}), key: draft.avatarKey },
     };
     setBusy(true);
     try {
       const ref = doc(db, 'users', currentUser.uid, 'pets', 'active');
       await updateDoc(ref, {
         name: next.name, breed: next.breed, birthday: next.birthday,
+        avatar: next.avatar,
       });
       toast.success('已保存 ✨');
       setEditing(false);
@@ -71,18 +82,17 @@ export default function PetEditCard() {
 
   const remove = async () => {
     setBusy(true);
-    try {
-      const ref = doc(db, 'users', currentUser.uid, 'pets', 'active');
-      await deleteDoc(ref);
-      setPetLocal(null);
-      toast.success('已删除');
-    } catch {
-      setPetLocal(null);
-      toast.success('已删除');
-    } finally {
-      setBusy(false);
-      setConfirmDelete(false);
+    if (!currentUser?._local) {
+      try {
+        const ref = doc(db, 'users', currentUser.uid, 'pets', 'active');
+        await deleteDoc(ref);
+      } catch { /* fall through to local clear */ }
     }
+    clearPetLocal(currentUser?.uid);
+    setPetLocal(null);
+    toast.success('已删除');
+    setBusy(false);
+    setConfirmDelete(false);
   };
 
   return (
@@ -96,18 +106,31 @@ export default function PetEditCard() {
 
       {!editing ? (
         <>
+          <div style={row}>
+            <span style={{ fontSize:13, color:'#9ca3af' }}>形象</span>
+            <span style={{ fontSize:20 }}>{getAvatar(pet.avatar?.key).emoji}</span>
+          </div>
           {[['名字', pet.name], ['品种', pet.breed], ['生日', pet.birthday || '未设置']].map(([k,v]) => (
             <div key={k} style={row}>
               <span style={{ fontSize:13, color:'#9ca3af' }}>{k}</span>
               <span style={{ fontSize:13, fontWeight:700, color:'#9d174d' }}>{v}</span>
             </div>
           ))}
-          <button onClick={() => setConfirmDelete(true)} style={dangerBtn}>
+          <button type="button" onClick={() => setConfirmDelete(true)} style={dangerBtn}>
             🗑️ 删除这只宠物
           </button>
         </>
       ) : (
         <>
+          <div style={{ marginBottom:12 }}>
+            <p style={{ fontSize:11, fontWeight:700, color:'#f472b6', marginBottom:6,
+                        textTransform:'uppercase', letterSpacing:1 }}>形象</p>
+            <AvatarPicker
+              value={draft.avatarKey}
+              onChange={key => setDraft({ ...draft, avatarKey: key })}
+              size="sm"
+            />
+          </div>
           {[
             { label:'名字', key:'name',     type:'text', extra:{ maxLength:20 } },
             { label:'生日', key:'birthday', type:'date', extra:{ max: new Date().toISOString().slice(0,10) } },
