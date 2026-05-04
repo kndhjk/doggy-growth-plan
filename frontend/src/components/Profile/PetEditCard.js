@@ -82,12 +82,17 @@ export default function PetEditCard() {
 
   const remove = async () => {
     setBusy(true);
+    // _local users skip Firestore entirely — deleteDoc() against demo-key
+    // Firebase never resolves nor rejects, leaving busy stuck on "删除中..."
+    // (same root cause as v2 Round 3's createPet hang).
     if (!currentUser?._local) {
       try {
         const ref = doc(db, 'users', currentUser.uid, 'pets', 'active');
         await deleteDoc(ref);
       } catch { /* fall through to local clear */ }
     }
+    // Clear both: React state via setPetLocal(null) AND localStorage so a
+    // page reload doesn't re-hydrate the deleted pet from gg_local_pet_*.
     clearPetLocal(currentUser?.uid);
     setPetLocal(null);
     toast.success('已删除');
@@ -106,6 +111,16 @@ export default function PetEditCard() {
 
       {!editing ? (
         <>
+          {pet.photoURL && (
+            <div style={{ display:'flex', justifyContent:'center', marginBottom:12 }}>
+              <img
+                src={pet.photoURL}
+                alt={pet.name}
+                style={{ width:96, height:96, borderRadius:'50%', objectFit:'cover',
+                         border:'3px solid #fce7f3', boxShadow:'0 4px 12px rgba(244,114,182,0.2)' }}
+              />
+            </div>
+          )}
           <div style={row}>
             <span style={{ fontSize:13, color:'#9ca3af' }}>形象</span>
             <span style={{ fontSize:20 }}>{getAvatar(pet.avatar?.key).emoji}</span>
