@@ -8,6 +8,7 @@ import DogCharacter   from '../components/Pet/DogCharacter';
 import StatusRow      from '../components/Pet/StatusRow';
 import ActionRing     from '../components/Pet/ActionRing';
 import CreatePetModal from '../components/Pet/CreatePetModal';
+import PetReactions   from '../components/Pet/PetReactions';
 
 export default function PetPageV2() {
   const { pet, logActivity, setPetLocal } = usePet();
@@ -15,6 +16,7 @@ export default function PetPageV2() {
 
   const [showCreate, setShowCreate] = useState(false);
   const [avatarTick, setAvatarTick] = useState(0);
+  const [lastAction, setLastAction] = useState({ type: null, tick: 0 });
 
   const writeActivity = (type, minutesAgo = 0) => {
     const tsDate = minutesAgo === 0
@@ -34,6 +36,7 @@ export default function PetPageV2() {
     });
 
     setAvatarTick(t => t + 1);
+    setLastAction({ type, tick: Date.now() });
   };
 
   const handleMain = (type, label, minutesAgo = 0) => {
@@ -115,9 +118,11 @@ export default function PetPageV2() {
                 stage={statuses.avatarStage}
                 reactKey={avatarTick}
                 wilted={warning}
+                lastActionType={lastAction.type}
                 size={220}
                 draggable
               />
+              <PetReactions lastAction={lastAction} statuses={statuses} />
             </div>
             <ActionRing onMain={handleMain} onSecondary={handleSecondary} />
             <p style={{ fontSize: 12, color: '#9ca3af', marginTop: 14, textAlign: 'center', position: 'relative', zIndex: 3 }}>
