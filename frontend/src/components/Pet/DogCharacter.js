@@ -1,12 +1,8 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { usePet } from '../../context/PetContext';
+import { getAvatar, STAGE_FALLBACK } from '../../data/petAvatars';
 
-const AVATAR = { puppy: '🐶', adult: '🐕', senior: '🦮' };
-
-// Big dog avatar in the centre of the playground.
-// Animates a gentle "breathing" idle when healthy, a "wilted" sway when any
-// status drops below 40. The `reactKey` prop bumps a one-shot bounce when
-// any activity is logged.
 export default function DogCharacter({
   stage,
   reactKey,
@@ -14,6 +10,10 @@ export default function DogCharacter({
   size = 96,
   draggable = false,
 }) {
+  const { pet } = usePet();
+  const avatarEmoji = pet?.avatar?.key
+    ? getAvatar(pet.avatar.key).emoji
+    : (STAGE_FALLBACK[stage] || STAGE_FALLBACK.adult);
   return (
     <>
       <DogStyles />
@@ -49,7 +49,7 @@ export default function DogCharacter({
           transition={{ duration: 0.7, ease: 'easeOut' }}
           style={{ display: 'inline-block' }}
         >
-          {AVATAR[stage || 'adult']}
+          {avatarEmoji}
         </motion.span>
       </motion.div>
     </>
