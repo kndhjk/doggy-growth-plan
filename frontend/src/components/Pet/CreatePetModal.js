@@ -4,6 +4,7 @@ import { usePet } from '../../context/PetContext';
 import toast from 'react-hot-toast';
 import AvatarPicker from './AvatarPicker';
 import { DEFAULT_AVATAR_KEY, getAvatar } from '../../data/petAvatars';
+import PhotoUpload from '../PhotoUpload';
 
 const BREEDS = [
   '金毛寻回犬', '拉布拉多', '柴犬', '边境牧羊犬', '法国斗牛犬',
@@ -15,6 +16,7 @@ export default function CreatePetModal({ onClose }) {
   const [breed, setBreed]       = useState('');
   const [birthday, setBirthday] = useState('');
   const [avatarKey, setAvatarKey] = useState(DEFAULT_AVATAR_KEY);
+  const [photoURL, setPhotoURL]   = useState(null);
   const [busy, setBusy]         = useState(false);
   const { createPet, setPetLocal } = usePet();
 
@@ -38,6 +40,7 @@ export default function CreatePetModal({ onClose }) {
     const payload = {
       name: name.trim(), breed, birthday,
       avatar: { key: avatarKey, hue: 0 },
+      photoURL: photoURL || null,
     };
     setBusy(true);
     try {
@@ -71,6 +74,21 @@ export default function CreatePetModal({ onClose }) {
 
         <Field label="选个形象 *">
           <AvatarPicker value={avatarKey} onChange={setAvatarKey} />
+        </Field>
+        <Field label="实拍照片（可选）">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <PhotoUpload
+              value={photoURL}
+              onChange={setPhotoURL}
+              pathPrefix="pets"
+              shape="circle"
+              size={72}
+            />
+            <p style={{ fontSize: 12, color: '#9ca3af', margin: 0, lineHeight: 1.6 }}>
+              上传你家宝贝的照片<br />
+              <span style={{ fontSize: 11, color: '#d1d5db' }}>（demo 模式只存浏览器本地）</span>
+            </p>
+          </div>
         </Field>
         <Field label="宝贝名字 *">
           <input value={name} onChange={e => setName(e.target.value)}
