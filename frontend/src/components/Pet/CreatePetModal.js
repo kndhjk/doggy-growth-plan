@@ -48,7 +48,9 @@ export default function CreatePetModal({ onClose }) {
       toast.success(`🎉 ${payload.name} 创建成功！`);
     } catch {
       setPetLocal({ ...payload, lastActivity: {} });
-      toast.success(`🎉 ${payload.name} 创建成功！`);
+      // Demo / offline path — make it clear data lives only in this browser so
+      // users don't expect it to sync across devices.
+      toast.success(`✨ ${payload.name} 已创建（本地保存）`);
     } finally {
       setBusy(false);
       onClose();
