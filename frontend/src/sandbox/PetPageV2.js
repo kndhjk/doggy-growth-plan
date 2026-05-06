@@ -9,6 +9,7 @@ import StatusRow      from '../components/Pet/StatusRow';
 import ActionRing     from '../components/Pet/ActionRing';
 import CreatePetModal from '../components/Pet/CreatePetModal';
 import PetReactions   from '../components/Pet/PetReactions';
+import AchievementWatcher from '../components/Pet/AchievementWatcher';
 
 export default function PetPageV2() {
   const { pet, logActivity, setPetLocal } = usePet();
@@ -124,6 +125,7 @@ export default function PetPageV2() {
               />
               <PetReactions lastAction={lastAction} statuses={statuses} />
             </div>
+            <AchievementWatcher pet={pet} statuses={statuses} />
             <ActionRing onMain={handleMain} onSecondary={handleSecondary} />
             <p style={{ fontSize: 12, color: '#9ca3af', marginTop: 14, textAlign: 'center', position: 'relative', zIndex: 3 }}>
               💡 单击记录 · 长按选时间 · "+" 展开更多

@@ -4,6 +4,7 @@ import { usePet }  from '../context/PetContext';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import PetEditCard from '../components/Profile/PetEditCard';
+import AchievementWall from '../components/Profile/AchievementWall';
 
 export default function ProfilePage() {
   const { currentUser, logout } = useAuth();
@@ -32,6 +33,9 @@ export default function ProfilePage() {
       <div style={{ padding:'16px', maxWidth:480, margin:'0 auto' }}>
         {/* Pet management */}
         <PetEditCard />
+
+        {/* Achievement wall */}
+        <AchievementWall />
 
         {/* Menu */}
         <div style={{ ...card, padding:0, overflow:'hidden' }}>
