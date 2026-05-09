@@ -190,6 +190,30 @@ router.delete('/users/:uid', async (req, res) => {
   }
 });
 
+
+
+// ─── Delete pet ───────────────────────────────────────────────────────────────
+router.delete('/pets/:uid', async (req, res) => {
+  try {
+    const { uid } = req.params;
+    await getDb().doc(`users/${uid}/pets/active`).delete();
+    res.json({ success: true });
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ─── Enable / Disable user ─────────────────────────────────────────────────────
+router.post('/users/:uid/disable', async (req, res) => {
+  try {
+    const { uid } = req.params;
+    const { disabled } = req.body;
+    await admin.auth().updateUser(uid, { disabled: !!disabled });
+    res.json({ success: true, disabled });
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
+});
 // ─── Recent activity log ──────────────────────────────────────────────────────
 router.get('/activities', async (req, res) => {
   try {
