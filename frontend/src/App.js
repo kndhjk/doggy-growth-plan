@@ -3,33 +3,40 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { PetProvider } from './context/PetContext';
+import { I18nProvider } from './i18n/I18nContext';
 import Layout       from './components/Layout/Layout';
 import LoginPage    from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
-import PetPage      from './pages/PetPage';
+import PetPageV2    from './sandbox/PetPageV2';
 import AIPage       from './pages/AIPage';
 import MapPage      from './pages/MapPage';
 import CommunityPage from './pages/CommunityPage';
 import ProfilePage  from './pages/ProfilePage';
 
 function Private({ children }) {
-  const { currentUser } = useAuth();
-  return currentUser ? children : <Navigate to="/login" replace />;
+  const { currentUser, loading } = useAuth();
+  if (loading !== false) return null; return currentUser ? children : <Navigate to="/login" replace />;
 }
 
 export default function App() {
   return (
     <AuthProvider>
       <PetProvider>
+        <I18nProvider>
         <BrowserRouter>
-          <Toaster position="top-center" toastOptions={{
-            style: { background:'#fff', border:'1px solid #fce7f3', color:'#9d174d' },
-          }} />
+          <Toaster
+            position="top-center"
+            gutter={12}
+            toastOptions={{
+              duration: 2500,
+              style: { background:'#fff', border:'1px solid #fce7f3', color:'#9d174d' },
+            }}
+          />
           <Routes>
             <Route path="/login"    element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/" element={<Private><Layout /></Private>}>
-              <Route index          element={<PetPage />} />
+              <Route index          element={<PetPageV2 />} />
               <Route path="ai"      element={<AIPage />} />
               <Route path="map"     element={<MapPage />} />
               <Route path="community" element={<CommunityPage />} />
@@ -37,6 +44,7 @@ export default function App() {
             </Route>
           </Routes>
         </BrowserRouter>
+        </I18nProvider>
       </PetProvider>
     </AuthProvider>
   );

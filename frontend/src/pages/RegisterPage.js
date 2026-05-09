@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth, authErrorText } from '../context/AuthContext';
+import { useI18n } from '../i18n/I18nContext';
 import toast from 'react-hot-toast';
 
 export default function RegisterPage() {
   const { register } = useAuth();
+  const { t } = useI18n();
   const nav = useNavigate();
   const [email, setEmail]   = useState('');
   const [pass,  setPass]    = useState('');
@@ -13,11 +15,11 @@ export default function RegisterPage() {
 
   const submit = async e => {
     e.preventDefault();
-    if (pass !== conf)    { toast.error('两次密码不一致'); return; }
-    if (pass.length < 6)  { toast.error('密码至少6位');   return; }
+    if (pass !== conf)    { toast.error(t('auth.register.passMismatch')); return; }
+    if (pass.length < 6)  { toast.error(t('auth.register.passTooShort'));   return; }
     setBusy(true);
-    try { await register(email, pass); toast.success('注册成功！快来创建你的宝贝 🐾'); nav('/'); }
-    catch { toast.error('注册失败，请检查邮箱格式'); }
+    try { await register(email, pass); toast.success(t('auth.register.success')); nav('/'); }
+    catch (err) { toast.error(authErrorText(err, t('auth.register.error'))); }
     finally { setBusy(false); }
   };
 
@@ -25,21 +27,21 @@ export default function RegisterPage() {
     <div style={{ minHeight:'100vh', background:'linear-gradient(160deg,#fdf2f8,#fce7f3)',
                   display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:24 }}>
       <div style={{ fontSize:64, marginBottom:16 }}>🐶</div>
-      <h1 style={{ fontSize:24, fontWeight:800, color:'#9d174d', marginBottom:4 }}>创建账号</h1>
-      <p style={{ color:'#f472b6', fontSize:14, marginBottom:32 }}>开启你的数字宠物之旅 💕</p>
+      <h1 style={{ fontSize:24, fontWeight:800, color:'#9d174d', marginBottom:4 }}>{t('auth.register.title')}</h1>
+      <p style={{ color:'#f472b6', fontSize:14, marginBottom:32 }}>{t('auth.register.subtitle')}</p>
 
       <form onSubmit={submit} style={{ width:'100%', maxWidth:360, display:'flex', flexDirection:'column', gap:12 }}>
-        <input type="email"    value={email} onChange={e=>setEmail(e.target.value)} placeholder="邮箱"       required style={inp} />
-        <input type="password" value={pass}  onChange={e=>setPass(e.target.value)}  placeholder="密码（至少6位）" required style={inp} />
-        <input type="password" value={conf}  onChange={e=>setConf(e.target.value)}  placeholder="确认密码"   required style={inp} />
+        <input type="email"    value={email} onChange={e=>setEmail(e.target.value)} placeholder={t('auth.register.email')}    required style={inp} />
+        <input type="password" value={pass}  onChange={e=>setPass(e.target.value)}  placeholder={t('auth.register.password')} required style={inp} />
+        <input type="password" value={conf}  onChange={e=>setConf(e.target.value)}  placeholder={t('auth.register.confirm')}  required style={inp} />
         <button type="submit" disabled={busy} style={btn}>
-          {busy ? '注册中…' : '🐾 注册'}
+          {busy ? t('auth.register.busy') : t('auth.register.submit')}
         </button>
       </form>
 
       <p style={{ marginTop:24, fontSize:14, color:'#9ca3af' }}>
-        已有账号？{' '}
-        <Link to="/login" style={{ color:'#ec4899', fontWeight:600 }}>立即登录</Link>
+        {t('auth.register.toLogin')}{' '}
+        <Link to="/login" style={{ color:'#ec4899', fontWeight:600 }}>{t('auth.register.loginLink')}</Link>
       </p>
     </div>
   );
