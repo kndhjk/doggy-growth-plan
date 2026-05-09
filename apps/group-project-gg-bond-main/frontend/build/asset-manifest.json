@@ -1,0 +1,31 @@
+{
+  "files": {
+    "main.css": "/static/css/main.0822e383.css",
+    "main.js": "/static/js/main.bfb301ac.js",
+    "static/media/scene_bg.png": "/static/media/scene_bg.7dafaca61619282958fe.png",
+    "static/media/senior_normal.png": "/static/media/senior_normal.960d3bbf2a197af528f2.png",
+    "static/media/nav_map.png": "/static/media/nav_map.7b8963025943a5e7d650.png",
+    "static/media/nav_ai.png": "/static/media/nav_ai.f44c25ede47bc1dbc53f.png",
+    "static/media/icon_bath.png": "/static/media/icon_bath.a67b124f062d4e0aa52c.png",
+    "static/media/icon_feed.png": "/static/media/icon_feed.e5d49a06a216d3168859.png",
+    "static/media/icon_walk.png": "/static/media/icon_walk.3b3c4a1e6cc149a87b4c.png",
+    "static/media/icon_water.png": "/static/media/icon_water.a52a696d3a730ca43f07.png",
+    "static/media/icon_medicine.png": "/static/media/icon_medicine.821da99ec80f5eec4600.png",
+    "static/media/icon_play.png": "/static/media/icon_play.fe0aac08b8bc5a74bb98.png",
+    "static/media/icon_playdate.png": "/static/media/icon_playdate.45ab7c0ac30b604a4a3b.png",
+    "static/media/adult_normal.png": "/static/media/adult_normal.5d488dc807e2e4e33d6e.png",
+    "static/media/nav_home.png": "/static/media/nav_home.e1bbf5cf057e5fd69f85.png",
+    "static/media/icon_vaccine.png": "/static/media/icon_vaccine.d58d1c4ca5fccae6846b.png",
+    "static/media/nav_community.png": "/static/media/nav_community.02e294b6707aab72b3e5.png",
+    "static/media/teen_normal.png": "/static/media/teen_normal.4db6eb00726b0f9a8c95.png",
+    "static/media/nav_profile.png": "/static/media/nav_profile.d1968ea2afa3cac2a3f9.png",
+    "static/media/puppy_normal.png": "/static/media/puppy_normal.be16a1702c1bed00d2fc.png",
+    "index.html": "/index.html",
+    "main.0822e383.css.map": "/static/css/main.0822e383.css.map",
+    "main.bfb301ac.js.map": "/static/js/main.bfb301ac.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.0822e383.css",
+    "static/js/main.bfb301ac.js"
+  ]
+}
