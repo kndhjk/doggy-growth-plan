@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { PetProvider } from './context/PetContext';
@@ -16,6 +16,16 @@ import ProfilePage  from './pages/ProfilePage';
 function Private({ children }) {
   const { currentUser, loading } = useAuth();
   if (loading !== false) return null; return currentUser ? children : <Navigate to="/login" replace />;
+}
+
+/* ── Wrapper forces PetPageV2 to remount fresh when navigating back to /.
+    Without the key, React Router re-uses the same component instance and
+    Framer Motion / flex-layout state from the previous visit can persist,
+    causing the layout to break. The key={location.pathname} trick is the
+    standard React pattern for forcing remount on (nested) route re-entry. ── */
+function HomeRoute() {
+  const location = useLocation();
+  return <PetPageV2 key={location.pathname} />;
 }
 
 export default function App() {
@@ -36,7 +46,7 @@ export default function App() {
             <Route path="/login"    element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/" element={<Private><Layout /></Private>}>
-              <Route index          element={<PetPageV2 />} />
+              <Route index          element={<HomeRoute />} />
               <Route path="ai"      element={<AIPage />} />
               <Route path="map"     element={<MapPage />} />
               <Route path="community" element={<CommunityPage />} />

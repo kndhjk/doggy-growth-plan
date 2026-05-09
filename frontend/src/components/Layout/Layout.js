@@ -18,8 +18,14 @@ const TABS = [
 export default function Layout() {
   const { t } = useI18n();
   return (
-    <div style={{ minHeight:'100dvh', background:'#fdf2f8' }}>
-      <main style={{ paddingBottom: 'calc(72px + env(safe-area-inset-bottom))' }}>
+    <div style={{ minHeight:'100dvh', background:'#fdf2f8', display:'flex', flexDirection:'column' }}>
+      <main style={{
+        flex: 1,
+        minHeight: 0,
+        paddingBottom: 'calc(72px + env(safe-area-inset-bottom))',
+        display: 'flex',
+        flexDirection: 'column',
+      }}>
         <Outlet />
       </main>
       <nav style={{
