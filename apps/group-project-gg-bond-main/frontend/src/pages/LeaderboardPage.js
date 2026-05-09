@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { LeaderboardAPI } from '../services/apiLayer';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useI18n } from '../i18n/I18nContext';
+import { translateContent } from '../utils/translate';
 import { isMobile } from '../utils/responsive';
 
 // ─── Mock Data ───────────────────────────────────────────────────────────────
@@ -136,10 +137,24 @@ function RankingRow({ entry, isCurrentUser, index }) {
 
 // ─── Page ──────────────────────────────────────────────────────────────────────
 export default function LeaderboardPage() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const [activeTab, setActiveTab] = useState('total');
   const [rankings, setRankings] = useState(MOCK_RANKINGS);
+  const [translatedRankings, setTranslatedRankings] = useState(MOCK_RANKINGS);
   const myRankRef = useRef(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    Promise.all(MOCK_RANKINGS.map(entry =>
+      Promise.all([
+        translateContent(entry.petName, lang),
+        translateContent(entry.owner, lang),
+      ]).then(([petName, owner]) => ({ ...entry, petName, owner }))
+    )).then(data => {
+      if (!cancelled) setTranslatedRankings(data);
+    });
+    return () => { cancelled = true; };
+  }, [lang]);
 
   useEffect(() => {
     LeaderboardAPI.get(activeTab, 30).then(data => {
@@ -153,7 +168,7 @@ export default function LeaderboardPage() {
     { key: 'newcomer', label: t('leaderboard.tab.newcomer') },
   ];
 
-  const sortedData = [...rankings].sort((a, b) => {
+  const sortedData = [...translatedRankings].sort((a, b) => {
     if (activeTab === 'total')    return b.happiness - a.happiness;
     if (activeTab === 'active')   return b.activity - a.activity;
     if (activeTab === 'newcomer') return new Date(b.joinedAt) - new Date(a.joinedAt);

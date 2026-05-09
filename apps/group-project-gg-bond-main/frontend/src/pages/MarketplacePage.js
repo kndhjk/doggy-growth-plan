@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { useI18n } from '../i18n/I18nContext';
+import { translateContent } from '../utils/translate';
 import { useAuth } from '../context/AuthContext';
 import {
   collection, doc, addDoc, getDocs, getDoc, deleteDoc,
@@ -492,11 +493,12 @@ function ListingDetailModal({ item, currentUser, onClose, onContact }) {
    Main MarketplacePage
 ────────────────────────────────────────────────────────────────────────── */
 export default function MarketplacePage() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const { currentUser } = useAuth();
   const navigate = useNavigate();
 
   const [listings, setListings] = useState([]);
+  const [displayListings, setDisplayListings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const [selected, setSelected] = useState(null);
@@ -545,6 +547,22 @@ export default function MarketplacePage() {
     });
     return unsub;
   }, [currentUser]);
+
+  // Translate listings when language changes
+  useEffect(() => {
+    if (!listings || listings.length === 0) { setDisplayListings([]); return; }
+    let cancelled = false;
+    Promise.all(listings.map(item =>
+      Promise.all([
+        translateContent(item.title || '', lang),
+        translateContent(item.description || '', lang),
+        translateContent(item.location || '', lang),
+      ]).then(([title, description, location]) => ({ ...item, title, description, location }))
+    )).then(data => {
+      if (!cancelled) setDisplayListings(data);
+    });
+    return () => { cancelled = true; };
+  }, [lang, listings]);
 
 
   const MOCK_ADOPTIONS = [
@@ -730,9 +748,8 @@ export default function MarketplacePage() {
   // Show mock data when Firestore is empty
   const showMock = listings.length === 0;
   const mockItems = listingType === 'adoption' ? MOCK_ADOPTIONS : MOCK_SALES;
-  const allItems = showMock ? [...mockItems, ...listings] : listings;
-
-  const filtered = allItems
+  const rawItems = [...mockItems, ...listings];
+  const allItems = rawItems
     .filter(l => !search || l.title.toLowerCase().includes(search.toLowerCase()))
     .sort((a, b) => {
       if (sort === 'price_asc') return Number(a.price) - Number(b.price);
@@ -844,13 +861,13 @@ export default function MarketplacePage() {
         <div style={{ textAlign: 'center', padding: '60px 0', color: '#f472b6', fontSize: 16 }}>
           {t('common.loading')}
         </div>
-      ) : filtered.length === 0 ? (
+      ) : allItems.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '60px 0', color: '#f9a8d4', fontSize: 15 }}>
           {t('common.empty')}
         </div>
       ) : (
         <div style={cardStyle}>
-          {filtered.map(item => (
+          {allItems.map(item => (
             <ListingCard key={item.id} item={item} onClick={setSelected} />
           ))}
         </div>

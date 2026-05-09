@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import { usePet } from '../context/PetContext';
 import { useAuth } from '../context/AuthContext';
 import { useI18n } from '../i18n/I18nContext';
+import { translateContent } from '../utils/translate';
 import { rp, isMobile } from '../utils/responsive';
 
 const BASE = process.env.REACT_APP_API_URL || '';
@@ -188,7 +189,7 @@ function saveLocalInventory(items) {
 
 // ─── 主页面 ───────────────────────────────────────────────────────────────────
 export default function InventoryPage() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const { pet, statuses } = usePet();
   const { currentUser } = useAuth();
   const [cat, setCat] = useState('all');
@@ -196,9 +197,28 @@ export default function InventoryPage() {
     const local = loadLocalInventory();
     return local || ITEM_DEFINITIONS.map(i => ({ ...i }));
   });
+  const [displayItems, setDisplayItems] = useState(() => {
+    const local = loadLocalInventory();
+    return local || ITEM_DEFINITIONS.map(i => ({ ...i }));
+  });
   const [selectedItem, setSelectedItem] = useState(null);
   const [animKey, setAnimKey] = useState(0);
   const [loaded, setLoaded] = useState(false);
+
+  // Translate inventory items when language changes
+  useEffect(() => {
+    if (!inventory || inventory.length === 0) return;
+    let cancelled = false;
+    Promise.all(inventory.map(item =>
+      Promise.all([
+        translateContent(item.name || '', lang),
+        translateContent(item.desc || '', lang),
+      ]).then(([name, desc]) => ({ ...item, name, desc }))
+    )).then(data => {
+      if (!cancelled) setDisplayItems(data);
+    });
+    return () => { cancelled = true; };
+  }, [lang, inventory]);
 
   // Build STAT_LABELS from i18n
   const STAT_LABELS = {
@@ -233,7 +253,7 @@ export default function InventoryPage() {
 
   const refreshPet = useCallback(() => setAnimKey(k => k + 1), []);
 
-  const filtered = cat === 'all' ? inventory : inventory.filter(i => i.category === cat);
+  const filtered = cat === 'all' ? displayItems : displayItems.filter(i => i.category === cat);
 
   const handleUse = (item) => {
     if (!pet) { toast.error(t('inventory.pet.afterAdopt')); return; }
@@ -245,6 +265,11 @@ export default function InventoryPage() {
     setInventory(prev => {
       const next = prev.map(it => it.id === item.id ? { ...it, quantity: Math.max(0, it.quantity - 1) } : it);
       saveLocalInventory(next);
+      // Sync displayItems with translated version of the new inventory
+      setDisplayItems(next.map(it => {
+        const display = displayItems.find(d => d.id === it.id);
+        return { ...it, name: display?.name || it.name, desc: display?.desc || it.desc };
+      }));
       return next;
     });
 

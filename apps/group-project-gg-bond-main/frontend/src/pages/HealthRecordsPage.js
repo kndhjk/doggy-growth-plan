@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { HealthAPI } from '../services/apiLayer';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useI18n } from '../i18n/I18nContext';
+import { translateContent } from '../utils/translate';
 import { isMobile } from '../utils/responsive';
 import toast from 'react-hot-toast';
 
@@ -79,7 +80,7 @@ function RecordCard({ record, onDelete, t }) {
 
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-            <div style={{ fontWeight: 800, fontSize: 15, color: '#9d174d' }}>{record.title}</div>
+            <div style={{ fontWeight: 800, fontSize: 15, color: '#9d174d' }}>{record.displayTitle || record.title}</div>
             <div style={{
               fontSize: 11, fontWeight: 700,
               color: meta.color,
@@ -102,7 +103,7 @@ function RecordCard({ record, onDelete, t }) {
 
           {record.notes && (
             <div style={{ fontSize: 13, color: '#9d174d', marginTop: 6, lineHeight: 1.5 }}>
-              {record.notes}
+              {record.displayNotes || record.notes}
             </div>
           )}
         </div>
@@ -288,7 +289,29 @@ function AddRecordModal({ onClose, onAdd, t }) {
 
 // ─── Page ──────────────────────────────────────────────────────────────────────
 export default function HealthRecordsPage() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
+
+  const [displayRecords, setDisplayRecords] = useState({});
+
+  // Translate records when language changes
+  useEffect(() => {
+    if (!records || Object.keys(records).length === 0) return;
+    let cancelled = false;
+    const translateRecords = async () => {
+      const translated = {};
+      for (const [type, recs] of Object.entries(records)) {
+        const mapped = await Promise.all(recs.map(async r => ({
+          ...r,
+          displayTitle: await translateContent(r.title || '', lang),
+          displayNotes: await translateContent(r.notes || '', lang),
+        })));
+        translated[type] = mapped;
+      }
+      if (!cancelled) setDisplayRecords(translated);
+    };
+    translateRecords();
+    return () => { cancelled = true; };
+  }, [lang, records]);
 
   const TYPE_META = {
     vaccine:   { label: t('health.type.vaccine'), icon: '💉', color: '#ec4899' },
@@ -336,10 +359,8 @@ export default function HealthRecordsPage() {
     { key: 'medicine', label: t('health.tab.medicine'), icon: '💊' },
   ];
 
-  const currentRecords = records[activeTab] || [];
-
-  // Sort by date desc
-  const sorted = [...currentRecords].sort((a, b) => new Date(b.date) - new Date(a.date));
+  const displayTabRecords = displayRecords[activeTab] || records[activeTab] || [];
+  const sorted = [...displayTabRecords].sort((a, b) => new Date(b.date) - new Date(a.date));
 
   const handleAddRecord = (newRecord) => {
     const recordWithId = { ...newRecord, id: `r${Date.now()}` };
