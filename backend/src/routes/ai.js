@@ -1,14 +1,11 @@
 /**
- * api/ai.js — GG Bond AI 健康顾问 (Vercel serverless)
- *
- * 使用 Groq 免费 API（Llama-3.3-70B-Versatile），
- * 内嵌中文行为指令层确保回答相关性 + 不跑题。
- *
- * POST /api/ai/chat  { message, context, lang }
- * GET  /api/ai        → { status: 'ok' }
+ * backend/src/routes/ai.js — GG Bond AI 健康顾问 (Express) — debug version
  */
 
+const router = require('express').Router();
+
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
+if (!GROQ_API_KEY) throw new Error('GROQ_API_KEY env not set');
 const MODEL = 'llama-3.3-70b-versatile';
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
 
@@ -33,7 +30,7 @@ const SMALL_TALK_REPLIES = {
   en: {
     default: `🐾 I'm the GG Bond AI Health Advisor, here to help with your pet dog's health questions.
 
-Feel free to ask me anything about dog health — loss of appetite, vomiting, skin itching, behavioral issues, and more. I'll do my best to give you helpful advice.
+Feel free to ask me anything about dog health — loss of appetite, vomiting, skin itching, behavioral issues, and more.
 
 ⚠️ Please note: I can only provide general reference advice and cannot replace diagnosis by a licensed veterinarian.`,
     login: `🔐 For login issues, please contact GG Bond support or reset your password.`,
@@ -42,7 +39,7 @@ Feel free to ask me anything about dog health — loss of appetite, vomiting, sk
 
 const ZH_INSTRUCTIONS = `【强制规则 — 必须遵守】
 1. 你是一名专业宠物狗健康顾问，只回答与宠物狗健康相关的问题。
-2. 回答必须紧扣用户问题，禁止跳转到无关主题。如果用户问的是非宠物问题（如天气、新闻、聊天），礼貌拒绝并引导回宠物话题。
+2. 回答必须紧扣用户问题，禁止跳转到无关主题。
 3. 用简体中文回答，所有文字（标题、bullet项、注释、emoji后文字）均为简体中文。
 4. 回答分为4段：① 直接回答（一句话）② 可能原因（3-5条）③ 具体建议（3-5条）④ 紧急度判断。
 5. 禁止编造不确定的医学数据；如不确定，给出合理范围而非精确数字。
@@ -119,18 +116,22 @@ function isOnTopic(userMessage, reply) {
 }
 
 async function groqGenerate(prompt) {
+  console.log('[groq] generating, prompt length:', prompt.length, 'key prefix:', GROQ_API_KEY.slice(0, 8));
   const res = await fetch(GROQ_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + GROQ_API_KEY },
     body: JSON.stringify({ model: MODEL, messages: [{ role: 'user', content: prompt }], temperature: 0.5, max_tokens: 1024 }),
   });
+  console.log('[groq] response status:', res.status, 'ok:', res.ok);
   if (!res.ok) {
     const txt = await res.text().catch(() => '');
-    throw new Error('Groq HTTP ' + res.status + ': ' + txt.slice(0, 200));
+    console.error('[groq] error response:', txt.slice(0, 300));
+    throw new Error('HTTP ' + res.status + ': ' + txt.slice(0, 200));
   }
   const data = await res.json();
   const content = data.choices?.[0]?.message?.content ?? '';
-  if (!content) throw new Error('Empty Groq response');
+  console.log('[groq] content length:', content.length, 'preview:', content.slice(0, 80));
+  if (!content) throw new Error('Empty response from Groq');
   return content;
 }
 
@@ -141,54 +142,54 @@ function cleanUrgency(reply, lang) {
   return reply.replace(/\n*\[Urgency\]\s*(Low|Medium|High)$/i, '\n\n[Urgency] $1').trim();
 }
 
-module.exports = async (req, res) => {
-  if (req.method === 'OPTIONS') return res.status(204).end();
-
+router.post('/chat', async (req, res, next) => {
   try {
-    const { method, url } = req;
-    const pathname = new URL(url, `http://${req.headers.host}`).pathname;
+    const { message, context } = req.body;
+    if (!message?.trim()) return res.status(400).json({ error: 'message required' });
 
-    if (method === 'GET' && pathname === '/api/ai') {
-      return res.status(200).json({ status: 'ok', time: new Date().toISOString(), provider: 'groq' });
+    const userMessage = message.trim();
+    const lang = detectLang(userMessage);
+    console.log('[ai] START msg=', userMessage.slice(0, 40), 'lang=', lang);
+
+    if (isSmallTalk(userMessage)) {
+      console.log('[ai] smalltalk hit, returning static reply');
+      return res.json({ reply: getSmallTalkReply(userMessage), type: 'small_talk' });
     }
 
-    if (method === 'POST' && pathname === '/api/ai/chat') {
-      if (!GROQ_API_KEY) return res.status(500).json({ error: 'GROQ_API_KEY not configured' });
+    let reply;
+    try {
+      const prompt = buildPrompt(userMessage, context, lang);
+      console.log('[ai] calling groqGenerate...');
+      reply = await groqGenerate(prompt);
+      console.log('[ai] groqGenerate succeeded, reply len=', reply.length);
 
-      const { message, context, lang = 'zh' } = req.body || {};
-      if (!message?.trim()) return res.status(400).json({ error: 'message required' });
-
-      const userMessage = message.trim();
-
-      if (isSmallTalk(userMessage)) {
-        return res.status(200).json({ reply: getSmallTalkReply(userMessage), type: 'small_talk' });
-      }
-
-      let reply;
-      try {
-        reply = await groqGenerate(buildPrompt(userMessage, context, lang));
-
-        if (!isOnTopic(userMessage, reply)) {
-          const retryReply = await groqGenerate(buildRetryPrompt(userMessage, context, lang));
-          if (retryReply.trim().length > reply.length * 0.5) {
-            reply = retryReply;
-          } else {
-            reply = FALLBACK[lang](userMessage);
-          }
-        }
-
-        if (!isOnTopic(userMessage, reply)) {
+      if (!isOnTopic(userMessage, reply)) {
+        console.log('[ai] not on topic, retrying...');
+        const retryReply = await groqGenerate(buildRetryPrompt(userMessage, context, lang));
+        if (retryReply.trim().length > reply.length * 0.5) {
+          reply = retryReply;
+        } else {
+          console.log('[ai] retry too short, using fallback');
           reply = FALLBACK[lang](userMessage);
         }
-      } catch (e) {
-        return res.status(503).json({ error: 'AI service temporarily unavailable. Please try again.' });
       }
 
-      return res.status(200).json({ reply: cleanUrgency(reply, lang) });
+      if (!isOnTopic(userMessage, reply)) {
+        console.log('[ai] still not on topic after retry, using fallback');
+        reply = FALLBACK[lang](userMessage);
+      }
+    } catch (e) {
+      console.error('[ai] groq exception:', e.message);
+      return res.status(503).json({ error: 'AI service temporarily unavailable. Please try again.' });
     }
 
-    res.status(404).json({ error: 'Not found' });
+    reply = cleanUrgency(reply, lang);
+    console.log('[ai] FINAL reply len=', reply.length, 'preview=', reply.slice(0, 60));
+    res.json({ reply });
   } catch (e) {
-    res.status(500).json({ error: e.message || 'Server error' });
+    console.error('[ai] outer exception:', e.message);
+    next(e);
   }
-};
+});
+
+module.exports = router;
