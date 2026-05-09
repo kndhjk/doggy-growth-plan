@@ -276,4 +276,28 @@ function chunkArray(arr, size) {
   return chunks;
 }
 
+// ─── Marketplace admin ──────────────────────────────────────────────────────
+router.get('/marketplace', async (req, res) => {
+  try {
+    const firestore = getDb();
+    const snap = await firestore
+      .collection('marketplace')
+      .where('status', '==', 'active')
+      .orderBy('createdAt', 'desc')
+      .get();
+    res.json(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+router.delete('/marketplace/:id', async (req, res) => {
+  try {
+    await getDb().collection('marketplace').doc(req.params.id).delete();
+    res.json({ success: true });
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 module.exports = router;

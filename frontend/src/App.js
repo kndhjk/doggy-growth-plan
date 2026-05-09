@@ -13,6 +13,9 @@ import AIPage        from './pages/AIPage';
 import MapPage       from './pages/MapPage';
 import CommunityPage from './pages/CommunityPage';
 import ProfilePage   from './pages/ProfilePage';
+import MarketplacePage from './pages/MarketplacePage';
+import MessagesPage    from './pages/MessagesPage';
+import ChatPage        from './pages/ChatPage';
 
 function Private({ children }) {
   const { currentUser, loading } = useAuth();
@@ -50,7 +53,10 @@ export default function App() {
               <Route path="map"     element={<MapPage />} />
               <Route path="community" element={<CommunityPage />} />
               <Route path="profile" element={<ProfilePage />} />
+              <Route path="marketplace" element={<MarketplacePage />} />
             </Route>
+            <Route path="/messages" element={<MessagesPage />} />
+            <Route path="/messages/:conversationId" element={<ChatPage />} />
           </Routes>
         </BrowserRouter>
         </I18nProvider>

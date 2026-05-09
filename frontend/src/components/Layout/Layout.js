@@ -11,11 +11,12 @@ const TABS = [
   { to:'/',          icon:'🏠', iconImg: navHome,      i18nKey:'nav.home'      },
   { to:'/ai',        icon:'🤖', iconImg: navAi,        i18nKey:'nav.ai'        },
   { to:'/map',       icon:'🗺️', iconImg: navMap,       i18nKey:'nav.map'       },
+  { to:'/marketplace', icon:'📦', iconImg: null,        i18nKey:'nav.marketplace' },
   { to:'/community', icon:'🐾', iconImg: navCommunity, i18nKey:'nav.community' },
   { to:'/profile',   icon:'👤', iconImg: navProfile,   i18nKey:'nav.profile'   },
 ];
 
-const TAB_EMOJI = { 'nav.home':'🏠','nav.ai':'🤖','nav.map':'🗺️','nav.community':'🐾','nav.profile':'👤' };
+const TAB_EMOJI = { 'nav.home':'🏠','nav.ai':'🤖','nav.map':'🗺️','nav.marketplace':'📦','nav.community':'🐾','nav.profile':'👤' };
 
 function NavItem({ to, iconImg, i18nKey, label, compact = false }) {
   return (
