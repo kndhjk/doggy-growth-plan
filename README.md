@@ -9,6 +9,7 @@
 - **宠物养成** — 水分、心情、体重实时衰减，支持洗澡/喂食/喝水等交互
 - **年龄预览滑块** — 拖动查看宠物在不同年龄阶段的样子（V2 页面）
 - **AI 助手** — 基于 Firebase + Kimi API 的宠物 AI 对话
+- **市场** — 宠物交易平台，支持图片上传、搜索过滤、卖家联系、应用内消息
 - **社区** — 用户分享宠物卡片、评论互动
 - **地图** — Google Maps 整合，展示周边用户
 - **多语言** — 支持英文、中文、日语、毛利语
@@ -25,6 +26,7 @@
 | 后端 | Firebase (Auth + Firestore) + Vercel Serverless Functions |
 | AI | Kimi (moonshot) API |
 | 地图 | Google Maps API |
+| 市场 | Firebase Storage + Firestore |
 | 部署 | Vercel (前端) + 作业测试服务器 (后端) |
 
 ---
@@ -44,7 +46,10 @@ frontend/
 │   │       └── ...
 │   ├── pages/
 │   │   ├── PetPage.js            # 宠物主页 (V1)
-│   │   └── PetPageV2.js          # 宠物主页 V2 (含年龄滑块)
+│   │   ├── PetPageV2.js          # 宠物主页 V2 (含年龄滑块)
+│   │   ├── MarketplacePage.js    # 宠物市场（列表/发布/详情）
+│   │   ├── MessagesPage.js       # 消息列表页
+│   │   ├── ChatPage.js           # 聊天页面
 │   │   └── ...
 │   ├── sandbox/            # 实验性页面 (PetPageV2, statusDecayV2)
 │   ├── context/            # AuthContext, PetContext
