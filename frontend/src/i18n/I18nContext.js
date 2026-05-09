@@ -46,6 +46,14 @@ const translations = {
     error: '加载失败',
     noData: '暂无数据',
     empty: '-',
+    // Leaderboard column labels
+    'leaderboard.col.happiness': '幸福',
+    'leaderboard.col.activity': '活跃',
+    'leaderboard.col.level': 'LV',
+    ownerPrefix: '主人 ',
+    // Health
+    'health.total': '共 {n} 条记录',
+    'health.lastCheckup': '上次检查: {date}',
   },
   en: {
     appName: 'GG Bond Pet Platform',
@@ -92,6 +100,14 @@ const translations = {
     error: 'Failed to load',
     noData: 'No data',
     empty: '-',
+    // Leaderboard column labels
+    'leaderboard.col.happiness': 'Happiness',
+    'leaderboard.col.activity': 'Active',
+    'leaderboard.col.level': 'LV',
+    ownerPrefix: 'Owner ',
+    // Health
+    'health.total': '{n} records',
+    'health.lastCheckup': 'Last checkup: {date}',
   },
   ja: {
     appName: 'GG Bondペットプラットフォーム',
@@ -138,6 +154,14 @@ const translations = {
     error: '読み込み失敗',
     noData: 'データなし',
     empty: '-',
+    // Leaderboard column labels
+    'leaderboard.col.happiness': '幸福',
+    'leaderboard.col.activity': 'アクティブ',
+    'leaderboard.col.level': 'LV',
+    ownerPrefix: 'オーナー ',
+    // Health
+    'health.total': '{n}件の記録',
+    'health.lastCheckup': '前回の検査: {date}',
   },
   mi: {
     appName: 'GG Bond Pet Platform',
@@ -184,6 +208,14 @@ const translations = {
     error: 'Kua horo',
     noData: 'Kāore he raraunga',
     empty: '-',
+    // Leaderboard column labels
+    'leaderboard.col.happiness': 'Hauora',
+    'leaderboard.col.activity': 'Nekehia',
+    'leaderboard.col.level': 'LV',
+    ownerPrefix: 'Tāngata ',
+    // Health
+    'health.total': '{n} rekōta',
+    'health.lastCheckup': 'Arotake whakamutunga: {date}',
   },
 };
 
