@@ -318,5 +318,21 @@ const ja = {
   'ai.clear.title':        '会話履歴を消去',
   'ai.quick.collapse':     'ショートカットを閉じる',
   'ai.quick.expand':       'ショートカットを開く',
+
+  // ─── Home / PetPage ──────────────────────────────────────────────────────
+  'pet.home.activityTypes':   'アクティビティの種類',
+  'pet.home.daysTogether':   '共に過ごした日数',
+  'pet.home.todayStatus':     'リアルタイムステータス',
+  'pet.home.todayCare':      '今日のケア',
+  'pet.home.record':         '記録',
+  'pet.home.noRecord':       '記録なし',
+  'pet.home.activityRecord': 'アクティビティ記録',
+  'pet.home.noActivityYet':  'まだアクティビティがありません、記録を始めましょう！',
+  'pet.home.todayWeather':   '今日の天気',
+  'pet.home.aiInsight':      'AI 健康洞察',
+  'pet.home.ai.needCare':    '{name}にもっと注意が必要！毎日のかかわりを増やして、気持ちをよく保ちましょう。',
+  'pet.home.ai.drinkLess':   '{name}は今日は水分補給が少ないです、水分を補充してください～',
+  'pet.home.ai.hungry':      '{name}はちょっとお腹が空いています、食べ物をあげるともっと喜びます！',
+  'pet.home.ai.allGood':     '{name}の各项指標は良好です！毎日のかいを続けて、もっと早く成長しましょう～',
 };
 export default ja;

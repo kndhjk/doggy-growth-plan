@@ -322,5 +322,21 @@ const mi = {
   'ai.clear.title':        'Ūkuihia te hītori kōrero',
   'ai.quick.collapse':     'Hunaia ngā pātai whawhe',
   'ai.quick.expand':       'Whakakitea ngā pātai whawhe',
+
+  // ─── Home / PetPage ──────────────────────────────────────────────────────
+  'pet.home.activityTypes':   'Ngā Momo Mahi',
+  'pet.home.daysTogether':   'Rā Tahi',
+  'pet.home.todayStatus':     'Tūnga Whaimana',
+  'pet.home.todayCare':      'Tiaki o te Rā',
+  'pet.home.record':         'Tāpiu',
+  'pet.home.noRecord':       'Kāore he tāpiu',
+  'pet.home.activityRecord': 'Mahini a Log',
+  'pet.home.noActivityYet':  'Kāore anō he mahi — tīmata ki te tāpiu!',
+  'pet.home.todayWeather':   'Te Huarākau o te Rā',
+  'pet.home.aiInsight':      'Mōhiotanga Hauora AI',
+  'pet.home.ai.needCare':    '{name} mea anō te aro! Whakapiki i ngā mahi a te rā ki te noho harikoa.',
+  'pet.home.ai.drinkLess':   '{name} kāore i inu wai i te rā nei — me mōhio koe ki te whakauru wai!',
+  'pet.home.ai.hungry':      '{name} e hiakai ana — kai ai te kai ka harikoa ake!',
+  'pet.home.ai.allGood':     '{name} kei runga kē! Haere tonu ki te tiaki i ia rā kia tipu ake ai.',
 };
 export default mi;

@@ -321,5 +321,22 @@ const en = {
   'ai.clear.title':        'Clear chat history',
   'ai.quick.collapse':     'Hide quick questions',
   'ai.quick.expand':       'Show quick questions',
+
+
+  // ─── Home / PetPage ──────────────────────────────────────────────────────
+  'pet.home.activityTypes':   'Activity Types',
+  'pet.home.daysTogether':   'Days Together',
+  'pet.home.todayStatus':     'Live Status',
+  'pet.home.todayCare':      'Today\'s Care',
+  'pet.home.record':         'Record',
+  'pet.home.noRecord':       'No record',
+  'pet.home.activityRecord': 'Activity Log',
+  'pet.home.noActivityYet':  'No activity yet — start logging!',
+  'pet.home.todayWeather':   'Today\'s Weather',
+  'pet.home.aiInsight':      'AI Health Insights',
+  'pet.home.ai.needCare':    '{name} needs more attention! Try increasing daily interactions to keep a happy mood.',
+  'pet.home.ai.drinkLess':   '{name} hasn\'t drunk enough water today — remember to top up!',
+  'pet.home.ai.hungry':      '{name} is a bit hungry — some food would make {name} happier!',
+  'pet.home.ai.allGood':     '{name} is in great shape! Keep up the daily care for faster growth~',
 };
 export default en;

@@ -105,6 +105,13 @@ top: -10 → -20
 zIndex: 5 → 20
 ```
 
+### 问题 5: 语言切换后 Home 页面 UI 不同步
+**根因**: `PetPageV2.js` 中大量 UI 文字硬编码了中文（如"实时状态"、"今日照顾清单"、"活动记录"等），没有走 i18n 的 `t()` 函数，切换语言后这些地方不更新。
+
+**修复** (`PetPageV2.js` + 4 个 locale 文件):
+- 新增 `pet.home.*` 系列翻译 key（活动类型、相处天数、实时状态、今日照顾清单、暂无记录、活动记录、暂无活动记录、今日天气、AI 健康洞察等）
+- 所有硬编码中文替换为 `t('key')` 调用：StatusPill 标签、QuickBtn 标签 + handleMain/handleSecondary 参数、careItems 清单 label、Section 标题、labelMap、AI 健康消息模板
+
 ---
 
 ## 部署

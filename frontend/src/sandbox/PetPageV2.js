@@ -240,12 +240,12 @@ function DesktopPetPage({ pet, statuses, displayStatuses, previewAge, handlePrev
 
   // Build care checklist from real last activity
   const careItems = [
-    { icon:'🍖', label:'喂食', type:'feed', done:!!getLastActivityTime(last, 'feed') },
-    { icon:'💧', label:'补充水分', type:'water', done:!!getLastActivityTime(last, 'water') },
-    { icon:'🚶', label:'遛弯', type:'walk', done:!!getLastActivityTime(last, 'walk') },
-    { icon:'🤝', label:'互动', type:'play', done:!!getLastActivityTime(last, 'play') },
-    { icon:'🛁', label:'洗澡', type:'bath', done:!!getLastActivityTime(last, 'bath') },
-    { icon:'💊', label:'健康检查', type:'medicine', done:!!getLastActivityTime(last, 'medicine') },
+    { icon:'🍖', label:t('pet.action.feed'), type:'feed', done:!!getLastActivityTime(last, 'feed') },
+    { icon:'💧', label:t('pet.action.water'), type:'water', done:!!getLastActivityTime(last, 'water') },
+    { icon:'🚶', label:t('pet.action.walk'), type:'walk', done:!!getLastActivityTime(last, 'walk') },
+    { icon:'🤝', label:t('pet.action.play'), type:'play', done:!!getLastActivityTime(last, 'play') },
+    { icon:'🛁', label:t('pet.action.bath'), type:'bath', done:!!getLastActivityTime(last, 'bath') },
+    { icon:'💊', label:t('pet.action.medicine'), type:'medicine', done:!!getLastActivityTime(last, 'medicine') },
   ];
 
   const achievements = [
@@ -400,44 +400,44 @@ function DesktopPetPage({ pet, statuses, displayStatuses, previewAge, handlePrev
               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
                 <div style={{ padding:'8px 10px', borderRadius:10, background:'#fdf2f8', textAlign:'center' }}>
                   <div style={{ fontSize:18, fontWeight:900, color:'#9d174d' }}>{daysWithPet || 1}</div>
-                  <div style={{ fontSize:10, color:'#9ca3af', fontWeight:600 }}>相处天数</div>
+                  <div style={{ fontSize:10, color:'#9ca3af', fontWeight:600 }}>{t('pet.home.daysTogether')}</div>
                 </div>
                 <div style={{ padding:'8px 10px', borderRadius:10, background:'#fdf2f8', textAlign:'center' }}>
                   <div style={{ fontSize:18, fontWeight:900, color:'#7c3aed' }}>
                     {Object.values(last).flat?.()?.[0] ? Object.keys(last).length : 0}+
                   </div>
-                  <div style={{ fontSize:10, color:'#9ca3af', fontWeight:600 }}>活动类型</div>
+                  <div style={{ fontSize:10, color:'#9ca3af', fontWeight:600 }}>{t('pet.home.activityTypes')}</div>
                 </div>
               </div>
             </div>
           </Section>
 
           {/* Vitals */}
-          <Section title="实时状态" icon="📊">
+          <Section title={t('pet.home.todayStatus')} icon="📊">
             <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
-              <StatusPill icon="💧" label="水分" value={statuses?.hydration||0} />
-              <StatusPill icon="🍖" label="饥饿" value={statuses?.appetite||0} />
-              <StatusPill icon="😊" label="心情" value={statuses?.mood||0} />
-              <StatusPill icon="💚" label="健康" value={statuses?.health||0} />
-              <StatusPill icon="🐾" label="社交" value={statuses?.social||0} />
+              <StatusPill icon="💧" label={t('pet.status.hydration')} value={statuses?.hydration||0} />
+              <StatusPill icon="🍖" label={t('pet.status.appetite')} value={statuses?.appetite||0} />
+              <StatusPill icon="😊" label={t('pet.status.mood')} value={statuses?.mood||0} />
+              <StatusPill icon="💚" label={t('pet.status.health')} value={statuses?.health||0} />
+              <StatusPill icon="🐾" label={t('pet.status.social')} value={statuses?.social||0} />
             </div>
           </Section>
 
           {/* Quick actions */}
           <Section title="快捷操作" icon="⚡">
             <div style={{ display:'flex', gap:8 }}>
-              <QuickBtn icon="🍖" label="喂食" color="#f97316" onClick={() => handleMain('feed','喂食')} />
-              <QuickBtn icon="💧" label="喝水" color="#3b82f6" onClick={() => handleMain('water','补充水分')} />
-              <QuickBtn icon="🛁" label="洗澡" color="#8b5cf6" onClick={() => handleSecondary('bath','洗澡')} />
-              <QuickBtn icon="🚶" label="遛弯" color="#10b981" onClick={() => handleSecondary('walk','遛弯')} />
+              <QuickBtn icon="🍖" label={t('pet.action.feed')} color="#f97316" onClick={() => handleMain('feed',t('pet.action.feed'))} />
+              <QuickBtn icon="💧" label={t('pet.action.water')} color="#3b82f6" onClick={() => handleMain('water',t('pet.action.water'))} />
+              <QuickBtn icon="🛁" label={t('pet.action.bath')} color="#8b5cf6" onClick={() => handleSecondary('bath',t('pet.action.bath'))} />
+              <QuickBtn icon="🚶" label={t('pet.action.walk')} color="#10b981" onClick={() => handleSecondary('walk',t('pet.action.walk'))} />
             </div>
           </Section>
 
           {/* Today's care checklist */}
-          <Section title="今日照顾清单" icon="📋">
+          <Section title={t('pet.home.todayCare')} icon="📋">
             <div style={{ display:'flex', flexDirection:'column' }}>
               {careItems.map(item => {
-                const t = item.done ? timeAgo(getLastActivityTime(last, item.type), t) : null;
+                const timeLabel = item.done ? timeAgo(getLastActivityTime(last, item.type), t) : null;
                 return (
                   <div key={item.type} style={{
                     display:'flex', alignItems:'center', gap:10, padding:'9px 0',
@@ -537,11 +537,11 @@ function DesktopPetPage({ pet, statuses, displayStatuses, previewAge, handlePrev
           <div style={{ width:'100%', maxWidth:540, display:'grid',
                         gridTemplateColumns:'repeat(3,1fr)', gap:10 }}>
             <StatCard icon="💧" title="水分指数" value={`${statuses?.hydration||0}%`}
-                      sub={timeAgo(getLastActivityTime(last,'water'), t) || '暂无记录'} color="#3b82f6" />
+                      sub={timeAgo(getLastActivityTime(last,'water'), t) || t('pet.home.noRecord')} color="#3b82f6" />
             <StatCard icon="🍖" title="饱腹指数" value={`${statuses?.appetite||0}%`}
-                      sub={timeAgo(getLastActivityTime(last,'feed'), t) || '暂无记录'} color="#f97316" />
+                      sub={timeAgo(getLastActivityTime(last,'feed'), t) || t('pet.home.noRecord')} color="#f97316" />
             <StatCard icon="😊" title="心情指数" value={`${statuses?.mood||0}%`}
-                      sub={timeAgo(getLastActivityTime(last,'walk'), t) || '暂无记录'} color="#ec4899" />
+                      sub={timeAgo(getLastActivityTime(last,'walk'), t) || t('pet.home.noRecord')} color="#ec4899" />
           </div>
         </main>
 
@@ -600,26 +600,26 @@ function DesktopPetPage({ pet, statuses, displayStatuses, previewAge, handlePrev
           </Section>
 
           {/* Activity timeline */}
-          <Section title="活动记录" icon="🕒">
+          <Section title={t('pet.home.activityRecord')} icon="🕒">
             <div style={{ display:'flex', flexDirection:'column', maxHeight:200, overflowY:'auto' }}>
               {['feed','water','walk','play','bath'].map(type => {
                 const iconMap = { feed:'🍖', water:'💧', walk:'🚶', play:'🤝', bath:'🛁' };
-                const labelMap = { feed:'喂食', water:'喝水', walk:'遛弯', play:'互动', bath:'洗澡' };
-                const t = timeAgo(getLastActivityTime(last, type), t);
-                return t ? (
-                  <TimelineItem key={type} icon={iconMap[type]} text={labelMap[type]} time={t} done />
+                const labelMap = { feed:t('pet.action.feed'), water:t('pet.action.water'), walk:t('pet.action.walk'), play:t('pet.action.play'), bath:t('pet.action.bath') };
+                const timeStr = timeAgo(getLastActivityTime(last, type), t);
+                return timeStr ? (
+                  <TimelineItem key={type} icon={iconMap[type]} text={labelMap[type]} time={timeStr} done />
                 ) : null;
               }).filter(Boolean).slice(0,5)}
               {Object.keys(last).length === 0 && (
                 <div style={{ fontSize:12, color:'#9ca3af', textAlign:'center', padding:'16px 0' }}>
-                  暂无活动记录，开始记录吧！
+                  {t('pet.home.noActivityYet')}
                 </div>
               )}
             </div>
           </Section>
 
           {/* Weather + time widget */}
-          <Section title="今日天气" icon="🌤️">
+          <Section title={t('pet.home.todayWeather')} icon="🌤️">
             <div style={{ display:'flex', alignItems:'center', gap:12 }}>
               <div style={{ fontSize:40 }}>🌤️</div>
               <div>
@@ -635,17 +635,17 @@ function DesktopPetPage({ pet, statuses, displayStatuses, previewAge, handlePrev
           </Section>
 
           {/* AI health insight */}
-          <Section title="AI 健康洞察" icon="🤖">
+          <Section title={t('pet.home.aiInsight')} icon="🤖">
             <div style={{ padding:'12px 14px', borderRadius:14,
                           background:'linear-gradient(135deg,#fdf2f8,#ede9fe)',
                           border:'1px solid #ddd6fe', fontSize:12.5, color:'#5b21b6', lineHeight:1.8 }}>
               💡 {warning
-                ? `${pet.name} 需要更多关注！建议增加每日互动次数，保持愉快心情。`
+                ? t('pet.home.ai.needCare', {name: pet.name})
                 : statuses?.hydration < 50
-                  ? `${pet.name} 今天喝水偏少，记得补充水分～`
+                  ? t('pet.home.ai.drinkLess', {name: pet.name})
                   : statuses?.appetite < 50
-                    ? `${pet.name} 有点饿了，喂点食物会更开心！`
-                    : `${pet.name} 各项指标良好！坚持每日照顾，成长的更快哦～`}
+                    ? t('pet.home.ai.hungry', {name: pet.name})
+                    : t('pet.home.ai.allGood', {name: pet.name})}
             </div>
             <motion.button
               whileHover={{ scale:1.02 }}
@@ -723,14 +723,14 @@ function TabletPetPage({ pet, statuses, displayStatuses, previewAge, handlePrevi
               <div style={{ fontSize:12, color:'#9ca3af' }}>{stageLabel} · ❤️{overall}%</div>
             </div>
           </div>
-          <StatusPill icon="💧" label="水分" value={statuses?.hydration||0} />
+          <StatusPill icon="💧" label={t('pet.status.hydration')} value={statuses?.hydration||0} />
           <StatusPill icon="🍖" label="饱腹" value={statuses?.appetite||0} />
-          <StatusPill icon="😊" label="心情" value={statuses?.mood||0} />
+          <StatusPill icon="😊" label={t('pet.status.mood')} value={statuses?.mood||0} />
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
-            <QuickBtn icon="🍖" label="喂食" color="#f97316" onClick={() => handleMain('feed','喂食')} />
+            <QuickBtn icon="🍖" label={t('pet.action.feed')} color="#f97316" onClick={() => handleMain('feed',t('pet.action.feed'))} />
             <QuickBtn icon="💧" label="喝水" color="#3b82f6" onClick={() => handleMain('water','补水')} />
-            <QuickBtn icon="🛁" label="洗澡" color="#8b5cf6" onClick={() => handleSecondary('bath','洗澡')} />
-            <QuickBtn icon="🚶" label="遛弯" color="#10b981" onClick={() => handleSecondary('walk','遛弯')} />
+            <QuickBtn icon="🛁" label={t('pet.action.bath')} color="#8b5cf6" onClick={() => handleSecondary('bath',t('pet.action.bath'))} />
+            <QuickBtn icon="🚶" label={t('pet.action.walk')} color="#10b981" onClick={() => handleSecondary('walk',t('pet.action.walk'))} />
           </div>
         </div>
         {/* Right */}

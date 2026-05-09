@@ -322,5 +322,21 @@ const zh = {
   'ai.clear.title':        '清空对话历史',
   'ai.quick.collapse':     '收起快捷问题',
   'ai.quick.expand':       '显示快捷问题',
+
+  // ─── Home / PetPage ──────────────────────────────────────────────────────
+  'pet.home.activityTypes':   '活动类型',
+  'pet.home.daysTogether':   '相处天数',
+  'pet.home.todayStatus':     '实时状态',
+  'pet.home.todayCare':      '今日照顾清单',
+  'pet.home.record':         '记录',
+  'pet.home.noRecord':       '暂无记录',
+  'pet.home.activityRecord': '活动记录',
+  'pet.home.noActivityYet':  '暂无活动记录，开始记录吧！',
+  'pet.home.todayWeather':   '今日天气',
+  'pet.home.aiInsight':      'AI 健康洞察',
+  'pet.home.ai.needCare':    '{name} 需要更多关注！建议增加每日互动次数，保持愉快心情。',
+  'pet.home.ai.drinkLess':   '{name} 今天喝水偏少，记得补充水分～',
+  'pet.home.ai.hungry':      '{name} 有点饿了，喂点食物会更开心！',
+  'pet.home.ai.allGood':     '{name} 各项指标良好！坚持每日照顾，成长的更快哦～',
 };
 export default zh;
