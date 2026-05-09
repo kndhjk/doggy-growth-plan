@@ -4,25 +4,22 @@ import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { PetProvider } from './context/PetContext';
 import { I18nProvider } from './i18n/I18nContext';
-import Layout       from './components/Layout/Layout';
-import LoginPage    from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
-import PetPageV2    from './sandbox/PetPageV2';
-import AIPage       from './pages/AIPage';
-import MapPage      from './pages/MapPage';
+import Layout        from './components/Layout/Layout';
+import LoginPage     from './pages/LoginPage';
+import RegisterPage  from './pages/RegisterPage';
+import AdminPage     from './pages/AdminPage';
+import PetPageV2     from './sandbox/PetPageV2';
+import AIPage        from './pages/AIPage';
+import MapPage       from './pages/MapPage';
 import CommunityPage from './pages/CommunityPage';
-import ProfilePage  from './pages/ProfilePage';
+import ProfilePage   from './pages/ProfilePage';
 
 function Private({ children }) {
   const { currentUser, loading } = useAuth();
-  if (loading !== false) return null; return currentUser ? children : <Navigate to="/login" replace />;
+  if (loading !== false) return null;
+  return currentUser ? children : <Navigate to="/login" replace />;
 }
 
-/* ── Wrapper forces PetPageV2 to remount fresh when navigating back to /.
-    Without the key, React Router re-uses the same component instance and
-    Framer Motion / flex-layout state from the previous visit can persist,
-    causing the layout to break. The key={location.pathname} trick is the
-    standard React pattern for forcing remount on (nested) route re-entry. ── */
 function HomeRoute() {
   const location = useLocation();
   return <PetPageV2 key={location.pathname} />;
@@ -45,6 +42,8 @@ export default function App() {
           <Routes>
             <Route path="/login"    element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
+            {/* Admin page — standalone, no Layout wrapper */}
+            <Route path="/admin" element={<AdminPage />} />
             <Route path="/" element={<Private><Layout /></Private>}>
               <Route index          element={<HomeRoute />} />
               <Route path="ai"      element={<AIPage />} />
