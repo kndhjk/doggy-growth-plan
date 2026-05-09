@@ -639,9 +639,100 @@ export default function MarketplacePage() {
     },
   ];
 
-  // Merge mock data for adoption tab when Firestore is empty
-  const showMockAdoptions = listingType === 'adoption' && listings.length === 0;
-  const allItems = showMockAdoptions ? [...MOCK_ADOPTIONS, ...listings] : listings;
+  const MOCK_SALES = [
+    {
+      id: 'mock_s1',
+      title: '柯基弟弟 — 屁股扭扭找新家',
+      description: '6个月柯基弟弟，疫苗齐全，身体健康。性格活泼粘人，屁股扭扭是它的标志技能。已学会定点上厕所，送狗粮、狗窝、玩具。要求领养人有时间陪伴。',
+      category: 'dog',
+      breed: '柯基',
+      price: 800,
+      location: 'Mount Eden',
+      images: [
+        'https://images.unsplash.com/photo-1546527868-ccb7ee7dfa6a?w=600&q=80',
+        'https://images.unsplash.com/photo-1612536057832-3cdb8e01c3c1?w=600&q=80',
+      ],
+      sellerName: '阿Leo',
+      sellerEmail: 'aleo@example.com',
+      sellerId: 'mock_seller_6',
+      createdAt: { toDate: () => new Date(Date.now() - 86400000 * 1) },
+      listingType: 'sale',
+    },
+    {
+      id: 'mock_s2',
+      title: '英短蓝猫 — 安静乖巧适合公寓',
+      description: '1岁英短蓝猫弟弟，健康已绝育。性格安静不爱叫，不破坏家具，非常适合公寓或单居室。已打疫苗，体内外驱虫，耳朵干净。要求领养人稳定住所。',
+      category: 'cat',
+      breed: '英国短毛猫',
+      price: 600,
+      location: 'New Lynn',
+      images: [
+        'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=600&q=80',
+      ],
+      sellerName: '小雪',
+      sellerEmail: 'xiaoxue@example.com',
+      sellerId: 'mock_seller_7',
+      createdAt: { toDate: () => new Date(Date.now() - 86400000 * 3) },
+      listingType: 'sale',
+    },
+    {
+      id: 'mock_s3',
+      title: '柴犬妹妹 — 表情包本包',
+      description: '8个月柴犬妹妹，疫苗齐全，已绝育。行走的表情包，表情极其丰富。性格独立但粘人，爱干净会自己清理毛发。送全套狗具，接受上门看狗。',
+      category: 'dog',
+      breed: '柴犬',
+      price: 1200,
+      location: 'Epsom',
+      images: [
+        'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=600&q=80',
+      ],
+      sellerName: '铲屎官老张',
+      sellerEmail: 'laozhang@example.com',
+      sellerId: 'mock_seller_8',
+      createdAt: { toDate: () => new Date(Date.now() - 86400000 * 2) },
+      listingType: 'sale',
+    },
+    {
+      id: 'mock_s4',
+      title: '仓鼠一家 — 萌萌哒小团子',
+      description: '2个月大的仓鼠宝宝，一共5只，金丝熊品种。毛色干净健康，性格温顺会亲人，已断奶可以独立吃鼠粮和辅食。需要整套笼子+跑轮+木屑一起带走。',
+      category: 'other',
+      breed: '金丝熊仓鼠',
+      price: 150,
+      location: 'Pukekohe',
+      images: [
+        'https://images.unsplash.com/photo-1425082661705-1834bfd2d326?w=600&q=80',
+      ],
+      sellerName: '学生小王',
+      sellerEmail: 'xiaowang@example.com',
+      sellerId: 'mock_seller_9',
+      createdAt: { toDate: () => new Date(Date.now() - 86400000 * 6) },
+      listingType: 'sale',
+    },
+    {
+      id: 'mock_s5',
+      title: '拉布拉多 — 导盲犬血统找爱家',
+      description: '1岁拉布拉多，祖辈有导盲犬血统，身体非常健康，体型标准。性格温和无攻击性，对小孩和老人特别友好。已完成基础服从训练，包括等待、召回、坐下。',
+      category: 'dog',
+      breed: '拉布拉多猎犬',
+      price: 1500,
+      location: 'Orewa',
+      images: [
+        'https://images.unsplash.com/photo-1552053831-71594a27632d?w=600&q=80',
+      ],
+      sellerName: '导盲犬训练员May',
+      sellerEmail: 'may@example.com',
+      sellerId: 'mock_seller_10',
+      createdAt: { toDate: () => new Date(Date.now() - 86400000 * 4) },
+      listingType: 'sale',
+    },
+  ];
+
+
+  // Show mock data when Firestore is empty
+  const showMock = listings.length === 0;
+  const mockItems = listingType === 'adoption' ? MOCK_ADOPTIONS : MOCK_SALES;
+  const allItems = showMock ? [...mockItems, ...listings] : listings;
 
   const filtered = allItems
     .filter(l => !search || l.title.toLowerCase().includes(search.toLowerCase()))
