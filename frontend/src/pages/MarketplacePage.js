@@ -33,7 +33,7 @@ function timeAgo(ts) {
 function CreateListingModal({ onClose, onCreated }) {
   const { t } = useI18n();
   const { currentUser } = useAuth();
-  const [form, setForm] = useState({ title: '', description: '', category: 'dog', price: '', location: '' });
+  const [form, setForm] = useState({ title: '', description: '', category: 'dog', price: '', location: '', listingType: 'sale' });
   const [images, setImages] = useState([]);
   const [previewUrls, setPreviewUrls] = useState([]);
   const [uploading, setUploading] = useState(false);
@@ -76,8 +76,9 @@ function CreateListingModal({ onClose, onCreated }) {
         title: form.title.trim(),
         description: form.description.trim(),
         category: form.category,
-        price: Number(form.price),
+        price: form.listingType === 'adoption' ? 0 : Number(form.price),
         location: form.location.trim(),
+        listingType: form.listingType,
         images: imageUrls,
         sellerId: currentUser.uid,
         sellerName: currentUser.displayName || currentUser.email || 'Anonymous',
@@ -119,9 +120,30 @@ function CreateListingModal({ onClose, onCreated }) {
           fontFamily: "system-ui,-apple-system,'PingFang SC',sans-serif",
         }}
       >
+        {/* Listing type toggle */}
+        <div style={{ display: 'flex', gap: 8, marginBottom: 20, background: '#fdf2f8', borderRadius: 12, padding: 4 }}>
+          {[
+            { key: 'sale', label: t('marketplace.forSale') || '出售/领养', color: '#f59e0b' },
+            { key: 'adoption', label: t('marketplace.forAdoption') || '免费领养', color: '#10b981' },
+          ].map(opt => (
+            <button
+              key={opt.key}
+              onClick={() => setForm(f => ({ ...f, listingType: opt.key, price: opt.key === 'adoption' ? '0' : f.price }))}
+              style={{
+                flex: 1, padding: '10px', borderRadius: 10, border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 13,
+                background: form.listingType === opt.key ? `linear-gradient(135deg,${opt.color},${opt.color}cc)` : 'transparent',
+                color: form.listingType === opt.key ? 'white' : opt.color,
+                transition: 'all 0.2s',
+              }}
+            >
+              {opt.key === 'sale' ? '💰 出售/送养' : '❤️ 免费领养'}
+            </button>
+          ))}
+        </div>
+
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
           <h2 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: '#9d174d' }}>
-            {t('marketplace.createListing')}
+            {form.listingType === 'adoption' ? '❤️ 创建免费领养' : t('marketplace.createListing')}
           </h2>
           <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 24, cursor: 'pointer', color: '#f9a8d4' }}>✕</button>
         </div>
@@ -157,15 +179,16 @@ function CreateListingModal({ onClose, onCreated }) {
           </div>
           <div style={{ flex: 1 }}>
             <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#9d174d', marginBottom: 6 }}>
-              {t('marketplace.priceNZD')} *
+              {form.listingType === 'adoption' ? t('marketplace.adoptionFee') : t('marketplace.priceNZD')} {form.listingType === 'sale' ? '*' : ''}
             </label>
             <input
               type="number"
               value={form.price}
               onChange={e => setForm(f => ({ ...f, price: e.target.value }))}
-              placeholder="0"
+              placeholder={form.listingType === 'adoption' ? '0（免费领养）' : '0'}
               min="0"
               style={inputStyle}
+              disabled={form.listingType === 'adoption'}
             />
           </div>
         </div>
@@ -173,7 +196,7 @@ function CreateListingModal({ onClose, onCreated }) {
         {/* Location */}
         <div style={{ marginBottom: 16 }}>
           <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#9d174d', marginBottom: 6 }}>
-            {t('marketplace.location')} *
+            {t('marketplace.location')} {form.listingType === 'adoption' ? '' : '*'}
           </label>
           <input
             value={form.location}
@@ -482,14 +505,17 @@ export default function MarketplacePage() {
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('all');
   const [sort, setSort] = useState('newest');
+  const [listingType, setListingType] = useState('sale'); // 'sale' | 'adoption'
+  const [page, setPage] = useState(1);
 
   // Fetch listings
   useEffect(() => {
     let q;
+    const typeFilter = listingType === 'adoption' ? 'adoption' : 'sale';
     if (category === 'all') {
-      q = query(collection(db, 'marketplace'), where('status', '==', 'active'), orderBy('createdAt', 'desc'));
+      q = query(collection(db, 'marketplace'), where('status', '==', 'active'), where('listingType', '==', typeFilter), orderBy('createdAt', 'desc'));
     } else {
-      q = query(collection(db, 'marketplace'), where('status', '==', 'active'), where('category', '==', category), orderBy('createdAt', 'desc'));
+      q = query(collection(db, 'marketplace'), where('status', '==', 'active'), where('listingType', '==', typeFilter), where('category', '==', category), orderBy('createdAt', 'desc'));
     }
     const unsub = onSnapshot(q, snap => {
       setListings(snap.docs.map(d => ({ id: d.id, ...d.data() })));
@@ -499,7 +525,7 @@ export default function MarketplacePage() {
       setLoading(false);
     });
     return unsub;
-  }, [category]);
+  }, [category, listingType]);
 
   // Unread count
   useEffect(() => {
@@ -522,7 +548,102 @@ export default function MarketplacePage() {
     return unsub;
   }, [currentUser]);
 
-  const filtered = listings
+
+  const MOCK_ADOPTIONS = [
+    {
+      id: 'mock_a1',
+      title: '萨摩耶 MM — 微笑天使找新家',
+      description: '2岁萨摩耶弟弟，疫苗齐全，驱虫已做。性格非常温柔，从不咬人，喜欢和小朋友玩。因主人移民无法继续抚养，希望找一个有爱心的新主人。可以上门看狗，必须签署领养协议。',
+      category: 'dog',
+      breed: '萨摩耶',
+      price: 0,
+      location: '奥克兰中区',
+      images: [
+        'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=600&q=80',
+        'https://images.unsplash.com/photo-1596727147705-61a532a659bd?w=600&q=80',
+      ],
+      sellerName: '小美',
+      sellerEmail: 'xiaomei@example.com',
+      sellerId: 'mock_seller_1',
+      createdAt: { toDate: () => new Date(Date.now() - 86400000 * 2) },
+      listingType: 'adoption',
+    },
+    {
+      id: 'mock_a2',
+      title: '金毛弟弟 — 暖男找靠谱人家',
+      description: '1岁半金毛猎犬，健康活泼，已绝育。三针疫苗+狂犬疫苗全打完，体内外驱虫完成。喜欢玩球和游泳，对小孩和其他宠物都很友好。希望领养家庭有稳定住所，能给予足够运动和陪伴。',
+      category: 'dog',
+      breed: '金毛猎犬',
+      price: 0,
+      location: '北岸 North Shore',
+      images: [
+        'https://images.unsplash.com/photo-1633722715463-d30f4f325e24?w=600&q=80',
+        'https://images.unsplash.com/photo-1552053831-71594a27632d?w=600&q=80',
+      ],
+      sellerName: '阿Ben',
+      sellerEmail: 'aben@example.com',
+      sellerId: 'mock_seller_2',
+      createdAt: { toDate: () => new Date(Date.now() - 86400000 * 5) },
+      listingType: 'adoption',
+    },
+    {
+      id: 'mock_a3',
+      title: '布偶猫 — 温柔小公主等领养',
+      description: '2岁布偶猫妹妹，健康状况良好，已绝育。性格超级温顺，爱撒娇，最爱被人抱着。会用猫砂盆，不抓沙发，非常适合公寓饲养。要求领养人有稳定收入，给她一个温暖的家。',
+      category: 'cat',
+      breed: '布偶猫',
+      price: 0,
+      location: 'Mount Albert',
+      images: [
+        'https://images.unsplash.com/photo-1573865526739-10659fec78a5?w=600&q=80',
+      ],
+      sellerName: '猫奴小李',
+      sellerEmail: 'lili@example.com',
+      sellerId: 'mock_seller_3',
+      createdAt: { toDate: () => new Date(Date.now() - 86400000 * 1) },
+      listingType: 'adoption',
+    },
+    {
+      id: 'mock_a4',
+      title: '田园猫三兄妹 — 一起领养优先',
+      description: '3个月大的三花田园猫宝宝，两母一公，健康活泼。猫妈妈是只很乖的流浪猫，宝宝们都很黏人社会化训练良好。领养需接受上门回访，领养成功后一起打疫苗。',
+      category: 'cat',
+      breed: '中华田园猫',
+      price: 0,
+      location: 'Epsom',
+      images: [
+        'https://images.unsplash.com/photo-1592194996308-7b43878e84a6?w=600&q=80',
+      ],
+      sellerName: '救助人阿花',
+      sellerEmail: 'ahua@example.com',
+      sellerId: 'mock_seller_4',
+      createdAt: { toDate: () => new Date(Date.now() - 86400000 * 3) },
+      listingType: 'adoption',
+    },
+    {
+      id: 'mock_a5',
+      title: '边牧女孩 — 超级聪明找运动家庭',
+      description: '3岁边境牧羊犬妹妹，智商排名第一，非常聪明，学东西极快。已完成基础服从训练，会握手、等食、翻滚。因主人工作调动需离开纽西兰，寻找有时间陪伴和训练它的家庭。',
+      category: 'dog',
+      breed: '边境牧羊犬',
+      price: 0,
+      location: 'Parnell',
+      images: [
+        'https://images.unsplash.com/photo-1503256207526-0d5d80fa2f47?w=600&q=80',
+      ],
+      sellerName: 'David W',
+      sellerEmail: 'david@example.com',
+      sellerId: 'mock_seller_5',
+      createdAt: { toDate: () => new Date(Date.now() - 86400000 * 7) },
+      listingType: 'adoption',
+    },
+  ];
+
+  // Merge mock data for adoption tab when Firestore is empty
+  const showMockAdoptions = listingType === 'adoption' && listings.length === 0;
+  const allItems = showMockAdoptions ? [...MOCK_ADOPTIONS, ...listings] : listings;
+
+  const filtered = allItems
     .filter(l => !search || l.title.toLowerCase().includes(search.toLowerCase()))
     .sort((a, b) => {
       if (sort === 'price_asc') return Number(a.price) - Number(b.price);
