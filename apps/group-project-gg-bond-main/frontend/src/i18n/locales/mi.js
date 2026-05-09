@@ -483,6 +483,7 @@ const mi = {
   'leaderboard.col.level':      'Taumata',
   'leaderboard.col.happiness':  'Hūtia',
   'leaderboard.col.activity':   'Whakahaere',
+  'leaderboard.ownerPrefix':     'Tāngata ',
   'leaderboard.myRank':         '🐾 My Rank — #{n}',
 
   // ─── Health Records ─────────────────────────────────────────────────────────

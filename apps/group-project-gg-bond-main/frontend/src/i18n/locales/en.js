@@ -483,6 +483,7 @@ const en = {
   'leaderboard.col.level':      'LV',
   'leaderboard.col.happiness':  'Happiness',
   'leaderboard.col.activity':   'Active',
+  'leaderboard.ownerPrefix':     'Owner ',
   'leaderboard.myRank':         '🐾 My Rank — #{n}',
 
   // ─── Health Records ─────────────────────────────────────────────────────────

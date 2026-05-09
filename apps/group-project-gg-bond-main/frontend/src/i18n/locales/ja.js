@@ -483,6 +483,7 @@ const ja = {
   'leaderboard.col.level':      'レベル',
   'leaderboard.col.happiness':  '幸福度',
   'leaderboard.col.activity':   'アクティブ度',
+  'leaderboard.ownerPrefix':     'オーナー ',
   'leaderboard.myRank':         '🐾 My Rank — #{n}',
 
   // ─── Health Records ─────────────────────────────────────────────────────────

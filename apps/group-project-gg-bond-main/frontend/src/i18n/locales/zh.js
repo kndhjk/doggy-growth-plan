@@ -556,6 +556,7 @@ const zh = {
   'leaderboard.col.level':      '等级',
   'leaderboard.col.happiness':   '快乐值',
   'leaderboard.col.activity':   '活跃度',
+  'leaderboard.ownerPrefix':     '主人 ',
   'leaderboard.myRank':         '🐾 我的排名 — 第 {n} 名',
 
   // ─── Adopt page ─────────────────────────────────────────────────────────────

@@ -108,19 +108,19 @@ function RankingRow({ entry, isCurrentUser, index }) {
           {entry.petName}
         </div>
         <div style={{ fontSize: 12, color: '#f9a8d4', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          主人 {entry.owner}
+          {t('leaderboard.ownerPrefix')} {entry.owner}
         </div>
       </div>
 
       {/* Level */}
       <div style={{ textAlign: 'center', minWidth: 44 }}>
-        <div style={{ fontSize: 10, color: '#f9a8d4', fontWeight: 600 }}>LV</div>
+        <div style={{ fontSize: 10, color: '#f9a8d4', fontWeight: 600 }}>{t('leaderboard.col.level')}</div>
         <div style={{ fontSize: 15, fontWeight: 800, color: '#9d174d' }}>{entry.level}</div>
       </div>
 
       {/* Happiness */}
       <div style={{ textAlign: 'center', minWidth: 44 }}>
-        <div style={{ fontSize: 10, color: '#f9a8d4', fontWeight: 600 }}>幸福</div>
+        <div style={{ fontSize: 10, color: '#f9a8d4', fontWeight: 600 }}>{t('leaderboard.col.happiness')}</div>
         <div style={{ fontSize: 15, fontWeight: 800, color: entry.happiness >= 90 ? '#ec4899' : '#9d174d' }}>
           {entry.happiness}%
         </div>
@@ -128,7 +128,7 @@ function RankingRow({ entry, isCurrentUser, index }) {
 
       {/* Activity */}
       <div style={{ textAlign: 'right', minWidth: 50 }}>
-        <div style={{ fontSize: 10, color: '#f9a8d4', fontWeight: 600 }}>活跃</div>
+        <div style={{ fontSize: 10, color: '#f9a8d4', fontWeight: 600 }}>{t('leaderboard.col.activity')}</div>
         <div style={{ fontSize: 15, fontWeight: 800, color: '#9d174d' }}>{entry.activity}</div>
       </div>
     </motion.div>

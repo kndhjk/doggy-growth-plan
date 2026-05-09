@@ -192,3 +192,41 @@ router.post('/chat', async (req, res, next) => {
 });
 
 module.exports = router;
+// ─── Translate endpoint ───────────────────────────────────────────────────────
+router.post('/translate', async (req, res, next) => {
+  try {
+    const { text, targetLang, sourceLang = 'auto' } = req.body;
+    if (!text || !targetLang) return res.status(400).json({ error: 'text and targetLang required' });
+
+    const langLabels = { zh: '中文', en: 'English', ja: '日本語', mi: 'Māori' };
+    const target = langLabels[targetLang] || targetLang;
+    const source = sourceLang === 'auto' ? '' : (langLabels[sourceLang] || sourceLang);
+
+    const systemPrompt = 'You are a professional translator. Output ONLY the translation, no explanations, quotes, or extra text.';
+    const userPrompt = source
+      ? `Translate from ${source} to ${target}:\n${text}`
+      : `Translate to ${target}:\n${text}`;
+
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + process.env.GROQ_API_KEY,
+      },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+        max_tokens: 500,
+        temperature: 0.2,
+      }),
+    });
+    const data = await response.json();
+    const translated = data.choices?.[0]?.message?.content?.trim();
+    res.json({ translated: translated || text });
+  } catch (e) {
+    next(e);
+  }
+});

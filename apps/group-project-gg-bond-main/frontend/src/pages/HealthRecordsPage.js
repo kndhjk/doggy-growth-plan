@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { HealthAPI } from '../services/apiLayer';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useI18n } from '../i18n/I18nContext';
-import { translateContent } from '../utils/translate';
 import { isMobile } from '../utils/responsive';
+import { translateContent } from '../utils/translate';
 import toast from 'react-hot-toast';
 
 // ─── Mock Data ───────────────────────────────────────────────────────────────
@@ -291,28 +291,6 @@ function AddRecordModal({ onClose, onAdd, t }) {
 export default function HealthRecordsPage() {
   const { t, lang } = useI18n();
 
-  const [displayRecords, setDisplayRecords] = useState({});
-
-  // Translate records when language changes
-  useEffect(() => {
-    if (!records || Object.keys(records).length === 0) return;
-    let cancelled = false;
-    const translateRecords = async () => {
-      const translated = {};
-      for (const [type, recs] of Object.entries(records)) {
-        const mapped = await Promise.all(recs.map(async r => ({
-          ...r,
-          displayTitle: await translateContent(r.title || '', lang),
-          displayNotes: await translateContent(r.notes || '', lang),
-        })));
-        translated[type] = mapped;
-      }
-      if (!cancelled) setDisplayRecords(translated);
-    };
-    translateRecords();
-    return () => { cancelled = true; };
-  }, [lang, records]);
-
   const TYPE_META = {
     vaccine:   { label: t('health.type.vaccine'), icon: '💉', color: '#ec4899' },
     dewormer:  { label: t('health.type.dewormer'), icon: '🪱', color: '#a855f7' },
@@ -322,6 +300,7 @@ export default function HealthRecordsPage() {
 
   const [activeTab, setActiveTab] = useState('vaccine');
   const [showModal, setShowModal] = useState(false);
+  const [displayRecords, setDisplayRecords] = useState({});
   const [records, setRecords] = useState(() => {
     const stored = loadRecords();
     if (stored) return stored;
@@ -350,8 +329,27 @@ export default function HealthRecordsPage() {
         setRecords(byType);
       }
     });
-    saveRecords(records);
   }, [records]);
+
+  // Translate display content when lang or records change
+  useEffect(() => {
+    if (!records || Object.keys(records).length === 0) return;
+    let cancelled = false;
+    const doTranslate = async () => {
+      const translated = {};
+      for (const [recType, recs] of Object.entries(records)) {
+        const mapped = await Promise.all(recs.map(async r => ({
+          ...r,
+          displayTitle: await translateContent(r.title || '', lang),
+          displayNotes: await translateContent(r.notes || '', lang),
+        })));
+        translated[recType] = mapped;
+      }
+      if (!cancelled) setDisplayRecords(translated);
+    };
+    doTranslate();
+    return () => { cancelled = true; };
+  }, [lang, records]);
 
   const tabs = [
     { key: 'vaccine',  label: t('health.tab.vaccine'), icon: '💉' },
@@ -359,8 +357,10 @@ export default function HealthRecordsPage() {
     { key: 'medicine', label: t('health.tab.medicine'), icon: '💊' },
   ];
 
-  const displayTabRecords = displayRecords[activeTab] || records[activeTab] || [];
-  const sorted = [...displayTabRecords].sort((a, b) => new Date(b.date) - new Date(a.date));
+  const currentRecords = records[activeTab] || [];
+
+  // Sort by date desc
+  const sorted = [...currentRecords].sort((a, b) => new Date(b.date) - new Date(a.date));
 
   const handleAddRecord = (newRecord) => {
     const recordWithId = { ...newRecord, id: `r${Date.now()}` };
