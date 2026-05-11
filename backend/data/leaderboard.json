@@ -1,0 +1,7 @@
+[
+  { "rank": 1, "petName": "毛毛", "owner": "王小明", "score": 9850, "breed": "金毛" },
+  { "rank": 2, "petName": "豆豆", "owner": "李小红", "score": 9200, "breed": "柯基" },
+  { "rank": 3, "petName": "旺财", "owner": "张大伟", "score": 8750, "breed": "哈士奇" },
+  { "rank": 4, "petName": "小白", "owner": "陈美丽", "score": 8400, "breed": "萨摩耶" },
+  { "rank": 5, "petName": "黑黑", "owner": "刘强", "score": 7900, "breed": "拉布拉多" }
+]

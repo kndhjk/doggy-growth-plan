@@ -1,0 +1,6 @@
+[
+  { "id": 1, "name": "宠物笼", "description": "大型犬用航空箱，透气性好", "quantity": 3, "category": "用品" },
+  { "id": 2, "name": "狗粮", "description": "皇家牌成年犬粮，10公斤装", "quantity": 5, "category": "食品" },
+  { "id": 3, "name": "玩具球", "description": "发声球，耐咬安全材质", "quantity": 10, "category": "玩具" },
+  { "id": 4, "name": "宠物床", "description": "四季通用保暖窝，大号", "quantity": 2, "category": "用品" }
+]

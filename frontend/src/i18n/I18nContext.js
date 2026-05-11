@@ -55,6 +55,21 @@ const translations = {
     // Health
     'health.total': '共 {n} 条记录',
     'health.lastCheckup': '上次检查: {date}',
+    // Marketplace toolbar + form
+    brand: '品牌',
+    searchPlaceholder: '搜索商品...',
+    allBrands: '所有品牌',
+    sortNewest: '最新',
+    sortPriceAsc: '价格 ↑',
+    sortPriceDesc: '价格 ↓',
+    publishListing: '发布商品',
+    imageUrl: '图片 URL（可选）',
+    submit: '提交',
+    cancel: '取消',
+    delete: '删除',
+    confirmDelete: '确定要删除吗？',
+    publishRequired: '请填写标题和价格',
+    publishFailed: '发布失败',
   },
   en: {
     appName: 'GG Bond Pet Platform',
@@ -110,6 +125,21 @@ const translations = {
     // Health
     'health.total': '{n} records',
     'health.lastCheckup': 'Last checkup: {date}',
+    // Marketplace toolbar + form
+    brand: 'Brand',
+    searchPlaceholder: 'Search listings...',
+    allBrands: 'All Brands',
+    sortNewest: 'Newest',
+    sortPriceAsc: 'Price ↑',
+    sortPriceDesc: 'Price ↓',
+    publishListing: 'Publish',
+    imageUrl: 'Image URL (optional)',
+    submit: 'Submit',
+    cancel: 'Cancel',
+    delete: 'Delete',
+    confirmDelete: 'Are you sure to delete?',
+    publishRequired: 'Title and price are required',
+    publishFailed: 'Publish failed',
   },
   ja: {
     appName: 'GG Bondペットプラットフォーム',
@@ -165,6 +195,21 @@ const translations = {
     // Health
     'health.total': '{n}件の記録',
     'health.lastCheckup': '前回の検査: {date}',
+    // Marketplace toolbar + form
+    brand: 'ブランド',
+    searchPlaceholder: '商品を検索...',
+    allBrands: 'すべてのブランド',
+    sortNewest: '新着',
+    sortPriceAsc: '価格 ↑',
+    sortPriceDesc: '価格 ↓',
+    publishListing: '出品',
+    imageUrl: '画像 URL（任意）',
+    submit: '送信',
+    cancel: 'キャンセル',
+    delete: '削除',
+    confirmDelete: '本当に削除しますか？',
+    publishRequired: 'タイトルと価格を入力してください',
+    publishFailed: '出品に失敗しました',
   },
   mi: {
     appName: 'GG Bond Pet Platform',
@@ -220,6 +265,21 @@ const translations = {
     // Health
     'health.total': '{n} rekōta',
     'health.lastCheckup': 'Arotake whakamutunga: {date}',
+    // Marketplace toolbar + form
+    brand: 'Waitohu',
+    searchPlaceholder: 'Rapu rārangi...',
+    allBrands: 'Ngā waitohu katoa',
+    sortNewest: 'Hou rawa',
+    sortPriceAsc: 'Utu ↑',
+    sortPriceDesc: 'Utu ↓',
+    publishListing: 'Whakaputa',
+    imageUrl: 'Hononga Whakaahua (kōwhiringa)',
+    submit: 'Tukuna',
+    cancel: 'Whakakore',
+    delete: 'Mukua',
+    confirmDelete: 'E pono ana koe ki te muku?',
+    publishRequired: 'Me whakauru te taitara me te utu',
+    publishFailed: 'Kua rahua te whakaputa',
   },
 };
 
