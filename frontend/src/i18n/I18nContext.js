@@ -41,6 +41,7 @@ const translations = {
     age: '年龄',
     gender: '性别',
     adoptMe: '领养我',
+    adoptSubtitle: '认识正在寻找温暖家的宠物们',
     // Common
     loading: '加载中...',
     error: '加载失败',
@@ -95,6 +96,7 @@ const translations = {
     age: 'Age',
     gender: 'Gender',
     adoptMe: 'Adopt Me',
+    adoptSubtitle: 'Meet pets looking for a loving home',
     // Common
     loading: 'Loading...',
     error: 'Failed to load',
@@ -149,6 +151,7 @@ const translations = {
     age: '年齢',
     gender: '性別',
     adoptMe: '里親になる',
+    adoptSubtitle: '温かい家を探しているペットたちに会いましょう',
     // Common
     loading: '読み込み中...',
     error: '読み込み失敗',
@@ -165,7 +168,7 @@ const translations = {
   },
   mi: {
     appName: 'GG Bond Pet Platform',
-    marketplace: ' Mākete',
+    marketplace: 'Mākete',
     healthRecords: 'Rekōta Hauora',
     leaderboard: 'Rārangi Kaupapa',
     inventory: 'Kōpae',
@@ -178,7 +181,7 @@ const translations = {
     description: 'Whakaahuatanga',
     location: 'Wāhi',
     price: 'Te utu',
-    buy: 'Whakaroha',
+    buy: 'Hoko',
     // Health
     recordTitle: 'Ingoa Rekōta',
     notes: 'Kōrero',
@@ -203,6 +206,7 @@ const translations = {
     age: 'Pakeke',
     gender: 'Mokopuna',
     adoptMe: 'Tautoko mai',
+    adoptSubtitle: 'Tūtaki ki ngā mōkai e rapu ana i tētahi kāinga aroha',
     // Common
     loading: 'Kei te utu...',
     error: 'Kua horo',
@@ -227,7 +231,14 @@ const I18nContext = createContext({
 });
 
 export function I18nProvider({ children }) {
-  const [lang, setLang] = useState('en');
+  const [lang, setLangState] = useState(() => {
+    try { return localStorage.getItem('gg_lang') || 'en'; } catch { return 'en'; }
+  });
+
+  const setLang = (newLang) => {
+    setLangState(newLang);
+    try { localStorage.setItem('gg_lang', newLang); } catch {}
+  };
 
   const t = (key) => {
     return translations[lang]?.[key] || translations['en']?.[key] || key;

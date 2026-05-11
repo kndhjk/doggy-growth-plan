@@ -85,7 +85,7 @@ export default function AdoptPage() {
   return (
     <div style={styles.page}>
       <h2 style={styles.heading}>🏠 {t('adopt')}</h2>
-      <p style={styles.subtitle}>Meet pets looking for a loving home</p>
+      <p style={styles.subtitle}>{t('adoptSubtitle')}</p>
       <div style={styles.grid}>
         {ADOPTABLE_PETS.map(pet => (
           <PetCard key={pet.id} pet={pet} t={t} />

@@ -15,12 +15,16 @@ app.get('/health', (req, res) => res.json({ status: 'ok' }));
 // AI routes (including translation)
 app.use('/api/ai', aiRouter);
 
-// Marketplace listings (mock data for demo)
+// Marketplace listings (mock data for demo) - dog food brands
 const MOCK_LISTINGS = [
-  { id: 1, title: '可爱的小狗', description: '三个月大的金毛寻回犬', location: '北京市朝阳区', price: 2000, image: 'https://placekitten.com/300/200' },
-  { id: 2, title: '进口猫粮', description: '天然无谷物配方，适合所有年龄段猫咪', location: '上海市浦东新区', price: 350, image: 'https://placekitten.com/301/200' },
-  { id: 3, title: '宠物牵引绳', description: '加厚防爆冲遛狗绳子', location: '广州市天河区', price: 89, image: 'https://placekitten.com/302/200' },
-  { id: 4, title: '皇家牧羊犬宝宝', description: '纯种德国牧羊犬，性格温顺聪明', location: '深圳市南山区', price: 5000, image: 'https://placekitten.com/303/200' },
+  { id: 1, title: 'Royal Canin 皇家金毛专用粮 10kg', brand: 'Royal Canin', description: '法国皇家针对金毛犬种配方，含 EPA/DHA 强化毛色，适合 15 个月以上成犬', location: 'Auckland CBD', price: 85, image: '/images/royal.jpg' },
+  { id: 2, title: "Hill's Science Diet 希尔斯成犬均衡配方 12kg", brand: "Hill's Science Diet", description: '兽医推荐，临床验证营养配比，适合中型成犬日常喂养', location: 'Mount Eden', price: 110, image: '/images/hills.png' },
+  { id: 3, title: 'Pro Plan 冠能高蛋白活力配方 15kg', brand: 'Pro Plan', description: '雀巢普瑞纳，30% 蛋白质，适合活跃成犬补能', location: 'Newmarket', price: 95, image: '/images/proplan.jpg' },
+  { id: 4, title: 'Orijen 渴望无谷六鱼配方 11.4kg', brand: 'Orijen', description: '加拿大原产 85% 动物原料，无谷低敏，适合所有阶段犬只', location: 'Ponsonby', price: 145, image: '/images/orijen.jpg' },
+  { id: 5, title: 'Acana 爱肯拿牧场鸡肉配方 11.4kg', brand: 'Acana', description: '加拿大放养鸡 + 火鸡蛋白，适合中大型成犬', location: 'Parnell', price: 98, image: '/images/acana.jpg' },
+  { id: 6, title: 'Ziwi Peak 滋益巅峰风干羊肉配方 1kg', brand: 'Ziwi Peak', description: '新西兰本土高端品牌，96% 草饲羊肉 + 内脏 + 骨头，慢速风干工艺，适合所有阶段犬只', location: 'Botany Downs', price: 75, image: '/images/ziwi.jpg' },
+  { id: 7, title: 'Black Hawk 黑鹰成犬羊肉米饭配方 10kg', brand: 'Black Hawk', description: '澳洲品牌，天然羊肉 + 糙米配方，适合中大型成犬日常喂养，NZ 超市常见', location: 'Mount Albert', price: 68, image: '/images/blackhawk.jpg' },
+  { id: 8, title: 'K9 Natural 纯天然牛肉冻干 500g', brand: 'K9 Natural', description: '新西兰本土冻干生骨肉，90% 草饲牛肉 + 内脏，无谷低敏，适合所有阶段', location: 'North Shore', price: 58, image: '/images/k9.jpg' },
 ];
 
 app.get('/api/marketplace', (req, res) => res.json(MOCK_LISTINGS));
