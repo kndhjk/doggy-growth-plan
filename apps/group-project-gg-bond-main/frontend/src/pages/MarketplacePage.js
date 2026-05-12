@@ -100,7 +100,7 @@ function CreateListingModal({ onClose, onCreated }) {
           listingType: form.listingType,
           images: imageUrls,
           sellerId: currentUser.uid,
-          sellerName: currentUser.displayName || currentUser.email || 'Anonymous',
+          sellerName: currentUser.displayName || currentUser.email || t('marketplace.anonymousTrader'),
           sellerEmail: currentUser.email || '',
           createdAt: new Date().toISOString(),
           status: 'active',
@@ -136,7 +136,7 @@ function CreateListingModal({ onClose, onCreated }) {
         listingType: form.listingType,
         images: imageUrls,
         sellerId: currentUser.uid,
-        sellerName: currentUser.displayName || currentUser.email || 'Anonymous',
+        sellerName: currentUser.displayName || currentUser.email || t('marketplace.anonymousTrader'),
         sellerEmail: currentUser.email || '',
         createdAt: serverTimestamp(),
         status: 'active',
@@ -847,7 +847,13 @@ export default function MarketplacePage() {
   const mockItems = listingType === 'adoption' ? MOCK_ADOPTIONS : MOCK_SALES;
   const rawItems = showMock ? [...mockItems, ...listings] : listings;
   const allItems = rawItems
-    .filter(l => !search || l.title.toLowerCase().includes(search.toLowerCase()))
+    .filter(l => {
+      if (!search) return true;
+      const q = search.toLowerCase();
+      return [l.title, l.description, l.location, l.category]
+        .filter(Boolean)
+        .some(v => String(v).toLowerCase().includes(q));
+    })
     .sort((a, b) => {
       if (sort === 'price_asc') return Number(a.price) - Number(b.price);
       if (sort === 'price_desc') return Number(b.price) - Number(a.price);

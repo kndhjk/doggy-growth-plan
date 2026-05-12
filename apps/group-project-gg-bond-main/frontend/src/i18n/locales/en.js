@@ -448,6 +448,7 @@ const en = {
   'marketplace.submitListing':    '🐾 Publish Listing',
   'marketplace.contactSeller':    '💬 Contact Trader',
   'marketplace.seller':          'Trader',
+  'marketplace.anonymousTrader':  'Anonymous Trader',
   'marketplace.search':          'Search food and supplies...',
   'marketplace.filterAll':        'All',
   'marketplace.sortNewest':       'Newest',

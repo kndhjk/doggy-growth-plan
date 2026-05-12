@@ -445,6 +445,7 @@ const zh = {
   'marketplace.submitListing':    '🐾 发布',
   'marketplace.contactSeller':    '💬 联系卖家',
   'marketplace.seller':          '商家',
+  'marketplace.anonymousTrader':  '匿名商家',
   'marketplace.search':          '搜索宠物用品、狗粮、猫粮...',
   'marketplace.filterAll':        '全部',
   'marketplace.sortNewest':       '最新',

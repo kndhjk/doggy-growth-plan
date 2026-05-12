@@ -448,6 +448,7 @@ const ja = {
   'marketplace.submitListing':    '🐾 Publish Listing',
   'marketplace.contactSeller':    '💬 出品者に連絡',
   'marketplace.seller':          '出品者',
+  'marketplace.anonymousTrader':  '匿名の出品者',
   'marketplace.search':          'フードや用品を検索...',
   'marketplace.filterAll':        'All',
   'marketplace.sortNewest':       'Newest',
