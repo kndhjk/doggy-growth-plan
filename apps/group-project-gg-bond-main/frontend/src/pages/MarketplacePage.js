@@ -799,7 +799,7 @@ export default function MarketplacePage() {
   // Show mock data when Firestore is empty
   const showMock = !isLocal && listings.length === 0;
   const mockItems = listingType === 'adoption' ? MOCK_ADOPTIONS : MOCK_SALES;
-  const rawItems = [...mockItems, ...listings];
+  const rawItems = showMock ? [...mockItems, ...listings] : listings;
   const allItems = rawItems
     .filter(l => !search || l.title.toLowerCase().includes(search.toLowerCase()))
     .sort((a, b) => {
@@ -841,7 +841,7 @@ export default function MarketplacePage() {
             📦 {t('marketplace.title')}
           </h1>
           <p style={{ margin: '4px 0 0', fontSize: 13, color: '#f472b6' }}>
-            {listings.length} {t('marketplace.listings')}
+            {allItems.length} {t('marketplace.listings')}{showMock ? ' · demo' : ''}
           </p>
         </div>
         {/* Messages badge */}
