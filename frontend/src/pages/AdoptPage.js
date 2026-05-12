@@ -540,7 +540,7 @@ export default function AdoptPage() {
           {t('adopt.results', { n: filtered.length })}
         </div>
         <div style={{ fontSize: 12, color: '#9ca3af' }}>
-          🏠 {t('adopt.helped', { n: ADOPTABLE_PETS.length * 3 + 12 })}
+          🏠 {t('adopt.helped', { n: pets.length * 3 + 12 })}
         </div>
       </div>
 
@@ -597,8 +597,8 @@ export default function AdoptPage() {
         display: 'flex', justifyContent: 'space-around', flexWrap: 'wrap', gap: 16,
       }}>
         {[
-          { icon: '🐾', value: ADOPTABLE_PETS.length * 3 + 12, label: t('adopt.stats.adopted') },
-          { icon: '🏠', value: ADOPTABLE_PETS.length, label: t('adopt.stats.available') },
+          { icon: '🐾', value: pets.length * 3 + 12, label: t('adopt.stats.adopted') },
+          { icon: '🏠', value: pets.length, label: t('adopt.stats.available') },
           { icon: '❤️', value: '98%', label: t('adopt.stats.satisfaction') },
           { icon: '🆓', value: '0', label: t('adopt.stats.free') },
         ].map(({ icon, value, label }) => (
