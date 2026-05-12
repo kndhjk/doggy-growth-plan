@@ -117,6 +117,24 @@ DB_NAME=ggbond
 | `inventory` | 用户宠物用品库存 | `uid (FK)` |
 | `pet_activities` | 宠物每日活动日志 | `uid (FK)`, `pet_id (FK)` |
 
+### MySQL 一键恢复
+
+我们还加了一键恢复脚本。
+
+- 恢复脚本：`/home/destiny/backend/restore-mysql.sh`
+- 默认恢复源：`ggbond-latest.sql.gz`
+- 也支持手动指定 `.sql` 或 `.sql.gz` 文件路径
+
+示例：
+
+```bash
+# 从最近一次备份恢复
+/home/destiny/backend/restore-mysql.sh
+
+# 从指定备份恢复
+/home/destiny/backend/restore-mysql.sh /home/destiny/backups/ggbond-mysql/ggbond-2026-05-12-111425.sql.gz
+```
+
 ### MySQL 自动备份（每日）
 
 我们还加了 MySQL 自动备份，避免重启、崩溃或错误部署后数据丢失。

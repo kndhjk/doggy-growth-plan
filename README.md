@@ -119,6 +119,24 @@ DB_NAME=ggbond
 | `inventory` | User pet supplies inventory | `uid (FK)` |
 | `pet_activities` | Daily activity log | `uid (FK)`, `pet_id (FK)` |
 
+### MySQL Restore (One Command)
+
+We also added a one-command restore script.
+
+- Restore script: `/home/destiny/backend/restore-mysql.sh`
+- Default source: `ggbond-latest.sql.gz`
+- Custom source supported: pass a `.sql` or `.sql.gz` file path
+
+Examples:
+
+```bash
+# restore from latest backup
+/home/destiny/backend/restore-mysql.sh
+
+# restore from a specific backup
+/home/destiny/backend/restore-mysql.sh /home/destiny/backups/ggbond-mysql/ggbond-2026-05-12-111425.sql.gz
+```
+
 ### MySQL Backup (Daily)
 
 We also added automatic MySQL backups so data is not lost after reboot, crash, or bad deploy.
