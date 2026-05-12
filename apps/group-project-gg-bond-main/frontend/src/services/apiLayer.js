@@ -106,38 +106,29 @@ export const RewardsAPI = {
 
 // ── Health Records ─────────────────────────────────────────────────────────
 export const HealthAPI = {
-  async list() {
-    const data = await apiFetch('/api/health');
-    if (data?.records) return data.records;
-    try {
-      return JSON.parse(localStorage.getItem('gg_health_records') || '[]');
-    } catch { return []; }
+  async list(uid) {
+    const data = await apiFetch(`/api/health?uid=${encodeURIComponent(uid)}`);
+    return data?.records || [];
   },
-  async add(record) {
-    const data = await apiFetch('/api/health/record', {
-      method: 'POST', body: JSON.stringify(record),
+  async add(uid, record) {
+    return apiFetch('/api/health/record', {
+      method: 'POST', body: JSON.stringify({ uid, ...record }),
     });
-    if (!data?.id) {
-      // Fallback: save to localStorage
-      try {
-        const raw = localStorage.getItem('gg_health_records') || '[]';
-        const records = JSON.parse(raw);
-        const newRecord = { ...record, id: `local_${Date.now()}` };
-        records.push(newRecord);
-        localStorage.setItem('gg_health_records', JSON.stringify(records));
-        return { id: newRecord.id };
-      } catch {}
-    }
-    return data;
   },
-  async remove(id) {
-    await apiFetch(`/api/health/record/${id}`, { method: 'DELETE' });
-    // Also remove from localStorage fallback
-    try {
-      const raw = localStorage.getItem('gg_health_records') || '[]';
-      const records = JSON.parse(raw).filter(r => r.id !== id);
-      localStorage.setItem('gg_health_records', JSON.stringify(records));
-    } catch {}
+  async remove(uid, id) {
+    return apiFetch(`/api/health/record/${id}?uid=${encodeURIComponent(uid)}`, { method: 'DELETE' });
+  },
+};
+
+export const InventoryAPI = {
+  async list(uid) {
+    const data = await apiFetch(`/api/inventory?uid=${encodeURIComponent(uid)}`);
+    return data?.items || [];
+  },
+  async use(uid, item) {
+    return apiFetch('/api/inventory/use', {
+      method: 'POST', body: JSON.stringify({ uid, itemId: item.id, item }),
+    });
   },
 };
 

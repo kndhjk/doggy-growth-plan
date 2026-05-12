@@ -36,6 +36,37 @@ const toIso = (v) => {
   return new Date(v).toISOString();
 };
 
+const DEFAULT_INVENTORY = [
+  { itemCode: "i1", name: "高级狗粮罐", description: "食欲 +30", category: "food", quantity: 3 },
+  { itemCode: "i2", name: "营养奶糕", description: "食欲 +15，心情 +8", category: "food", quantity: 5 },
+  { itemCode: "i3", name: "鸡肉干", description: "食欲 +10，心情 +5", category: "food", quantity: 10 },
+  { itemCode: "i4", name: "鲜骨棒", description: "食欲 +25，社交 +5", category: "food", quantity: 2 },
+  { itemCode: "i5", name: "宠物酸奶", description: "食欲 +12，水分 +15", category: "food", quantity: 4 },
+  { itemCode: "i6", name: "飞盘", description: "心情 +20，食欲 +5", category: "toy", quantity: 2 },
+  { itemCode: "i7", name: "绒毛球", description: "心情 +12，社交 +5", category: "toy", quantity: 4 },
+  { itemCode: "i8", name: "益生菌", description: "健康 +18", category: "medicine", quantity: 3 },
+  { itemCode: "i9", name: "维生素片", description: "健康 +10，心情 +4", category: "medicine", quantity: 6 },
+  { itemCode: "i10", name: "蝴蝶结", description: "心情 +6，社交 +8", category: "accessory", quantity: 2 },
+];
+
+const normalizeInventoryCategory = (value) => {
+  const v = String(value || "").toLowerCase();
+  if (["food", "食品"].includes(value) || v.includes("food")) return "food";
+  if (["toy", "玩具"].includes(value) || v.includes("toy")) return "toy";
+  if (["medicine", "药品", "medicine"].includes(value) || v.includes("med")) return "medicine";
+  if (["accessory", "用品", "配件"].includes(value) || v.includes("acc")) return "accessory";
+  return "food";
+};
+
+const mapHealthRecord = (r) => ({
+  id: String(r.id),
+  type: r.type || "medicine",
+  title: r.title,
+  notes: r.notes || "",
+  vet: r.vet || null,
+  date: r.date || (r.record_date ? String(r.record_date) : null),
+});
+
 const mapListing = (r) => ({
   id: r.id,
   title: r.title,
@@ -404,19 +435,107 @@ app.delete("/api/admin/listings/:id", adminAuth, async (req, res) => {
   }
 });
 
-app.get("/api/health-records", async (_req, res) => {
+app.get("/api/health", async (req, res) => {
   try {
-    const [rows] = await pool.execute("SELECT id, title, notes, vet, DATE_FORMAT(record_date, '%Y-%m-%d') as date FROM health_records ORDER BY record_date DESC LIMIT 50");
-    res.json(rows);
+    const { uid } = req.query;
+    if (!uid) return res.status(400).json({ error: "uid is required" });
+    const [rows] = await pool.execute(
+      "SELECT id, title, notes, vet, DATE_FORMAT(record_date, '%Y-%m-%d') as date FROM health_records WHERE uid = ? ORDER BY record_date DESC, id DESC LIMIT 100",
+      [uid]
+    );
+    const records = rows.map((r) => {
+      let notes = r.notes || "";
+      let type = "medicine";
+      try {
+        const parsed = JSON.parse(r.notes || "");
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+          notes = parsed.text || "";
+          type = parsed.__type || type;
+        }
+      } catch {}
+      return mapHealthRecord({ ...r, notes, type });
+    });
+    res.json({ records });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-app.get("/api/inventory", async (_req, res) => {
+app.post("/api/health/record", async (req, res) => {
   try {
-    const [rows] = await pool.execute("SELECT id, name, description, quantity, category FROM inventory ORDER BY created_at DESC LIMIT 100");
-    res.json(rows);
+    const { uid, type = 'medicine', title, notes = '', vet = null, date = null } = req.body;
+    if (!uid) return res.status(400).json({ error: 'uid is required' });
+    if (!title?.trim()) return res.status(400).json({ error: 'title required' });
+    const storedNotes = JSON.stringify({ __type: type, text: notes || '' });
+    const [result] = await pool.execute(
+      "INSERT INTO health_records (uid, title, notes, vet, record_date) VALUES (?, ?, ?, ?, ?)",
+      [uid, title.trim(), storedNotes, vet || null, date || null]
+    );
+    res.status(201).json({ id: String(result.insertId) });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete("/api/health/record/:id", async (req, res) => {
+  try {
+    const { uid } = req.query;
+    if (!uid) return res.status(400).json({ error: 'uid is required' });
+    await pool.execute("DELETE FROM health_records WHERE id = ? AND uid = ?", [req.params.id, uid]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get("/api/inventory", async (req, res) => {
+  try {
+    const { uid } = req.query;
+    if (!uid) return res.status(400).json({ error: 'uid is required' });
+    const [existing] = await pool.execute("SELECT id, item_code, name, description, quantity, category FROM inventory WHERE uid = ? ORDER BY created_at DESC LIMIT 200", [uid]);
+    if (existing.length === 0) {
+      for (const item of DEFAULT_INVENTORY) {
+        await pool.execute(
+          "INSERT INTO inventory (uid, item_code, name, description, quantity, category) VALUES (?, ?, ?, ?, ?, ?)",
+          [uid, item.itemCode, item.name, item.description, item.quantity, item.category]
+        );
+      }
+    }
+    const [rows] = await pool.execute("SELECT id, item_code, name, description, quantity, category FROM inventory WHERE uid = ? ORDER BY created_at DESC LIMIT 200", [uid]);
+    res.json({
+      items: rows.map((r) => ({
+        id: r.item_code || String(r.id),
+        rowId: r.id,
+        name: r.name,
+        description: r.description || '',
+        quantity: r.quantity ?? 0,
+        category: normalizeInventoryCategory(r.category),
+      })),
+      count: rows.length,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/api/inventory/use", async (req, res) => {
+  try {
+    const { uid, itemId, item } = req.body;
+    if (!uid || !itemId) return res.status(400).json({ error: 'uid and itemId are required' });
+    const [rows] = await pool.execute("SELECT id, quantity, category FROM inventory WHERE uid = ? AND item_code = ? LIMIT 1", [uid, itemId]);
+    const row = rows[0];
+    if (!row) return res.status(404).json({ error: 'item not found' });
+    if ((row.quantity ?? 0) <= 0) return res.status(400).json({ error: 'item out of stock' });
+    await pool.execute("UPDATE inventory SET quantity = GREATEST(quantity - 1, 0) WHERE id = ?", [row.id]);
+    const activityType = ({ food: 'feed', toy: 'walk', medicine: 'health', accessory: 'play' })[normalizeInventoryCategory(item?.category || row.category)] || 'feed';
+    const [pets] = await pool.execute("SELECT id, last_activity FROM pets WHERE uid = ? ORDER BY created_at DESC LIMIT 1", [uid]);
+    if (pets[0]) {
+      const lastActivity = parseJsonField(pets[0].last_activity, {});
+      lastActivity[activityType] = new Date().toISOString();
+      await pool.execute("UPDATE pets SET last_activity = ?, updated_at = NOW() WHERE id = ?", [JSON.stringify(lastActivity), pets[0].id]);
+      await pool.execute("INSERT INTO pet_activities (uid, pet_id, activity_type, performed_at) VALUES (?, ?, ?, NOW())", [uid, pets[0].id, activityType]);
+    }
+    res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
