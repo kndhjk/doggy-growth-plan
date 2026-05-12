@@ -1,7 +1,7 @@
 # GG Bond / Doggy Growth Plan — Beginner Handoff Guide (English)
 
 > This is the English companion to the Chinese README.  
-> It is written for teammates who are new to React, Firebase, and full-stack project structure.
+> It is written for teammates who are new to React, Firebase, and full-stack project structure, so we can onboard together.
 
 **Chinese version:** `README.md`  
 **English version:** `README_EN.md`
@@ -18,7 +18,7 @@ The current `master` branch was pushed from the test server, so the repository r
 apps/group-project-gg-bond-main/
 ```
 
-That is the folder you should work inside.
+That is the folder we should work inside.
 
 ```bash
 apps/group-project-gg-bond-main/
@@ -358,7 +358,7 @@ With backend routes:
 
 ---
 
-## 10. If you only want to change a tab’s UI
+## 10. If we only want to change a tab’s UI
 
 Workflow:
 1. Open `frontend/src/components/Layout/Layout.js`
@@ -374,7 +374,7 @@ frontend/src/pages/LeaderboardPage.js
 
 ---
 
-## 11. If you want to change feature logic
+## 11. If we want to change feature logic
 
 Look at the `import` lines first.
 
@@ -980,7 +980,7 @@ So when you take it over, do not ask “why is this not perfectly elegant?” fi
 
 ---
 
-## 50. If you only have 30 seconds, read this
+## 50. If we only have 30 seconds, read this
 
 ```text
 Real project folder: apps/group-project-gg-bond-main/
