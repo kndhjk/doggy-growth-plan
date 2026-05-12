@@ -735,3 +735,478 @@ Tab 名称
 2. 把服务器无关文件（如 `.bash_history`、`.npm/`、压缩包等）从仓库历史里清出去
 
 这两个不影响现在开发，但会让仓库干净很多。
+
+---
+
+## 21. 队友第一次拉代码后，第一小时该做什么？
+
+这是推荐的 **1 小时上手流程**。
+
+### 第 0 步：确认你看的不是假根目录
+仓库根目录里会有很多服务器痕迹文件，所以一定先进入：
+
+```bash
+cd apps/group-project-gg-bond-main
+```
+
+### 第 1 步：只看结构，不要急着改
+按这个顺序打开文件：
+
+1. `frontend/src/App.js`
+2. `frontend/src/components/Layout/Layout.js`
+3. `frontend/src/context/AuthContext.js`
+4. `frontend/src/context/PetContext.js`
+5. `backend/src/index.js`
+
+### 第 2 步：选一个你负责的 tab
+举例：
+- 你负责排行榜 → 看 `LeaderboardPage.js`
+- 你负责健康页 → 看 `HealthRecordsPage.js`
+- 你负责宠物主页 → 看 `PetPageV2.js`
+
+### 第 3 步：只改文案或颜色，先完成一次最小提交
+不要一上来改大逻辑。第一次建议只做：
+- 改标题
+- 改按钮颜色
+- 改列表文案
+- 改一个小卡片布局
+
+这样最不容易炸。
+
+---
+
+## 22. 环境变量到底是干嘛的？
+
+### 前端环境变量
+文件：
+```bash
+apps/group-project-gg-bond-main/frontend/.env.production
+```
+
+常见变量：
+- `REACT_APP_API_URL`：前端请求后端 API 的地址
+- Firebase 相关 key
+- Google Maps key
+- 可能还有 AI key / Gemini key（按页面实际使用）
+
+### 后端环境变量
+文件：
+```bash
+apps/group-project-gg-bond-main/backend/.env
+```
+
+常见变量：
+- `PORT=5000`
+- `FRONTEND_URL=...`
+- Firebase Admin 相关配置
+- 其他第三方服务 key
+
+### 新手要记住
+- **前端环境变量变了，通常要重新 build**
+- **后端环境变量变了，通常要重启 node 服务**
+
+---
+
+## 23. 前端页面是怎么串起来的？
+
+你可以把前端理解成 4 层：
+
+### 第 1 层：路由层
+文件：
+```bash
+frontend/src/App.js
+```
+作用：
+- URL 对应哪个页面
+- 哪个页面需要登录后才能看
+
+### 第 2 层：布局层
+文件：
+```bash
+frontend/src/components/Layout/Layout.js
+```
+作用：
+- 底部 tab / 左侧边栏
+- 手机、平板、桌面三种布局切换
+
+### 第 3 层：页面层
+文件夹：
+```bash
+frontend/src/pages/
+frontend/src/sandbox/
+```
+作用：
+- 真正的业务页面
+- 一般每个 tab 对应一个 page
+
+### 第 4 层：数据层
+文件夹：
+```bash
+frontend/src/context/
+frontend/src/services/
+```
+作用：
+- 登录状态
+- 宠物状态
+- API 请求
+- Firebase 连接
+- 本地 fallback
+
+---
+
+## 24. 后端是怎么串起来的？
+
+你可以把后端理解成 3 层：
+
+### 第 1 层：总入口
+```bash
+backend/src/index.js
+```
+作用：
+- 启动 express
+- 挂中间件
+- 把 `/api/*` 路由接起来
+
+### 第 2 层：route 层
+```bash
+backend/src/routes/*.js
+```
+作用：
+- 按功能拆 API
+- 一个 route 文件处理一类业务
+
+### 第 3 层：service / middleware 层
+```bash
+backend/src/services/
+backend/src/middleware/
+```
+作用：
+- Firebase Admin 初始化
+- 鉴权
+- 参数校验
+- 公共逻辑复用
+
+---
+
+## 25. 常见开发任务，应该改哪些文件？
+
+### 场景 A：我只想改页面文字
+一般改：
+- `frontend/src/pages/xxxPage.js`
+- 如果是多语言文案，再去：
+  - `frontend/src/i18n/locales/zh.js`
+  - `frontend/src/i18n/locales/en.js`
+  - `frontend/src/i18n/locales/ja.js`
+  - `frontend/src/i18n/locales/mi.js`
+
+### 场景 B：我只想改 tab 顺序或图标
+改：
+```bash
+frontend/src/components/Layout/Layout.js
+```
+
+### 场景 C：我想加一个新的按钮，点了要调后端
+通常会改：
+1. 页面文件（加按钮）
+2. `frontend/src/services/apiLayer.js` 或 `services/api.js`（加请求方法）
+3. `backend/src/routes/xxx.js`（加 API）
+
+### 场景 D：我想改登录逻辑
+改：
+- `frontend/src/context/AuthContext.js`
+- `frontend/src/services/firebase.js`
+
+### 场景 E：我想改宠物状态怎么衰减
+改：
+- `frontend/src/sandbox/statusDecayV2.js`
+- 有时候还要看 `PetContext.js`
+
+---
+
+## 26. 如果我要“新增一个 tab”，完整流程是什么？
+
+这是非常常见的需求，流程如下：
+
+### 第 1 步：新建页面文件
+例如新建：
+```bash
+frontend/src/pages/MyNewTabPage.js
+```
+
+### 第 2 步：在 `App.js` 里注册路由
+例如：
+```jsx
+<Route path="mytab" element={<MyNewTabPage />} />
+```
+
+### 第 3 步：在 `Layout.js` 的 `TABS` 数组里加一项
+例如：
+```js
+{ to:'/mytab', icon:'🧪', iconImg:null, i18nKey:'nav.mytab' }
+```
+
+### 第 4 步：补多语言 key
+例如去 locale 文件加：
+```js
+'nav.mytab': 'My Tab'
+```
+
+### 第 5 步：如果需要后端，再补 API
+例如：
+- 前端：`services/apiLayer.js`
+- 后端：`backend/src/routes/mytab.js`
+- 总入口：`backend/src/index.js`
+
+---
+
+## 27. 多语言（i18n）怎么改，才不会漏？
+
+这个项目是多语言项目，**不要随便把中文硬编码到页面里**。
+
+### 正确做法
+1. 页面里用：
+```js
+const { t } = useI18n();
+```
+2. 页面显示文字时写：
+```jsx
+{t('nav.home')}
+```
+3. 去对应 locale 文件补 key
+
+### locale 文件位置
+```bash
+frontend/src/i18n/
+```
+
+### 新手最容易犯的错
+- 只改了中文，没改英文/日文/毛利语
+- 页面里直接写死中文
+- 改完 key 但没同步到其他语言文件
+
+### 最稳妥做法
+每次加新文案时，**四个语言文件一起补**，不要想着“后面再补”。
+
+---
+
+## 28. 数据优先从哪里来？一张脑图记住
+
+不同页面拿数据的方式并不完全一样，大体分 4 种：
+
+### 1) Context
+典型：
+- `AuthContext`
+- `PetContext`
+
+适合：
+- 当前登录用户
+- 当前宠物
+- 全局共享状态
+
+### 2) `services/apiLayer.js`
+典型：
+- Achievements
+- Training
+- Rewards
+- Health
+- Leaderboard
+
+适合：
+- 标准 REST API 数据
+- 有本地 fallback 的页面
+
+### 3) `services/firebase.js`
+典型：
+- 社区
+- 消息
+- 登录认证
+- 地图的一部分数据
+
+适合：
+- 直接 Firestore/Firebase Auth 交互
+
+### 4) localStorage fallback
+典型：
+- 本地宠物
+- 本地成就进度
+- 本地 health records
+- 本地 rewards / training
+
+适合：
+- 后端挂了时还能演示
+- 开发阶段快速兜底
+
+---
+
+## 29. 最常见的报错，应该先查哪里？
+
+### 白屏 / 页面空白
+先查：
+1. 浏览器 console
+2. 当前 page 文件
+3. 页面是否提前读取了 `null` 数据（比如 `pet.name`）
+4. 路由有没有写错
+
+### 按钮点了没反应
+先查：
+1. 按钮 `onClick` 是否绑上
+2. 调用的函数是否真的执行
+3. API 是否报错
+4. toast / 状态更新是否被吞掉
+
+### 数据保存失败
+先查：
+1. 前端调用哪个 service
+2. service 走的是 API 还是 Firebase
+3. 后端 route 是否存在
+4. 环境变量是否缺失
+
+### 登录失效 / 用户状态异常
+先查：
+1. `frontend/src/context/AuthContext.js`
+2. `frontend/src/services/firebase.js`
+3. local fallback 是否接管了
+
+### build 成功但线上没变化
+先查：
+1. 有没有重新把 `frontend/build/` 部署到 nginx
+2. 浏览器缓存
+3. `REACT_APP_API_URL` 是否正确
+
+---
+
+## 30. 新手最容易踩的 10 个坑
+
+1. **看错目录**：改了仓库根目录，没改 `apps/group-project-gg-bond-main/`
+2. **只改页面，不改数据层**：按钮出来了，但根本没请求
+3. **只改中文，不补 i18n**
+4. **把 context 当普通 local state 用**
+5. **忘记后端 route 还要在 `backend/src/index.js` 挂载**
+6. **改了环境变量但没重启 / 没重新 build**
+7. **以为页面白屏是样式问题，其实是 JS 报错**
+8. **直接在复杂页面大改，不先做小提交**
+9. **只看 page，不看顶部 import，结果找不到数据来源**
+10. **线上缓存没清，误以为代码没生效**
+
+---
+
+## 31. 建议的协作分工（很适合你们这种队友水平不均的组）
+
+### 新手适合负责
+- Adopt
+- Profile
+- Leaderboard
+- Health 的 UI 部分
+- Rewards 的展示部分
+- README / 文档
+
+### 中级适合负责
+- Marketplace
+- Community
+- Inventory
+- Achievements
+- Training
+
+### 较熟的人适合负责
+- Auth
+- PetContext / PetPageV2
+- AI
+- Firebase 数据结构
+- Admin
+- 部署
+
+这样分工最稳。
+
+---
+
+## 32. 推荐提交流程（别把仓库搞炸）
+
+每次改动尽量按这个流程：
+
+1. 先 pull / fetch 最新代码
+2. 只改一个功能点
+3. 本地跑起来确认页面没白屏
+4. 如果有后端，顺手测一下 `/health`
+5. commit message 写清楚改了什么
+
+示例：
+```bash
+git add .
+git commit -m "fix: leaderboard i18n labels"
+git push origin master
+```
+
+如果你改的是大功能，建议不要一把梭，拆成多个 commit。
+
+---
+
+## 33. README 之后还建议补什么文档？
+
+如果你们后面还要继续交接，我建议继续补这几个文件：
+
+### `CONTRIBUTING.md`
+写清楚：
+- 队友怎么提交流程
+- 命名规范
+- 改 tab 时从哪里找代码
+
+### `DEPLOYMENT.md`
+写清楚：
+- 前端怎么 build
+- 怎么发到测试服务器
+- 后端怎么重启
+- 回滚怎么做
+
+### `ARCHITECTURE.md`
+写清楚：
+- Firebase 数据结构
+- Context / API / fallback 的关系
+- 各模块之间依赖
+
+---
+
+## 34. 真正接手时，可以直接照抄的排查顺序
+
+### 我想改一个 tab，但完全不知道从哪里开始
+```text
+1. 看 Layout.js 里的 TABS
+2. 找到 route
+3. 去 App.js 看 route 对应哪个 page
+4. 打开 page 文件
+5. 看 import
+6. 顺着 import 找 service/context/component
+7. 如果有后端，再找 backend/src/routes/*.js
+```
+
+### 我改完了，但页面没生效
+```text
+1. 看你改的是不是 apps/group-project-gg-bond-main/ 里的文件
+2. 看有没有 build
+3. 看有没有部署到 /var/www/gg-bond
+4. 看浏览器有没有缓存
+```
+
+### 我加了 API，但前端报 404
+```text
+1. route 文件有没有创建
+2. backend/src/index.js 有没有 app.use 挂载
+3. path 前缀有没有写对
+4. 后端服务有没有重启
+```
+
+---
+
+## 35. 最后的结论（给真的很新的队友）
+
+如果你读完前面内容还是怕，那你至少记住下面这三句：
+
+### 句子 1
+> **所有真正项目代码都在 `apps/group-project-gg-bond-main/`。**
+
+### 句子 2
+> **找页面入口看 `App.js`，找 tab 看 `Layout.js`。**
+
+### 句子 3
+> **找数据来源先看 imports，再决定去 context、services 还是 backend routes。**
+
+只要记住这三句，基本就不会完全迷路。
