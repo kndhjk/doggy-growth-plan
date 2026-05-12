@@ -1210,3 +1210,385 @@ git push origin master
 > **找数据来源先看 imports，再决定去 context、services 还是 backend routes。**
 
 只要记住这三句，基本就不会完全迷路。
+
+---
+
+## 36. 部署到底怎么做？给没部署过的人看
+
+这个项目现在有两套“运行思路”，不要混：
+
+### 思路 A：本地开发
+你在自己电脑上跑：
+- 前端：React dev server
+- 后端：Node / Express
+
+### 思路 B：测试服务器部署
+你把前端 build 完，放到 nginx；后端用 node 在服务器上跑。
+
+### 当前测试服务器部署结构
+- 前端静态文件：`/var/www/gg-bond`
+- 后端运行端口：`5000`
+- nginx：负责把 `/` 指向前端，把 `/api/` 反代到 `127.0.0.1:5000`
+
+### 一句话理解
+```text
+浏览器
+→ nginx
+→ /            读前端静态文件
+→ /api/*       转发给 node 后端
+```
+
+---
+
+## 37. 测试服务器上一次完整部署，实际做了什么？
+
+如果你要把改动重新发到测试服务器，核心是这几步：
+
+### 前端
+```bash
+cd apps/group-project-gg-bond-main/frontend
+npm install
+CI=true npm run build
+```
+
+生成结果在：
+```bash
+frontend/build/
+```
+
+然后把它同步到：
+```bash
+/var/www/gg-bond
+```
+
+### 后端
+```bash
+cd apps/group-project-gg-bond-main/backend
+npm install
+npm start
+```
+
+后端监听：
+```bash
+http://127.0.0.1:5000
+```
+
+### 最后检查
+```bash
+curl http://127.0.0.1:5000/health
+curl -I http://127.0.0.1/
+```
+
+---
+
+## 38. 为什么仓库里会有 `frontend/build/`？
+
+正常 React 项目很多时候不会把 build 产物提交到 git。
+
+但这个仓库当前 `master` 是从测试服务器环境推上来的，所以：
+- 有服务器目录痕迹
+- 有 `frontend/build/`
+- 有一些不够干净的历史结构
+
+### 新手要记住
+- **业务源码主要看 `src/`**
+- `build/` 是编译后产物，不是你平时主要修改的地方
+- 除非你在做部署快照，否则尽量不要手改 build 文件
+
+---
+
+## 39. 后端每个 route 大概负责什么？
+
+> 这个表的用途是：当前端同学看到 `/api/xxx` 时，知道该去哪找。
+
+| route 文件 | 负责什么 |
+|---|---|
+| `routes/pet.js` | 宠物创建、读取、更新，宠物核心数据 |
+| `routes/activities.js` | 宠物活动记录（喂食、喝水、洗澡等） |
+| `routes/ai.js` | AI 对话 / AI 相关请求 |
+| `routes/community.js` | 社区帖子、评论、互动 |
+| `routes/map.js` | 地图相关数据 |
+| `routes/marketplace.js` | 商品、交易市场、发布内容 |
+| `routes/inventory.js` | 背包物品、使用道具 |
+| `routes/achievements.js` | 成就进度、解锁状态 |
+| `routes/training.js` | 训练技能、训练记录、训练点数 |
+| `routes/rewards.js` | 每日奖励 / 签到 |
+| `routes/health.js` | 健康记录 |
+| `routes/leaderboard.js` | 排行榜数据 |
+| `routes/admin.js` | 管理员后台操作 |
+
+### 看到 API 时怎么反推？
+比如你在前端看到：
+```js
+fetch('/api/health')
+```
+那你直接去：
+```bash
+backend/src/routes/health.js
+```
+
+---
+
+## 40. 前端 `services/` 目录怎么理解？
+
+很多新手看到 `services/` 会慌，其实可以这么记：
+
+### `services/firebase.js`
+作用：
+- 初始化 Firebase app
+- 导出 `auth` / `db` / `storage`
+
+### `services/api.js`
+作用：
+- 比较原始的 API 请求逻辑
+- Marketplace 这类页面直接在用
+
+### `services/apiLayer.js`
+作用：
+- 更像“按业务封装好的 API”
+- 比如：
+  - `AchievementsAPI`
+  - `TrainingAPI`
+  - `RewardsAPI`
+  - `HealthAPI`
+  - `LeaderboardAPI`
+
+### `services/authFallback.js`
+作用：
+- Firebase 认证出问题时，本地兜底登录
+
+### `services/petLocalStore.js`
+作用：
+- 宠物本地缓存
+- 后端/Firestore 不可用时兜底
+
+### `services/storage.js`
+作用：
+- 文件 / 图片上传相关封装
+
+---
+
+## 41. `context/` 和 `services/` 的区别是什么？
+
+这是新手最容易混的点之一。
+
+### `context/`
+偏“当前页面/整个 app 正在用的状态”
+
+例如：
+- 当前登录用户是谁
+- 当前宠物是谁
+
+### `services/`
+偏“拿数据 / 存数据 / 调接口的方法”
+
+例如：
+- 调 `/api/leaderboard`
+- 初始化 Firebase
+- 读写 localStorage
+
+### 一句话记忆
+> **context 是“状态容器”，services 是“拿状态/存状态的工具”。**
+
+---
+
+## 42. `pages/` 和 `components/` 的区别是什么？
+
+### `pages/`
+一个路由通常对应一个 page。
+
+例如：
+- `/leaderboard` → `LeaderboardPage.js`
+- `/profile` → `ProfilePage.js`
+
+### `components/`
+页面里反复复用的小块 UI。
+
+例如：
+- 宠物卡片
+- 评论列表
+- 上传组件
+- Layout
+- ActionRing
+
+### 一句话记忆
+> **page 是整页，component 是零件。**
+
+---
+
+## 43. 如果队友说“这个功能到底有没有后端”，怎么判断？
+
+看 page 顶部 import 基本就能猜到：
+
+### 情况 1：import 了 `apiLayer` / `api`
+说明大概率有后端接口。
+
+### 情况 2：import 了 `firebase.js`
+说明大概率直接走 Firebase。
+
+### 情况 3：只用了 `useState` / 本地数组 / mock 数据
+说明可能只是前端静态实现。
+
+### 情况 4：代码里有 `localStorage`
+说明可能有本地 fallback，甚至主要就是本地存储。
+
+---
+
+## 44. 这个项目为什么会出现“同一功能有两套数据源”？
+
+因为它不是那种从一开始就非常干净、完全统一的数据架构。
+
+当前项目里常见情况是：
+- 正常情况：走 Firebase / 走后端 API
+- 异常情况：走 local fallback
+- 某些页面：直接前端 mock 数据
+
+### 这不是 bug 吗？
+不一定。
+
+对课程项目来说，这种设计有一个现实好处：
+> **就算后端挂了，演示还能继续。**
+
+### 但新手要注意
+你改功能时，一定要搞清楚：
+- 你改的是“真实数据流”
+- 还是只改了“fallback / mock 数据”
+
+---
+
+## 45. 一份给队友的“改功能前检查清单”
+
+开始改之前，先问自己 8 个问题：
+
+1. 我改的是哪个 tab / 页面？
+2. 对应 page 文件是哪一个？
+3. 数据来自 context、API、Firebase，还是 localStorage？
+4. 有没有多语言文案需要一起改？
+5. 有没有后端 route 也要改？
+6. 改完需不需要 build？
+7. 改完需不需要重启后端？
+8. 这个改动会不会影响移动端布局？
+
+这 8 个问题能帮你避开一大半低级坑。
+
+---
+
+## 46. 一份给 reviewer 的“看队友代码清单”
+
+如果你在帮队友 review，可以按这个顺序扫：
+
+### 页面层
+- 有没有直接写死中文？
+- 有没有空值判断？
+- 手机上会不会炸布局？
+
+### 数据层
+- 有没有调用错 API？
+- fallback 是否还能工作？
+- 改动会不会影响已有 localStorage 数据？
+
+### 后端层
+- route 有没有挂到 `backend/src/index.js`？
+- 参数是否校验？
+- 报错是否返回清楚？
+
+### 部署层
+- 如果改了前端，build 是否同步？
+- 如果改了环境变量，是否说明重启要求？
+
+---
+
+## 47. 如果后面要做仓库整理，推荐顺序是什么？
+
+现在这个仓库能用，但结构不算理想。以后要整理，我建议按这个顺序：
+
+### 第 1 步：把真正项目根目录提到仓库根
+也就是把：
+```bash
+apps/group-project-gg-bond-main/
+```
+提到最外面。
+
+### 第 2 步：把服务器杂项移出版本控制
+例如：
+- `.bash_history`
+- `.npm/`
+- 压缩包
+- 临时日志
+
+### 第 3 步：决定 build 是否继续提交
+- 如果想保留部署快照，可以提交
+- 如果想更干净，应该把 `build/` 忽略掉
+
+### 第 4 步：把文档拆分
+把现在这个 README 拆成：
+- README（概览）
+- DEPLOYMENT.md（部署）
+- CONTRIBUTING.md（协作）
+- ARCHITECTURE.md（结构）
+
+---
+
+## 48. 现在这份 README 应该怎么用？
+
+不同人用法不一样：
+
+### 如果你是新手队友
+从前往后看，重点看：
+- 第 5 节
+- 第 6 节
+- 第 8 节
+- 第 21 节之后
+
+### 如果你是负责修 bug 的人
+重点看：
+- 第 9 节
+- 第 29 节
+- 第 34 节
+- 第 45 节
+
+### 如果你是负责部署的人
+重点看：
+- 第 17 节
+- 第 18 节
+- 第 36 节
+- 第 37 节
+
+### 如果你是负责整理仓库的人
+重点看：
+- 第 1 节
+- 第 38 节
+- 第 47 节
+
+---
+
+## 49. 最后再补一句非常现实的话
+
+这个项目不是“教科书级完美架构”，它更像是：
+
+> **一个已经能跑、能演示、功能很多，但需要靠文档把人带进去的课程项目。**
+
+所以你接手时不要先追求“它为什么不够优雅”，而是先搞清楚：
+
+1. 页面在哪
+2. 数据从哪来
+3. 你改动会影响哪一层
+4. 改完怎么验证
+
+先能稳稳改动，再谈重构。
+
+---
+
+## 50. 如果你只剩 30 秒，看这段就够了
+
+```text
+真正项目目录：apps/group-project-gg-bond-main/
+页面入口：frontend/src/App.js
+Tab 定义：frontend/src/components/Layout/Layout.js
+登录状态：frontend/src/context/AuthContext.js
+宠物状态：frontend/src/context/PetContext.js
+后端总入口：backend/src/index.js
+API 路由：backend/src/routes/*.js
+```
+
+这 7 行，就是这个项目的最短导航图。
