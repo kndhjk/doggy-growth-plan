@@ -51,14 +51,14 @@ async function api(path, body) {
 
 export const localRegister = async (email, password) => {
   const data = await api('/api/auth/register', { email, password });
-  const u = data.user;
+  const u = { ...data.user, _local: true };
   writeCurr(u);
   return u;
 };
 
 export const localLogin = async (email, password) => {
   const data = await api('/api/auth/login', { email, password });
-  const u = data.user;
+  const u = { ...data.user, _local: true };
   writeCurr(u);
   return u;
 };
