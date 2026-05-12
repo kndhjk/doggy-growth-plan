@@ -10,6 +10,23 @@ import {
 } from 'firebase/firestore';
 import { db } from '../services/firebase';
 
+const LOCAL_CONVERSATIONS_KEY = 'gg_local_conversations';
+const localMessagesKey = (conversationId) => `gg_local_messages_${conversationId}`;
+const readLocalConversations = () => {
+  try { return JSON.parse(localStorage.getItem(LOCAL_CONVERSATIONS_KEY) || '[]'); }
+  catch { return []; }
+};
+const writeLocalConversations = (items) => {
+  try { localStorage.setItem(LOCAL_CONVERSATIONS_KEY, JSON.stringify(items)); } catch {}
+};
+const readLocalMessages = (conversationId) => {
+  try { return JSON.parse(localStorage.getItem(localMessagesKey(conversationId)) || '[]'); }
+  catch { return []; }
+};
+const writeLocalMessages = (conversationId, items) => {
+  try { localStorage.setItem(localMessagesKey(conversationId), JSON.stringify(items)); } catch {}
+};
+
 function timeStr(ts) {
   if (!ts) return '';
   const date = ts?.toDate ? ts.toDate() : new Date(ts);
@@ -24,6 +41,7 @@ export default function ChatPage() {
   const otherName = searchParams.get('other') || 'User';
   const sellerId = searchParams.get('sellerId') || '';
   const otherUid = sellerId || conversationId.split('_').find(uid => uid !== currentUser?.uid) || '';
+  const isLocal = currentUser?._local;
 
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState('');
@@ -33,6 +51,13 @@ export default function ChatPage() {
 
   useEffect(() => {
     if (!currentUser) return;
+    if (isLocal) {
+      setMessages(readLocalMessages(conversationId));
+      setTimeout(() => {
+        bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+      return;
+    }
     const q = query(
       collection(db, 'conversations', conversationId, 'messages'),
       orderBy('createdAt', 'asc'),
@@ -44,7 +69,7 @@ export default function ChatPage() {
       }, 100);
     });
     return unsub;
-  }, [conversationId, currentUser]);
+  }, [conversationId, currentUser, isLocal]);
 
   // Mark messages as read
   useEffect(() => {
@@ -53,20 +78,61 @@ export default function ChatPage() {
       m => m.senderId !== currentUser.uid && !m.read
     );
     if (unread.length === 0) return;
-    // Mark all from other user as read
+
+    if (isLocal) {
+      const nextMessages = messages.map(m => (
+        m.senderId !== currentUser.uid ? { ...m, read: true } : m
+      ));
+      setMessages(nextMessages);
+      writeLocalMessages(conversationId, nextMessages);
+      const nextConversations = readLocalConversations().map(conv => (
+        conv.id === conversationId
+          ? { ...conv, lastMessage: conv.lastMessage ? { ...conv.lastMessage, read: true } : conv.lastMessage }
+          : conv
+      ));
+      writeLocalConversations(nextConversations);
+      return;
+    }
+
     unread.forEach(m => {
       updateDoc(doc(db, 'conversations', conversationId, 'messages', m.id), { read: true }).catch(() => {});
     });
-    // Update conversation lastMessage read status
     updateDoc(doc(db, 'conversations', conversationId), {
       [`lastMessage.read`]: true,
     }).catch(() => {});
-  }, [messages, currentUser, conversationId]);
+  }, [messages, currentUser, conversationId, isLocal]);
 
   const sendMessage = async () => {
     if (!text.trim() || sending) return;
     setSending(true);
     try {
+      if (isLocal) {
+        const msg = {
+          id: `local-msg-${Date.now()}`,
+          senderId: currentUser.uid,
+          text: text.trim(),
+          createdAt: new Date().toISOString(),
+          read: false,
+        };
+        const nextMessages = [...readLocalMessages(conversationId), msg];
+        writeLocalMessages(conversationId, nextMessages);
+        setMessages(nextMessages);
+        const others = readLocalConversations().filter(conv => conv.id !== conversationId);
+        writeLocalConversations([{
+          id: conversationId,
+          lastMessage: msg,
+          updatedAt: msg.createdAt,
+          participants: {
+            [currentUser.uid]: { name: currentUser.displayName || currentUser.email || 'Me', uid: currentUser.uid },
+            ...(otherUid ? { [otherUid]: { name: otherName, uid: otherUid } } : {}),
+          },
+          otherUid,
+        }, ...others]);
+        setText('');
+        setTimeout(() => inputRef.current?.focus(), 50);
+        return;
+      }
+
       const msg = {
         senderId: currentUser.uid,
         text: text.trim(),
@@ -74,7 +140,6 @@ export default function ChatPage() {
         read: false,
       };
       await addDoc(collection(db, 'conversations', conversationId, 'messages'), msg);
-      // Update conversation lastMessage
       await setDoc(doc(db, 'conversations', conversationId), {
         lastMessage: msg,
         updatedAt: serverTimestamp(),

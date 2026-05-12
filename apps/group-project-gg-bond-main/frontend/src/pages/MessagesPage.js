@@ -4,9 +4,15 @@ import { motion } from 'framer-motion';
 import { useI18n } from '../i18n/I18nContext';
 import { useAuth } from '../context/AuthContext';
 import {
-  collection, query, orderBy, onSnapshot, where, doc,
+  collection, query, orderBy, onSnapshot,
 } from 'firebase/firestore';
 import { db } from '../services/firebase';
+
+const LOCAL_CONVERSATIONS_KEY = 'gg_local_conversations';
+const readLocalConversations = () => {
+  try { return JSON.parse(localStorage.getItem(LOCAL_CONVERSATIONS_KEY) || '[]'); }
+  catch { return []; }
+};
 
 function timeAgo(ts) {
   if (!ts) return '';
@@ -24,11 +30,20 @@ export default function MessagesPage() {
   const { t } = useI18n();
   const { currentUser } = useAuth();
   const navigate = useNavigate();
+  const isLocal = currentUser?._local;
   const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!currentUser) return;
+    if (isLocal) {
+      const convs = readLocalConversations()
+        .filter(c => c.participants && currentUser.uid in c.participants)
+        .sort((a, b) => new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0));
+      setConversations(convs);
+      setLoading(false);
+      return;
+    }
     const q = query(collection(db, 'conversations'), orderBy('updatedAt', 'desc'));
     const unsub = onSnapshot(q, snap => {
       const convs = snap.docs
@@ -38,7 +53,7 @@ export default function MessagesPage() {
       setLoading(false);
     });
     return unsub;
-  }, [currentUser]);
+  }, [currentUser, isLocal]);
 
   const getOther = (conv) => {
     const otherId = Object.keys(conv.participants || {}).find(k => k !== currentUser?.uid);
