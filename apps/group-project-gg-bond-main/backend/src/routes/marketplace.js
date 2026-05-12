@@ -1,5 +1,6 @@
 const router = require('express').Router();
 const { db } = require('../services/firebaseAdmin');
+const { FieldValue } = require('firebase-admin/firestore');
 
 // GET /api/marketplace - List marketplace listings
 router.get('/', async (req, res, next) => {
@@ -37,16 +38,16 @@ router.post('/', async (req, res, next) => {
     const docRef = await db.collection('marketplace').add({
       title: title.trim(),
       description: description?.trim() || '',
-      category: category || 'dog',
+      category: category || 'pet',
       price: listingType === 'adoption' ? 0 : (Number(price) || 0),
       location: location.trim(),
       listingType: listingType || 'sale',
       images: Array.isArray(images) ? images : [],
       sellerId,
-      sellerName: sellerName || 'Anonymous',
+      sellerName: sellerName || 'Anonymous Trader',
       sellerEmail: sellerEmail || '',
       status: 'active',
-      createdAt: require('firebase-admin/firestore').FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
     });
 
     res.status(201).json({ id: docRef.id, message: 'Listing created' });
