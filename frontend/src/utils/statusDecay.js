@@ -45,5 +45,5 @@ export function computeStatuses(pet) {
   };
 }
 
-export const STATUS_LABELS = { appetite:'食欲', hydration:'水分', health:'健康', mood:'心情', social:'社交' };
+export const STATUS_LABELS = { appetite:'Appetite', hydration:'Hydration', health:'Health', mood:'Mood', social:'Social' };
 export const STATUS_EMOJIS = { appetite:'🍖', hydration:'💧', health:'❤️', mood:'😊', social:'🐾' };

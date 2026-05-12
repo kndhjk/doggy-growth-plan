@@ -66,19 +66,19 @@ export const localLogin = async (email, password) => {
 export const localLogout = () => writeCurr(null);
 
 export const AUTH_ERROR_MESSAGES = {
-  'auth/invalid-email':         '邮箱格式不正确',
-  'auth/email-already-in-use':  '该邮箱已注册过',
-  'auth/weak-password':         '密码至少 6 位',
-  'auth/user-not-found':        '该邮箱未注册',
-  'auth/wrong-password':        '密码错误',
-  'auth/invalid-credential':    '邮箱或密码错误',
-  'auth/too-many-requests':     '尝试次数过多，请稍后再试',
-  'api/409':                    '该邮箱已注册过',
-  'api/404':                    '该邮箱未注册',
-  'api/401':                    '密码错误',
+  'auth/invalid-email':         'Invalid email format',
+  'auth/email-already-in-use':  'This email is already registered',
+  'auth/weak-password':         'Password must be at least 6 characters',
+  'auth/user-not-found':        'This email is not registered',
+  'auth/wrong-password':        'Incorrect password',
+  'auth/invalid-credential':    'Incorrect email or password',
+  'auth/too-many-requests':     'Too many attempts, please try again later',
+  'api/409':                    'This email is already registered',
+  'api/404':                    'This email is not registered',
+  'api/401':                    'Incorrect password',
 };
 
 export const authErrorText = (e, fallback) =>
   AUTH_ERROR_MESSAGES[e?.code]
     || fallback
-    || (e?.message ? `操作失败：${e.message}` : '操作失败');
+    || (e?.message ? `Request failed: ${e.message}` : 'Request failed');

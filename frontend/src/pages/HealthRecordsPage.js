@@ -9,17 +9,17 @@ import toast from 'react-hot-toast';
 
 // ─── Mock Data ───────────────────────────────────────────────────────────────
 const VACCINE_RECORDS = [
-  { id: 'v1', date: '2026-03-15', title: '狂犬疫苗',    vet: 'Auckland Vet Centre',   notes: '第一针，无不良反应', type: 'vaccine' },
-  { id: 'v2', date: '2026-01-20', title: '犬瘟热疫苗',  vet: 'Petcare Epsom',         notes: '幼犬基础免疫',        type: 'vaccine' },
-  { id: 'v3', date: '2025-12-10', title: '体内驱虫',    vet: null,                    notes: '服用犬心宝',          type: 'dewormer' },
+  { id: 'v1', date: '2026-03-15', title: 'Rabies vaccine',    vet: 'Auckland Vet Centre',   notes: 'First shot, no adverse reaction', type: 'vaccine' },
+  { id: 'v2', date: '2026-01-20', title: 'Canine distemper vaccine',  vet: 'Petcare Epsom',         notes: 'Core puppy vaccination',        type: 'vaccine' },
+  { id: 'v3', date: '2025-12-10', title: 'Internal deworming',    vet: null,                    notes: 'Given heartworm prevention',          type: 'dewormer' },
 ];
 
 const CHECKUP_RECORDS = [
-  { id: 'c1', date: '2026-04-01', title: '年度体检',   vet: 'Dr. Sarah @ Auckland Vet', notes: '全部正常，体重 12.5kg', type: 'checkup' },
+  { id: 'c1', date: '2026-04-01', title: 'Annual checkup',   vet: 'Dr. Sarah @ Auckland Vet', notes: 'Everything looks normal, weight 12.5kg', type: 'checkup' },
 ];
 
 const MEDICINE_RECORDS = [
-  { id: 'm1', date: '2026-05-01', title: '感冒药',    vet: null, notes: '连续服用 3 天后康复', type: 'medicine' },
+  { id: 'm1', date: '2026-05-01', title: 'Cold medicine',    vet: null, notes: 'Recovered after 3 days of medicine', type: 'medicine' },
 ];
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────

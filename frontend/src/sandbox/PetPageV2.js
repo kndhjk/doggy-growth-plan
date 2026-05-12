@@ -33,11 +33,11 @@ function timeAgo(ts, t) {
   const d = ts.toDate ? ts.toDate() : new Date(ts);
   const diff = Date.now() - d.getTime();
   const m = Math.floor(diff / 60000);
-  if (m < 1) return t('pet.justNow') || '刚刚';
-  if (m < 60) return `${m}${t('pet.minutesAgo') || '分钟前'}`;
+  if (m < 1) return t('pet.justNow') || 'Just now';
+  if (m < 60) return `${m}${t('pet.minutesAgo') || ' min ago'}`;
   const h = Math.floor(m / 60);
-  if (h < 24) return `${h}${t('pet.hoursAgo') || '小时前'}`;
-  return `${Math.floor(h / 24)}${t('pet.daysAgo') || '天前'}`;
+  if (h < 24) return `${h}${t('pet.hoursAgo') || ' hr ago'}`;
+  return `${Math.floor(h / 24)}${t('pet.daysAgo') || ' day ago'}`;
 }
 
 function getLastActivityTime(lastActivity, type) {
@@ -74,9 +74,9 @@ function getPetAge(birthday) {
   totalMonths = Math.max(0, totalMonths);
   const years = Math.floor(totalMonths / 12);
   const months = totalMonths % 12;
-  if (years === 0) return `${months}个月`;
-  if (months === 0) return `${years}岁`;
-  return `${years}岁${months}个月`;
+  if (years === 0) return `${months} mo`;
+  if (months === 0) return `${years} yr`;
+  return `${years} yr ${months} mo`;
 }
 
 function getDaysWithPet(createdAt) {
@@ -245,15 +245,15 @@ function DesktopPetPage({ pet, statuses, displayStatuses, previewAge, handlePrev
 
   const greeting = () => {
     const h = now.getHours();
-    if (h < 6) return '🌙 夜深了';
-    if (h < 12) return '☀️ 早上好';
-    if (h < 14) return '🌤️ 中午好';
-    if (h < 18) return '🌤️ 下午好';
-    if (h < 22) return '🌙 晚上好';
-    return '🌃 夜深了';
+    if (h < 6) return '🌙 Late night';
+    if (h < 12) return '☀️ Good morning';
+    if (h < 14) return '🌤️ Good noon';
+    if (h < 18) return '🌤️ Good afternoon';
+    if (h < 22) return '🌙 Good evening';
+    return '🌃 Late night';
   };
 
-  const dateStr = now.toLocaleDateString('zh-CN', { weekday:'long', month:'long', day:'numeric' });
+  const dateStr = now.toLocaleDateString(undefined, { weekday:'long', month:'long', day:'numeric' });
 
   const overall = Math.round(statuses?.overall || 0);
 
@@ -268,12 +268,12 @@ function DesktopPetPage({ pet, statuses, displayStatuses, previewAge, handlePrev
   ];
 
   const achievements = [
-    { icon:'🌟', label:'首次喂食', color:'#f59e0b', earned:!!getLastActivityTime(last, 'feed') },
-    { icon:'💧', label:'爱喝水', color:'#3b82f6', earned:!!getLastActivityTime(last, 'water') },
-    { icon:'🚶', label:'散步达人', color:'#10b981', earned:!!getLastActivityTime(last, 'walk') },
-    { icon:'🛁', label:'爱干净', color:'#8b5cf6', earned:!!getLastActivityTime(last, 'bath') },
-    { icon:'🤝', label:'社交达人', color:'#ec4899', earned:!!getLastActivityTime(last, 'play') },
-    { icon:'🏆', label:'坚持7天', color:'#f97316', earned:daysWithPet >= 7 },
+    { icon:'🌟', label:'First feed', color:'#f59e0b', earned:!!getLastActivityTime(last, 'feed') },
+    { icon:'💧', label:'Hydration hero', color:'#3b82f6', earned:!!getLastActivityTime(last, 'water') },
+    { icon:'🚶', label:'Walk champ', color:'#10b981', earned:!!getLastActivityTime(last, 'walk') },
+    { icon:'🛁', label:'Clean bean', color:'#8b5cf6', earned:!!getLastActivityTime(last, 'bath') },
+    { icon:'🤝', label:'Social star', color:'#ec4899', earned:!!getLastActivityTime(last, 'play') },
+    { icon:'🏆', label:'7-day streak', color:'#f97316', earned:daysWithPet >= 7 },
   ];
 
   // Pet avatar placeholder based on breed or default
@@ -344,7 +344,7 @@ function DesktopPetPage({ pet, statuses, displayStatuses, previewAge, handlePrev
           }}>
             <span style={{ fontSize:16 }}>❤️</span>
             <div>
-              <div style={{ fontSize:11, color:'#9ca3af', fontWeight:600 }}>健康指数</div>
+              <div style={{ fontSize:11, color:'#9ca3af', fontWeight:600 }}>Health Index</div>
               <div style={{ fontWeight:800, fontSize:14, color: overall>60?'#10b981':overall>30?'#f59e0b':'#ef4444' }}>
                 {overall}%
               </div>
@@ -355,7 +355,7 @@ function DesktopPetPage({ pet, statuses, displayStatuses, previewAge, handlePrev
             <div style={{ padding:'8px 14px', borderRadius:12, background:'#fef2f2',
                           border:'1px solid #fecaca', color:'#ef4444',
                           fontWeight:700, fontSize:13, display:'flex', alignItems:'center', gap:6 }}>
-              ⚠️ 需要关注
+              ⚠️ Needs attention
             </div>
           )}
 
@@ -382,7 +382,7 @@ function DesktopPetPage({ pet, statuses, displayStatuses, previewAge, handlePrev
           overflowY:'auto',
         }}>
           {/* Pet profile card */}
-          <Section title="宠物档案" icon="🐕">
+          <Section title="Pet Profile" icon="🐕">
             <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
               <div style={{ display:'flex', alignItems:'center', gap:12 }}>
                 <div style={{ width:56, height:56, borderRadius:16,
@@ -443,7 +443,7 @@ function DesktopPetPage({ pet, statuses, displayStatuses, previewAge, handlePrev
           </Section>
 
           {/* Quick actions */}
-          <Section title="快捷操作" icon="⚡">
+          <Section title="Quick Actions" icon="⚡">
             <div style={{ display:'flex', gap:8 }}>
               <QuickBtn icon="🍖" label={t('pet.action.feed')} color="#f97316" onClick={() => handleMain('feed',t('pet.action.feed'))} />
               <QuickBtn icon="💧" label={t('pet.action.water')} color="#3b82f6" onClick={() => handleMain('water',t('pet.action.water'))} />
@@ -474,7 +474,7 @@ function DesktopPetPage({ pet, statuses, displayStatuses, previewAge, handlePrev
                       {t && <div style={{ fontSize:11, color:'#9ca3af' }}>{t}</div>}
                     </div>
                     {item.done && (
-                      <span style={{ fontSize:10, color:'#10b981', fontWeight:700, flexShrink:0 }}>已完成</span>
+                      <span style={{ fontSize:10, color:'#10b981', fontWeight:700, flexShrink:0 }}>Done</span>
                     )}
                     {!item.done && (
                       <motion.button
@@ -485,7 +485,7 @@ function DesktopPetPage({ pet, statuses, displayStatuses, previewAge, handlePrev
                         style={{ padding:'4px 10px', borderRadius:100, border:'none',
                                  background:'linear-gradient(135deg,#f472b6,#fb7185)',
                                  color:'white', fontWeight:700, fontSize:11, cursor:'pointer', flexShrink:0 }}>
-                        记录
+                        Log
                       </motion.button>
                     )}
                   </div>
@@ -554,11 +554,11 @@ function DesktopPetPage({ pet, statuses, displayStatuses, previewAge, handlePrev
           {/* Bottom stats row */}
           <div style={{ width:'100%', maxWidth:540, display:'grid',
                         gridTemplateColumns:'repeat(3,1fr)', gap:10 }}>
-            <StatCard icon="💧" title="水分指数" value={`${statuses?.hydration||0}%`}
+            <StatCard icon="💧" title="Hydration" value={`${statuses?.hydration||0}%`}
                       sub={timeAgo(getLastActivityTime(last,'water'), t) || t('pet.home.noRecord')} color="#3b82f6" />
-            <StatCard icon="🍖" title="饱腹指数" value={`${statuses?.appetite||0}%`}
+            <StatCard icon="🍖" title="Fullness" value={`${statuses?.appetite||0}%`}
                       sub={timeAgo(getLastActivityTime(last,'feed'), t) || t('pet.home.noRecord')} color="#f97316" />
-            <StatCard icon="😊" title="心情指数" value={`${statuses?.mood||0}%`}
+            <StatCard icon="😊" title="Mood" value={`${statuses?.mood||0}%`}
                       sub={timeAgo(getLastActivityTime(last,'walk'), t) || t('pet.home.noRecord')} color="#ec4899" />
           </div>
         </main>
@@ -573,11 +573,11 @@ function DesktopPetPage({ pet, statuses, displayStatuses, previewAge, handlePrev
           overflowY:'auto',
         }}>
           {/* Growth progress */}
-          <Section title="成长进度" icon="🏆">
+          <Section title="Growth" icon="🏆">
             <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
               <div>
                 <div style={{ display:'flex', justifyContent:'space-between', marginBottom:4 }}>
-                  <span style={{ fontSize:12, fontWeight:700, color:'#4a1942' }}>总体成长</span>
+                  <span style={{ fontSize:12, fontWeight:700, color:'#4a1942' }}>Overall growth</span>
                   <span style={{ fontSize:12, fontWeight:800, color:'#f472b6' }}>{overall}%</span>
                 </div>
                 <div style={{ height:8, background:'#f5f3ff', borderRadius:100, overflow:'hidden' }}>
@@ -589,7 +589,7 @@ function DesktopPetPage({ pet, statuses, displayStatuses, previewAge, handlePrev
               </div>
               <div>
                 <div style={{ display:'flex', justifyContent:'space-between', marginBottom:4 }}>
-                  <span style={{ fontSize:12, fontWeight:700, color:'#4a1942' }}>本周活跃</span>
+                  <span style={{ fontSize:12, fontWeight:700, color:'#4a1942' }}>Weekly activity</span>
                   <span style={{ fontSize:12, fontWeight:800, color:'#8b5cf6' }}>72%</span>
                 </div>
                 <div style={{ height:8, background:'#f5f3ff', borderRadius:100, overflow:'hidden' }}>
@@ -602,16 +602,16 @@ function DesktopPetPage({ pet, statuses, displayStatuses, previewAge, handlePrev
               <div style={{ padding:'10px 12px', borderRadius:12, background:'linear-gradient(135deg,#fdf2f8,#fce7f3)',
                             border:'1px solid #fce7f3', fontSize:12, color:'#9d174d', lineHeight:1.7 }}>
                 🌟 {warning
-                  ? '健康指数偏低！建议增加互动频率，关注饮食营养。'
+                  ? 'Health index is a bit low. Try more interaction and keep an eye on nutrition.'
                   : daysWithPet < 3
-                    ? `和 ${pet.name} 刚刚认识，多互动建立感情吧～`
-                    : `${pet.name} 成长良好！继续保持，升级指日可待！`}
+                    ? `You and ${pet.name} are just getting to know each other — spend more time together!`
+                    : `${pet.name} is doing great! Keep it up and the next level is close.`}
               </div>
             </div>
           </Section>
 
           {/* Achievements */}
-          <Section title="成就徽章" icon="🎖️">
+          <Section title="Achievement Badges" icon="🎖️">
             <div style={{ display:'flex', gap:6 }}>
               {achievements.map((a,i) => <Badge key={i} {...a} />)}
             </div>
@@ -674,17 +674,17 @@ function DesktopPetPage({ pet, statuses, displayStatuses, previewAge, handlePrev
                        color:'white', fontWeight:700, fontSize:13, cursor:'pointer',
                        boxShadow:'0 4px 14px rgba(244,114,182,0.35)' }}
             >
-              🤖 问问 AI 顾问
+              🤖 Ask the AI advisor
             </motion.button>
           </Section>
 
           {/* Quick links */}
-          <Section title="快捷入口" icon="🔗">
+          <Section title="Quick Links" icon="🔗">
             <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
               {[
-                { icon:'🗺️', label:'附近公园', sub:'探索遛弯好去处', color:'#10b981' },
-                { icon:'🐾', label:'宠物社区', sub:'分享成长点滴', color:'#ec4899' },
-                { icon:'🎒', label:'道具背包', sub:'管理宠物道具', color:'#8b5cf6' },
+                { icon:'🗺️', label:'Nearby parks', sub:'Find great walk spots', color:'#10b981' },
+                { icon:'🐾', label:'Pet community', sub:'Share growth moments', color:'#ec4899' },
+                { icon:'🎒', label:'Inventory', sub:'Manage pet items', color:'#8b5cf6' },
               ].map(item => (
                 <motion.div key={item.label}
                   whileHover={{ x:4 }}
@@ -742,11 +742,11 @@ function TabletPetPage({ pet, statuses, displayStatuses, previewAge, handlePrevi
             </div>
           </div>
           <StatusPill icon="💧" label={t('pet.status.hydration')} value={statuses?.hydration||0} />
-          <StatusPill icon="🍖" label="饱腹" value={statuses?.appetite||0} />
+          <StatusPill icon="🍖" label="Fullness" value={statuses?.appetite||0} />
           <StatusPill icon="😊" label={t('pet.status.mood')} value={statuses?.mood||0} />
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
             <QuickBtn icon="🍖" label={t('pet.action.feed')} color="#f97316" onClick={() => handleMain('feed',t('pet.action.feed'))} />
-            <QuickBtn icon="💧" label="喝水" color="#3b82f6" onClick={() => handleMain('water','补水')} />
+            <QuickBtn icon="💧" label="Water" color="#3b82f6" onClick={() => handleMain('water','Water')} />
             <QuickBtn icon="🛁" label={t('pet.action.bath')} color="#8b5cf6" onClick={() => handleSecondary('bath',t('pet.action.bath'))} />
             <QuickBtn icon="🚶" label={t('pet.action.walk')} color="#10b981" onClick={() => handleSecondary('walk',t('pet.action.walk'))} />
           </div>

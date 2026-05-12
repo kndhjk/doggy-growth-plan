@@ -38,7 +38,7 @@ function LoginPage({ onLogin }) {
       sessionStorage.setItem(ADMIN_SESSION_KEY, pw);
       onLogin(pw);
     } catch {
-      setErr('密码错误，请重试');
+      setErr('Incorrect password, please try again');
     } finally {
       setLoading(false);
     }
@@ -53,11 +53,11 @@ function LoginPage({ onLogin }) {
         style={{ background: 'white', borderRadius: 24, padding: '40px 36px',
                  boxShadow: '0 20px 60px rgba(244,114,182,0.2)', width: 360, textAlign: 'center' }}>
         <div style={{ fontSize: 48, marginBottom: 12 }}>🔐</div>
-        <h2 style={{ fontWeight: 900, color: '#9d174d', marginBottom: 6 }}>管理员登录</h2>
-        <p style={{ color: '#9ca3af', fontSize: 13, marginBottom: 24 }}>Doggy Growth Plan 后台</p>
+        <h2 style={{ fontWeight: 900, color: '#9d174d', marginBottom: 6 }}>Admin login</h2>
+        <p style={{ color: '#9ca3af', fontSize: 13, marginBottom: 24 }}>Doggy Growth Plan Admin</p>
         <form onSubmit={tryLogin} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <input type="password" value={pw} onChange={e => setPw(e.target.value)}
-            placeholder="输入管理员密码" autoFocus
+            placeholder="Enter admin password" autoFocus
             style={{ padding: '12px 16px', borderRadius: 12, border: '2px solid #fce7f3',
                      fontSize: 15, outline: 'none', background: '#fdf2f8', color: '#1f0933',
                      boxSizing: 'border-box', width: '100%' }} />
@@ -72,7 +72,7 @@ function LoginPage({ onLogin }) {
                      color: 'white', fontWeight: 800, fontSize: 15,
                      cursor: (loading || !pw.trim()) ? 'not-allowed' : 'pointer',
                      boxShadow: '0 4px 14px rgba(244,114,182,0.3)' }}>
-            {loading ? '验证中...' : '进入管理后台'}
+            {loading ? 'Verifying...' : 'Enter admin dashboard'}
           </button>
         </form>
       </motion.div>
@@ -81,7 +81,7 @@ function LoginPage({ onLogin }) {
 }
 
 // ─── Confirm Modal ────────────────────────────────────────────────────────────
-function ConfirmModal({ title, message, confirmLabel = '确认', danger = false, onConfirm, onCancel }) {
+function ConfirmModal({ title, message, confirmLabel = 'Confirm', danger = false, onConfirm, onCancel }) {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
       style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex',
@@ -97,7 +97,7 @@ function ConfirmModal({ title, message, confirmLabel = '确认', danger = false,
           <button onClick={onCancel}
             style={{ padding: '10px 20px', borderRadius: 10, border: '2px solid #f3e8ff',
                      background: 'white', color: '#7c3aed', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>
-            取消
+            Cancel
           </button>
           <button onClick={onConfirm}
             style={{ padding: '10px 20px', borderRadius: 10, border: 'none',
@@ -121,11 +121,11 @@ function PetEditModal({ pet, onSave, onClose }) {
     setSaving(true);
     try {
       await adminFetch(`/pets/${pet.uid}`, { method: 'PATCH', body: JSON.stringify(form) });
-      toast.success('宠物资料已更新');
+      toast.success('Pet profile updated');
       onSave({ ...pet, ...form });
       onClose();
     } catch (e) {
-      toast.error(`保存失败: ${e.message}`);
+      toast.error(`Save failed: ${e.message}`);
     } finally {
       setSaving(false);
     }
@@ -142,13 +142,13 @@ function PetEditModal({ pet, onSave, onClose }) {
         onClick={e => e.stopPropagation()}
         style={{ background: 'white', borderRadius: 20, padding: 32, maxWidth: 480, width: '90%',
                  boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}>
-        <h3 style={{ fontWeight: 900, color: '#1f0933', marginBottom: 24, fontSize: 18 }}>✏️ 编辑宠物资料</h3>
+        <h3 style={{ fontWeight: 900, color: '#1f0933', marginBottom: 24, fontSize: 18 }}>✏️ Edit pet profile</h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {[
-            { key: 'name', label: '宠物名称', placeholder: '例如：旺财', type: 'text' },
-            { key: 'breed', label: '品种', placeholder: '例如：Golden Retriever', type: 'text' },
-            { key: 'birthday', label: '生日 (YYYY-MM-DD)', placeholder: '2023-01-15', type: 'date' },
-            { key: 'photoURL', label: '头像 URL', placeholder: 'https://...', type: 'text' },
+            { key: 'name', label: 'Pet name', placeholder: 'e.g. Coco', type: 'text' },
+            { key: 'breed', label: 'Breed', placeholder: 'e.g. Golden Retriever', type: 'text' },
+            { key: 'birthday', label: 'Birthday (YYYY-MM-DD)', placeholder: '2023-01-15', type: 'date' },
+            { key: 'photoURL', label: 'Avatar URL', placeholder: 'https://...', type: 'text' },
           ].map(({ key, label, placeholder, type }) => (
             <div key={key}>
               <div style={{ fontWeight: 700, color: '#7c3aed', fontSize: 12, marginBottom: 6 }}>{label}</div>
@@ -161,7 +161,7 @@ function PetEditModal({ pet, onSave, onClose }) {
           <button onClick={onClose}
             style={{ padding: '10px 20px', borderRadius: 10, border: '2px solid #f3e8ff',
                      background: 'white', color: '#7c3aed', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>
-            取消
+            Cancel
           </button>
           <button onClick={save} disabled={saving}
             style={{ padding: '10px 24px', borderRadius: 10, border: 'none',
@@ -169,7 +169,7 @@ function PetEditModal({ pet, onSave, onClose }) {
                      color: 'white', fontWeight: 800, fontSize: 14,
                      cursor: saving ? 'not-allowed' : 'pointer',
                      boxShadow: '0 4px 14px rgba(139,92,246,0.3)' }}>
-            {saving ? '保存中...' : '💾 保存'}
+            {saving ? 'Saving...' : '💾 Save'}
           </button>
         </div>
       </motion.div>
@@ -204,7 +204,7 @@ export default function AdminPage() {
     try {
       const u = await adminFetch('/users');
       setUsers((u || []).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
-    } catch { toast.error('加载用户失败'); }
+    } catch { toast.error('Failed to load users'); }
     if (showLoading) setLoading(false);
   }, []);
 
@@ -213,19 +213,19 @@ export default function AdminPage() {
     try {
       const p = await adminFetch('/pets');
       setPets((p || []).sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)));
-    } catch { toast.error('加载宠物失败'); }
+    } catch { toast.error('Failed to load pets'); }
     if (showLoading) setLoading(false);
   }, []);
 
   const loadActivities = useCallback(async () => {
     setLoading(true);
-    try { setActivities(await adminFetch('/activities')); } catch { toast.error('加载动态失败'); }
+    try { setActivities(await adminFetch('/activities')); } catch { toast.error('Failed to load activity log'); }
     setLoading(false);
   }, []);
 
   const loadListings = useCallback(async (showLoading = true) => {
     if (showLoading) setLoading(true);
-    try { setListings(await adminFetch('/listings')); } catch { toast.error('加载 listings 失败'); }
+    try { setListings(await adminFetch('/listings')); } catch { toast.error('Failed to load listings'); }
     if (showLoading) setLoading(false);
   }, []);
 
@@ -264,9 +264,9 @@ export default function AdminPage() {
     try {
       await adminFetch(`/users/${uid}/disable`, { method: 'POST', body: JSON.stringify({ disabled: !currentlyDisabled }) });
       setUsers(prev => prev.map(u => u.uid === uid ? { ...u, disabled: !currentlyDisabled } : u));
-      toast.success(currentlyDisabled ? '✅ 用户已启用' : '🚫 用户已禁用');
+      toast.success(currentlyDisabled ? '✅ User enabled' : '🚫 User disabled');
     } catch (e) {
-      toast.error(`操作失败: ${e.message}`);
+      toast.error(`Action failed: ${e.message}`);
     }
     setConfirmModal(null);
   };
@@ -275,9 +275,9 @@ export default function AdminPage() {
     try {
       await adminFetch(`/users/${uid}`, { method: 'DELETE' });
       setUsers(prev => prev.filter(u => u.uid !== uid));
-      toast.success('🗑️ 用户已删除');
+      toast.success('🗑️ User deleted');
     } catch (e) {
-      toast.error(`删除失败: ${e.message}`);
+      toast.error(`Delete failed: ${e.message}`);
     }
     setConfirmModal(null);
   };
@@ -286,9 +286,9 @@ export default function AdminPage() {
     try {
       await adminFetch(`/pets/${pet.uid}`, { method: 'DELETE' });
       setPets(prev => prev.filter(p => p.uid !== pet.uid));
-      toast.success('🗑️ 宠物已删除');
+      toast.success('🗑️ Pet deleted');
     } catch (e) {
-      toast.error(`删除失败: ${e.message}`);
+      toast.error(`Delete failed: ${e.message}`);
     }
     setConfirmModal(null);
   };
@@ -297,9 +297,9 @@ export default function AdminPage() {
     try {
       await adminFetch(`/listings/${listing.id}`, { method: 'DELETE' });
       setListings(prev => prev.filter(l => l.id !== listing.id));
-      toast.success('🗑️ Listing 已删除');
+      toast.success('🗑️ Listing deleted');
     } catch (e) {
-      toast.error(`删除失败: ${e.message}`);
+      toast.error(`Delete failed: ${e.message}`);
     }
     setConfirmModal(null);
   };
@@ -364,7 +364,7 @@ export default function AdminPage() {
     <button onClick={onClick} disabled={loading}
       style={{ padding: '6px 14px', borderRadius: 8, border: '2px solid #f3e8ff', cursor: loading ? 'not-allowed' : 'pointer',
                background: 'white', color: '#7c3aed', fontWeight: 700, fontSize: 12 }}>
-      {loading ? '⏳' : '🔄'} 刷新
+      {loading ? '⏳' : '🔄'} Refresh
     </button>
   );
 
@@ -373,8 +373,8 @@ export default function AdminPage() {
   );
 
   const ACTIVITY_ICONS = {
-    feed: '🍖 喂食', water: '💧 喝水', walk: '🚶 遛弯',
-    play: '🤝 互动', bath: '🛁 洗澡', medicine: '💊 健康检查',
+    feed: '🍖 Feed', water: '💧 Water', walk: '🚶 Walk',
+    play: '🤝 Play', bath: '🛁 Bath', medicine: '💊 Health care',
   };
 
   // ─── Login ─────────────────────────────────────────────────────────────────
@@ -390,15 +390,15 @@ export default function AdminPage() {
         <div style={{ fontSize: 22 }}>🐾</div>
         <div>
           <div style={{ fontWeight: 900, color: '#9d174d', fontSize: 15 }}>GG Bond Admin</div>
-          <div style={{ fontSize: 11, color: '#9ca3af' }}>后台管理系统</div>
+          <div style={{ fontSize: 11, color: '#9ca3af' }}>Admin control panel</div>
         </div>
         <div style={{ marginLeft: 20, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
           {[
-            ['dashboard', '📊 总览'],
-            ['users', `👥 用户 (${users.length})`],
-            ['pets', `🐕 宠物 (${pets.length})`],
-            ['activities', `📋 动态 (${activities.length})`],
-            ['broadcast', '📢 广播'],
+            ['dashboard', '📊 Overview'],
+            ['users', `👥 Users (${users.length})`],
+            ['pets', `🐕 Pets (${pets.length})`],
+            ['activities', `📋 Activity (${activities.length})`],
+            ['broadcast', '📢 Broadcast'],
             ['listings', `📦 Listings (${listings.length})`],
           ].map(([t, label]) => (
             <NavBtn key={t} label={label} active={step === t} onClick={() => switchTab(t)} />
@@ -407,7 +407,7 @@ export default function AdminPage() {
         <button onClick={logoutAdmin}
           style={{ marginLeft: 'auto', padding: '7px 16px', borderRadius: 100, border: '2px solid #f3e8ff',
                    background: 'white', color: '#9ca3af', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
-          退出
+          Log out
         </button>
       </div>
 
@@ -417,33 +417,33 @@ export default function AdminPage() {
         {step === 'dashboard' && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-              <h2 style={{ fontWeight: 900, color: '#1f0933' }}>📊 数据总览</h2>
+              <h2 style={{ fontWeight: 900, color: '#1f0933' }}>📊 Overview</h2>
               <RefreshBtn onClick={loadAll} />
             </div>
             <div style={{ display: 'flex', gap: 16, marginBottom: 24, flexWrap: 'wrap' }}>
-              <StatCard icon="👥" label="注册用户" value={stats?.totalUsers} color="#8b5cf6" />
-              <StatCard icon="🐾" label="宠物总数" value={stats?.totalPets} color="#f97316" />
-              <StatCard icon="🔥" label="今日活跃" value={stats?.activeToday} color="#10b981" />
-              <StatCard icon="❤️" label="平均健康" value={stats?.avgHealth != null ? `${stats.avgHealth}%` : '—'} color="#ec4899" />
-              <StatCard icon="📦" label="Listings 总数" value={stats?.totalListings} color="#f59e0b" />
-              <StatCard icon="💰" label="在售" value={stats?.saleListings} color="#10b981" />
-              <StatCard icon="🎁" label="免费转让" value={stats?.adoptionListings} color="#ec4899" />
+              <StatCard icon="👥" label="Registered users" value={stats?.totalUsers} color="#8b5cf6" />
+              <StatCard icon="🐾" label="Total pets" value={stats?.totalPets} color="#f97316" />
+              <StatCard icon="🔥" label="Active today" value={stats?.activeToday} color="#10b981" />
+              <StatCard icon="❤️" label="Average health" value={stats?.avgHealth != null ? `${stats.avgHealth}%` : '—'} color="#ec4899" />
+              <StatCard icon="📦" label="Total listings" value={stats?.totalListings} color="#f59e0b" />
+              <StatCard icon="💰" label="For sale" value={stats?.saleListings} color="#10b981" />
+              <StatCard icon="🎁" label="Free giveaway" value={stats?.adoptionListings} color="#ec4899" />
             </div>
             <div style={{ background: 'white', borderRadius: 20, padding: 24, boxShadow: '0 4px 20px rgba(244,114,182,0.1)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                <h3 style={{ fontWeight: 800, color: '#1f0933' }}>📋 最新动态 (最近 20 条)</h3>
+                <h3 style={{ fontWeight: 800, color: '#1f0933' }}>📋 Latest activity (last 20)</h3>
                 <button onClick={() => switchTab('activities')}
                   style={{ background: 'none', border: 'none', color: '#ec4899', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
-                  查看全部 →
+                  View all →
                 </button>
               </div>
               {loading ? (
-                <div style={{ textAlign: 'center', padding: 24, color: '#9ca3af' }}>⏳ 加载中...</div>
+                <div style={{ textAlign: 'center', padding: 24, color: '#9ca3af' }}>⏳ Loading...</div>
               ) : (
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                   <thead>
                     <tr style={{ borderBottom: '2px solid #f9f5ff' }}>
-                      {['时间', '用户', '宠物', '活动'].map(h => (
+                      {['Time', 'User', 'Pet', 'Activity'].map(h => (
                         <th key={h} style={{ textAlign: 'left', padding: '8px 12px', fontSize: 12, color: '#7c3aed', fontWeight: 800 }}>{h}</th>
                       ))}
                     </tr>
@@ -463,7 +463,7 @@ export default function AdminPage() {
                         </td>
                       </tr>
                     ))}
-                    {activities.length === 0 && <EmptyState msg="暂无动态记录" />}
+                    {activities.length === 0 && <EmptyState msg="No activity records yet" />}
                   </tbody>
                 </table>
               )}
@@ -475,23 +475,23 @@ export default function AdminPage() {
         {step === 'users' && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-              <h2 style={{ fontWeight: 900, color: '#1f0933' }}>👥 用户列表 ({filteredUsers.length} / {users.length})</h2>
+              <h2 style={{ fontWeight: 900, color: '#1f0933' }}>👥 Users ({filteredUsers.length} / {users.length})</h2>
               <RefreshBtn onClick={() => loadUsers(false)} />
             </div>
             <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
               <input value={userSearch} onChange={e => setUserSearch(e.target.value)}
-                placeholder="🔍 搜索邮箱或昵称..."
+                placeholder="🔍 Search email or nickname..."
                 style={{ padding: '8px 14px', borderRadius: 10, border: '2px solid #f3e8ff', fontSize: 13, outline: 'none', background: 'white', color: '#1f0933', minWidth: 220 }} />
               <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 700, color: '#7c3aed', cursor: 'pointer' }}>
                 <input type="checkbox" checked={hideDisabled} onChange={e => setHideDisabled(e.target.checked)} />
-                隐藏已禁用
+                Hide disabled
               </label>
             </div>
             <div style={{ background: 'white', borderRadius: 20, overflow: 'hidden', boxShadow: '0 4px 20px rgba(244,114,182,0.1)' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr style={{ background: '#f9f5ff', borderBottom: '2px solid #ede9fe' }}>
-                    {['用户信息', '状态', '注册时间', '最后登录', '操作'].map(h => (
+                    {['User', 'Status', 'Created', 'Last login', 'Actions'].map(h => (
                       <th key={h} style={{ textAlign: 'left', padding: '12px 16px', fontSize: 12, color: '#7c3aed', fontWeight: 800 }}>{h}</th>
                     ))}
                   </tr>
@@ -506,7 +506,7 @@ export default function AdminPage() {
                             {u.email?.[0]?.toUpperCase()}
                           </div>
                           <div>
-                            <div style={{ fontWeight: 700, color: '#1f0933', fontSize: 13 }}>{u.displayName || '未设置昵称'}</div>
+                            <div style={{ fontWeight: 700, color: '#1f0933', fontSize: 13 }}>{u.displayName || 'No nickname'}</div>
                             <div style={{ fontSize: 12, color: '#9ca3af' }}>{u.email}</div>
                           </div>
                         </div>
@@ -515,35 +515,35 @@ export default function AdminPage() {
                         <span style={{ padding: '3px 10px', borderRadius: 100, fontSize: 12, fontWeight: 700,
                                        background: u.disabled ? '#fef2f2' : '#f0fdf4',
                                        color: u.disabled ? '#ef4444' : '#10b981' }}>
-                          {u.disabled ? '❌ 已禁用' : '✅ 正常'}
+                          {u.disabled ? '❌ Disabled' : '✅ Active'}
                         </span>
                       </td>
                       <td style={{ padding: '12px 16px', fontSize: 12, color: '#6b7280', whiteSpace: 'nowrap' }}>
                         {new Date(u.createdAt).toLocaleDateString('zh-CN')}
                       </td>
                       <td style={{ padding: '12px 16px', fontSize: 12, color: '#6b7280', whiteSpace: 'nowrap' }}>
-                        {u.lastSignIn ? new Date(u.lastSignIn).toLocaleDateString('zh-CN') : '从未登录'}
+                        {u.lastSignIn ? new Date(u.lastSignIn).toLocaleDateString('zh-CN') : 'Never signed in'}
                       </td>
                       <td style={{ padding: '12px 16px' }}>
                         <div style={{ display: 'flex', gap: 6 }}>
-                          <ActionBtn label={u.disabled ? '启用' : '禁用'} icon={u.disabled ? '✅ ' : '🚫 '}
+                          <ActionBtn label={u.disabled ? 'Enable' : 'Disable'} icon={u.disabled ? '✅ ' : '🚫 '}
                             onClick={() => setConfirmModal({
-                              title: u.disabled ? '启用用户' : '禁用用户',
-                              message: `确定要${u.disabled ? '启用' : '禁用'}用户 ${u.email} 吗？${u.disabled ? '' : '禁用后该用户将无法登录。'}`,
-                              confirmLabel: u.disabled ? '启用' : '禁用',
+                              title: u.disabled ? 'Enable user' : 'Disable user',
+                              message: `Are you sure you want to ${u.disabled ? 'enable' : 'disable'} user ${u.email}?${u.disabled ? '' : ' Disabled users will not be able to sign in.'}`,
+                              confirmLabel: u.disabled ? 'Enable' : 'Disable',
                               onConfirm: () => disableUser(u.uid, u.disabled),
                             })} />
-                          <ActionBtn label="删除" icon="🗑️ " danger
+                          <ActionBtn label="Delete" icon="🗑️ " danger
                             onClick={() => setConfirmModal({
-                              title: '⚠️ 删除用户', danger: true,
-                              message: `确定删除用户 ${u.email} 吗？此操作不可恢复，将同时删除其宠物档案。`,
-                              confirmLabel: '确认删除', onConfirm: () => deleteUser(u.uid),
+                              title: '⚠️ Delete user', danger: true,
+                              message: `Are you sure you want to delete user ${u.email}? This cannot be undone and will also delete the pet profile.`,
+                              confirmLabel: 'Confirm delete', onConfirm: () => deleteUser(u.uid),
                             })} />
                         </div>
                       </td>
                     </tr>
                   ))}
-                  {filteredUsers.length === 0 && <EmptyState msg={userSearch ? '没有匹配的用户' : '暂无用户'} />}
+                  {filteredUsers.length === 0 && <EmptyState msg={userSearch ? 'No matching users' : 'No users yet'} />}
                 </tbody>
               </table>
             </div>
@@ -554,30 +554,30 @@ export default function AdminPage() {
         {step === 'pets' && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-              <h2 style={{ fontWeight: 900, color: '#1f0933' }}>🐕 宠物列表 ({filteredPets.length} / {pets.length})</h2>
+              <h2 style={{ fontWeight: 900, color: '#1f0933' }}>🐕 Pets ({filteredPets.length} / {pets.length})</h2>
               <RefreshBtn onClick={() => loadPets(false)} />
             </div>
             <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
               <input value={petSearch} onChange={e => setPetSearch(e.target.value)}
-                placeholder="🔍 搜索宠物名或主人邮箱..."
+                placeholder="🔍 Search pet name or owner email..."
                 style={{ padding: '8px 14px', borderRadius: 10, border: '2px solid #f3e8ff', fontSize: 13, outline: 'none', background: 'white', color: '#1f0933', minWidth: 220 }} />
               <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 700, color: '#7c3aed', cursor: 'pointer' }}>
                 <input type="checkbox" checked={showActiveOnly} onChange={e => setShowActiveOnly(e.target.checked)} />
-                仅显示今日活跃
+                Only show active today
               </label>
             </div>
             <div style={{ background: 'white', borderRadius: 20, overflow: 'hidden', boxShadow: '0 4px 20px rgba(244,114,182,0.1)' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr style={{ background: '#f9f5ff', borderBottom: '2px solid #ede9fe' }}>
-                    {['宠物', '品种', '年龄', '主人', '创建时间', '操作'].map(h => (
+                    {['Pet', 'Breed', 'Age', 'Owner', 'Created', 'Actions'].map(h => (
                       <th key={h} style={{ textAlign: 'left', padding: '12px 16px', fontSize: 12, color: '#7c3aed', fontWeight: 800 }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {filteredPets.map(p => {
-                    const age = p.birthday ? `${Math.floor((Date.now() - new Date(p.birthday).getTime()) / 86400000 / 365)}岁` : '—';
+                    const age = p.birthday ? `${Math.floor((Date.now() - new Date(p.birthday).getTime()) / 86400000 / 365)} yr` : '—';
                     return (
                       <tr key={p.uid} style={{ borderBottom: '1px solid #f9f5ff' }}>
                         <td style={{ padding: '12px 16px' }}>
@@ -588,10 +588,10 @@ export default function AdminPage() {
                             ) : null}
                             <div style={{ width: 34, height: 34, borderRadius: 10, background: 'linear-gradient(#fcd34d,#fb923c)',
                                          display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>🐕</div>
-                            <span style={{ fontWeight: 700, color: '#1f0933', fontSize: 14 }}>{p.name || '未命名'}</span>
+                            <span style={{ fontWeight: 700, color: '#1f0933', fontSize: 14 }}>{p.name || 'Unnamed'}</span>
                           </div>
                         </td>
-                        <td style={{ padding: '12px 16px', fontSize: 13, color: '#6b7280' }}>{p.breed || '未知'}</td>
+                        <td style={{ padding: '12px 16px', fontSize: 13, color: '#6b7280' }}>{p.breed || 'Unknown'}</td>
                         <td style={{ padding: '12px 16px', fontSize: 13, color: '#6b7280' }}>{age}</td>
                         <td style={{ padding: '12px 16px', fontSize: 12, color: '#9ca3af' }}>{p.email || '—'}</td>
                         <td style={{ padding: '12px 16px', fontSize: 12, color: '#6b7280', whiteSpace: 'nowrap' }}>
@@ -599,19 +599,19 @@ export default function AdminPage() {
                         </td>
                         <td style={{ padding: '12px 16px' }}>
                           <div style={{ display: 'flex', gap: 6 }}>
-                            <ActionBtn label="编辑" icon="✏️ " onClick={() => setEditingPet(p)} />
-                            <ActionBtn label="删除" icon="🗑️ " danger
+                            <ActionBtn label="Edit" icon="✏️ " onClick={() => setEditingPet(p)} />
+                            <ActionBtn label="Delete" icon="🗑️ " danger
                               onClick={() => setConfirmModal({
-                                title: '⚠️ 删除宠物', danger: true,
-                                message: `确定删除宠物「${p.name || '未命名'}」（属于 ${p.email || '未知用户'}）吗？此操作不可恢复。`,
-                                confirmLabel: '确认删除', onConfirm: () => deletePet(p),
+                                title: '⚠️ Delete pet', danger: true,
+                                message: `Are you sure you want to delete pet "${p.name || 'Unnamed'}" owned by ${p.email || 'Unknown user'}? This action cannot be undone.`,
+                                confirmLabel: 'Confirm delete', onConfirm: () => deletePet(p),
                               })} />
                           </div>
                         </td>
                       </tr>
                     );
                   })}
-                  {filteredPets.length === 0 && <EmptyState msg={(petSearch || showActiveOnly) ? '没有匹配的宠物' : '暂无宠物'} />}
+                  {filteredPets.length === 0 && <EmptyState msg={(petSearch || showActiveOnly) ? 'No matching pets' : 'No pets yet'} />}
                 </tbody>
               </table>
             </div>
@@ -622,14 +622,14 @@ export default function AdminPage() {
         {step === 'activities' && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-              <h2 style={{ fontWeight: 900, color: '#1f0933' }}>📋 活动记录 ({activities.length})</h2>
+              <h2 style={{ fontWeight: 900, color: '#1f0933' }}>📋 Activity log ({activities.length})</h2>
               <RefreshBtn onClick={loadActivities} />
             </div>
             <div style={{ background: 'white', borderRadius: 20, overflow: 'hidden', boxShadow: '0 4px 20px rgba(244,114,182,0.1)' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr style={{ background: '#f9f5ff', borderBottom: '2px solid #ede9fe' }}>
-                    {['时间', '用户', '宠物', '活动类型'].map(h => (
+                    {['Time', 'User', 'Pet', 'Activity type'].map(h => (
                       <th key={h} style={{ textAlign: 'left', padding: '12px 16px', fontSize: 12, color: '#7c3aed', fontWeight: 800 }}>{h}</th>
                     ))}
                   </tr>
@@ -649,7 +649,7 @@ export default function AdminPage() {
                       </td>
                     </tr>
                   ))}
-                  {activities.length === 0 && <EmptyState msg="暂无活动记录" />}
+                  {activities.length === 0 && <EmptyState msg="No activity records yet" />}
                 </tbody>
               </table>
             </div>
@@ -659,39 +659,39 @@ export default function AdminPage() {
         {/* ── Broadcast ─────────────────────────────────────────────────────── */}
         {step === 'broadcast' && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-            <h2 style={{ fontWeight: 900, color: '#1f0933', marginBottom: 20 }}>📢 广播通知</h2>
+            <h2 style={{ fontWeight: 900, color: '#1f0933', marginBottom: 20 }}>📢 Broadcast</h2>
             <div style={{ background: 'white', borderRadius: 20, padding: 32, boxShadow: '0 4px 20px rgba(244,114,182,0.1)', maxWidth: 560 }}>
               <div style={{ background: '#f0fdf4', border: '2px solid #bbf7d0', borderRadius: 12, padding: '12px 16px', marginBottom: 24, fontSize: 13, color: '#166534', lineHeight: 1.6 }}>
-                💡 广播通知会存入数据库，可供客户端展示为系统消息。Firebase Cloud Messaging 推送功能需另行配置。
+                💡 Broadcast messages are stored in the database and can be shown to clients as system messages. Firebase Cloud Messaging push still needs separate setup.
               </div>
               <div style={{ marginBottom: 16 }}>
-                <div style={{ fontWeight: 700, color: '#1f0933', marginBottom: 6, fontSize: 14 }}>通知标题</div>
+                <div style={{ fontWeight: 700, color: '#1f0933', marginBottom: 6, fontSize: 14 }}>Title</div>
                 <input value={broadcast.title} onChange={e => setBroadcast(b => ({ ...b, title: e.target.value }))}
-                  placeholder="例如：系统升级通知"
+                  placeholder="e.g. Maintenance notice"
                   style={{ width: '100%', padding: '12px 16px', borderRadius: 12, border: '2px solid #f3e8ff',
                            fontSize: 14, outline: 'none', boxSizing: 'border-box', color: '#1f0933', fontFamily: 'inherit' }} />
               </div>
               <div style={{ marginBottom: 20 }}>
-                <div style={{ fontWeight: 700, color: '#1f0933', marginBottom: 6, fontSize: 14 }}>通知内容</div>
+                <div style={{ fontWeight: 700, color: '#1f0933', marginBottom: 6, fontSize: 14 }}>Message</div>
                 <textarea value={broadcast.body} onChange={e => setBroadcast(b => ({ ...b, body: e.target.value }))}
-                  placeholder="输入通知内容..." rows={5}
+                  placeholder="Enter message..." rows={5}
                   style={{ width: '100%', padding: '12px 16px', borderRadius: 12, border: '2px solid #f3e8ff',
                            fontSize: 14, outline: 'none', resize: 'vertical', boxSizing: 'border-box', color: '#1f0933', fontFamily: 'inherit' }} />
               </div>
               <button onClick={async () => {
                 const { title, body } = broadcast;
-                if (!title?.trim() || !body?.trim()) { toast.error('请填写标题和内容'); return; }
+                if (!title?.trim() || !body?.trim()) { toast.error('Please enter a title and message'); return; }
                 try {
                   await adminFetch('/broadcast', { method: 'POST', body: JSON.stringify({ title, body }) });
-                  toast.success('📢 广播发送成功');
+                  toast.success('📢 Broadcast sent');
                   setBroadcast({ title: '', body: '' });
-                } catch (e) { toast.error(`发送失败: ${e.message}`); }
+                } catch (e) { toast.error(`Send failed: ${e.message}`); }
               }}
                 style={{ padding: '12px 28px', borderRadius: 12, border: 'none',
                          background: 'linear-gradient(135deg,#8b5cf6,#a78bfa)',
                          color: 'white', fontWeight: 800, fontSize: 14, cursor: 'pointer',
                          boxShadow: '0 4px 14px rgba(139,92,246,0.3)' }}>
-                📢 发送广播
+                📢 Send broadcast
               </button>
             </div>
           </motion.div>
@@ -706,18 +706,18 @@ export default function AdminPage() {
             </div>
             <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
               <div style={{ background: 'white', borderRadius: 12, padding: '10px 20px', display: 'flex', gap: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
-                <span style={{ fontSize: 13, color: '#6b7280' }}>💰 <strong style={{ color: '#1f0933' }}>{listings.filter(l => l.listingType === 'sale').length}</strong> 在售</span>
-                <span style={{ fontSize: 13, color: '#6b7280' }}>🎁 <strong style={{ color: '#1f0933' }}>{listings.filter(l => l.listingType === 'free').length}</strong> 免费转让</span>
-                <span style={{ fontSize: 13, color: '#6b7280' }}>🐕 <strong style={{ color: '#1f0933' }}>{listings.filter(l => l.category === 'dog').length}</strong> 狗粮</span>
-                <span style={{ fontSize: 13, color: '#6b7280' }}>🐈 <strong style={{ color: '#1f0933' }}>{listings.filter(l => l.category === 'cat').length}</strong> 猫粮</span>
-                <span style={{ fontSize: 13, color: '#6b7280' }}>📦 <strong style={{ color: '#1f0933' }}>{listings.filter(l => l.category === 'pet').length}</strong> 用品</span>
+                <span style={{ fontSize: 13, color: '#6b7280' }}>💰 <strong style={{ color: '#1f0933' }}>{listings.filter(l => l.listingType === 'sale').length}</strong> For sale</span>
+                <span style={{ fontSize: 13, color: '#6b7280' }}>🎁 <strong style={{ color: '#1f0933' }}>{listings.filter(l => l.listingType === 'free').length}</strong> Free giveaway</span>
+                <span style={{ fontSize: 13, color: '#6b7280' }}>🐕 <strong style={{ color: '#1f0933' }}>{listings.filter(l => l.category === 'dog').length}</strong> Dog food</span>
+                <span style={{ fontSize: 13, color: '#6b7280' }}>🐈 <strong style={{ color: '#1f0933' }}>{listings.filter(l => l.category === 'cat').length}</strong> Cat food</span>
+                <span style={{ fontSize: 13, color: '#6b7280' }}>📦 <strong style={{ color: '#1f0933' }}>{listings.filter(l => l.category === 'pet').length}</strong> Supplies</span>
               </div>
             </div>
             <div style={{ background: 'white', borderRadius: 20, overflow: 'hidden', boxShadow: '0 4px 20px rgba(244,114,182,0.1)' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr style={{ background: '#f9f5ff', borderBottom: '2px solid #ede9fe' }}>
-                    {['商品名称', '类型', '分类', '价格', '卖家', '操作'].map(h => (
+                    {['Title', 'Type', 'Category', 'Price', 'Seller', 'Actions'].map(h => (
                       <th key={h} style={{ textAlign: 'left', padding: '12px 16px', fontSize: 12, color: '#7c3aed', fontWeight: 800 }}>{h}</th>
                     ))}
                   </tr>
@@ -725,7 +725,7 @@ export default function AdminPage() {
                 <tbody>
                   {listings.length === 0 ? (
                     <tr><td colSpan={99} style={{ padding: 40, textAlign: 'center', color: '#9ca3af', fontSize: 14 }}>
-                      {loading ? '⏳ 加载中...' : '暂无 listings'}
+                      {loading ? '⏳ Loading...' : 'No listings yet'}
                     </td></tr>
                   ) : listings.map(l => (
                     <tr key={l.id} style={{ borderBottom: '1px solid #f9f5ff' }}>
@@ -737,21 +737,21 @@ export default function AdminPage() {
                         <span style={{ padding: '3px 10px', borderRadius: 100, fontSize: 12, fontWeight: 700,
                           background: l.listingType === 'sale' ? '#dcfce7' : '#fce7f3',
                           color: l.listingType === 'sale' ? '#166534' : '#9d174d' }}>
-                          {l.listingType === 'sale' ? '💰 在售' : '🎁 免费'}
+                          {l.listingType === 'sale' ? '💰 For sale' : '🎁 Free'}
                         </span>
                       </td>
                       <td style={{ padding: '12px 16px', fontSize: 12, color: '#6b7280', textTransform: 'capitalize' }}>
-                        {{ dog: '🐕 狗粮', cat: '🐈 猫粮', pet: '📦 用品' }[l.category] || l.category}
+                        {{ dog: '🐕 Dog food', cat: '🐈 Cat food', pet: '📦 Supplies' }[l.category] || l.category}
                       </td>
                       <td style={{ padding: '12px 16px', fontSize: 13, fontWeight: 700, color: l.price === 0 ? '#10b981' : '#1f0933' }}>
-                        {l.price === 0 ? '免费' : `NZD ${l.price}`}
+                        {l.price === 0 ? 'Free' : `NZD ${l.price}`}
                       </td>
                       <td style={{ padding: '12px 16px', fontSize: 12, color: '#6b7280' }}>{l.sellerName}</td>
                       <td style={{ padding: '12px 16px' }}>
-                        <ActionBtn label="删除" danger icon="🗑️ " onClick={() => setConfirmModal({
-                          title: '删除 Listing',
-                          message: `确定要删除「${l.title}」吗？此操作不可恢复。`,
-                          confirmLabel: '确认删除',
+                        <ActionBtn label="Delete" danger icon="🗑️ " onClick={() => setConfirmModal({
+                          title: 'Delete listing',
+                          message: `Are you sure you want to delete "${l.title}"? This action cannot be undone.`,
+                          confirmLabel: 'Confirm delete',
                           danger: true,
                           onConfirm: () => deleteListing(l),
                         })} />

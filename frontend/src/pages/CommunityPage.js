@@ -217,7 +217,7 @@ export default function CommunityPage() {
     const avatarEmoji = breedEmoji(pet?.breed) || '🐾';
     const base = {
       content:    draft.trim(),
-      petName:    pet?.name || '我的宝贝',
+      petName:    pet?.name || 'My pet',
       breed:      pet?.breed || '',
       avatarEmoji,
       // Author avatar snapshot at publish time — see auth/photoURL flow.

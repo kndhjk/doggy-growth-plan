@@ -85,12 +85,12 @@ Each dimension decays automatically (half-life 6–48h depending on type). When 
 
 Examples of good replies:
 
-Q: "我家狗刚吃了一颗葡萄，紧急吗？"
-A: "🚨 是的，紧急！葡萄/葡萄干对狗有肾毒性，即使一颗也可能致急性肾衰。
-- 立即联系兽医或宠物急诊（24h 内最关键）
-- 观察症状：呕吐、嗜睡、尿少、食欲骤减
-- 兽医可能催吐、活性炭、IV 输液
-💡 不要等症状出现再去——已经摄入就直接送医。"
+Q: "My dog just ate a grape. Is it urgent?"
+A: "🚨 Yes, this is urgent. Grapes and raisins can be toxic to dogs even in small amounts.
+- Contact a vet or emergency clinic immediately
+- Watch for vomiting, lethargy, reduced urination, or sudden appetite loss
+- A vet may recommend inducing vomiting, activated charcoal, or IV fluids
+💡 Do not wait for symptoms. If ingestion already happened, go now."
 
 Q: "How much should I feed today?"
 A: "Depends on weight, age, activity. Rough guide for adult dogs:
@@ -206,11 +206,39 @@ const QUICK = [
 ];
 
 const FALLBACK = [
-  p => `关于${p?.name||'你的狗狗'}，我来解答！\n\n一般成年犬每天喂食2次，幼犬3-4次。具体喂食量根据体重和品种而定，建议参考宠物食品包装上的说明。\n\n如有疑虑，请咨询当地兽医 🏥`,
-  p => `${p?.breed||'该品种'}每天建议运动量：\n\n• 散步：30-60分钟\n• 玩耍：15-30分钟\n\n幼犬不宜过度运动，老年犬适当减少。规律运动有助于维持体重和心理健康 🐾`,
-  () => `狗狗舔爪子可能原因：\n\n1. 过敏（食物/环境）\n2. 爪子受伤或有异物\n3. 焦虑或无聊\n4. 皮肤感染\n\n如频繁且伴随红肿，建议及时就医 🏥`,
-  () => `判断狗狗发烧：\n\n• 正常体温 38-39.2°C\n• 精神萎靡、食欲下降\n• 耳朵和爪垫发热\n\n体温超过39.5°C请立即就医 ⚠️`,
-  () => `洗澡频率建议：\n\n• 短毛犬：每月1-2次\n• 长毛犬：每2-3周\n• 油性皮肤：每周\n\n不宜过频，会破坏皮肤天然油脂。每次洗完彻底吹干 🛁`,
+  p => `I can help with ${p?.name || 'your dog'}!
+
+Most adult dogs eat twice a day, while puppies usually eat 3-4 times. The right amount depends on weight and breed, so check the feeding guide on your pet food packaging.
+
+If you are unsure, please contact a local vet 🏥`,
+  p => `${p?.breed || 'This breed'} usually does well with:
+
+• Walks: 30-60 minutes
+• Play: 15-30 minutes
+
+Puppies should avoid over-exercising, and senior dogs may need less. Regular exercise helps with weight and mental wellbeing 🐾`,
+  () => `Possible reasons dogs lick their paws:
+
+1. Allergies (food or environment)
+2. Paw injury or something stuck
+3. Anxiety or boredom
+4. Skin infection
+
+If it is frequent or comes with redness and swelling, see a vet promptly 🏥`,
+  () => `Signs your dog may have a fever:
+
+• Normal temperature is about 38-39.2°C
+• Low energy or reduced appetite
+• Warm ears or paw pads
+
+If the temperature is above 39.5°C, seek veterinary care right away ⚠️`,
+  () => `Suggested bathing frequency:
+
+• Short-haired dogs: 1-2 times a month
+• Long-haired dogs: every 2-3 weeks
+• Oily skin: about once a week
+
+Bathing too often can strip natural skin oils. Dry thoroughly after each bath 🛁`,
 ];
 
 let fi = 0;

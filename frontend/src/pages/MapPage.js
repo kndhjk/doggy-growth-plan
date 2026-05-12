@@ -16,15 +16,15 @@ function pushLocalCheckin(entry) {
   list.unshift(entry);
   localStorage.setItem(LOCAL_CHECKIN_KEY, JSON.stringify(list.slice(0, 50)));
 }
-function formatRelativeTime(ts) {
+function formatRelativeTime(ts, lang = 'en', t = (k) => k) {
   if (!ts) return '';
   const d = ts.toDate ? ts.toDate() : new Date(ts);
   const diff = (Date.now() - d.getTime()) / 1000;
-  if (diff < 60) return '刚刚';
-  if (diff < 3600) return `${Math.floor(diff/60)} 分钟前`;
-  if (diff < 86400) return `${Math.floor(diff/3600)} 小时前`;
-  if (diff < 604800) return `${Math.floor(diff/86400)} 天前`;
-  return d.toLocaleDateString('zh-CN');
+  if (diff < 60) return lang === 'zh' ? '刚刚' : 'Just now';
+  if (diff < 3600) return lang === 'zh' ? `${Math.floor(diff/60)} 分钟前` : `${Math.floor(diff/60)} min ago`;
+  if (diff < 86400) return lang === 'zh' ? `${Math.floor(diff/3600)} 小时前` : `${Math.floor(diff/3600)} hr ago`;
+  if (diff < 604800) return lang === 'zh' ? `${Math.floor(diff/86400)} 天前` : `${Math.floor(diff/86400)} day ago`;
+  return d.toLocaleDateString(lang === 'zh' ? 'zh-CN' : 'en-NZ');
 }
 
 const TYPES = [
@@ -40,17 +40,17 @@ const AUCKLAND = { lat: -36.8485, lng: 174.7633 };
 
 const DEMO = {
   park: [
-    { place_id:'p1', name:'中央公园宠物区', vicinity:'示例路 123号', rating:4.8, isOpen:true,  geometry:{ lat: AUCKLAND.lat+0.004, lng: AUCKLAND.lng+0.003 } },
-    { place_id:'p2', name:'绿地狗狗乐园',   vicinity:'示例路 456号', rating:4.5, isOpen:true,  geometry:{ lat: AUCKLAND.lat-0.003, lng: AUCKLAND.lng+0.005 } },
-    { place_id:'p3', name:'河滨宠物公园',   vicinity:'示例路 789号', rating:4.2, isOpen:false, geometry:{ lat: AUCKLAND.lat+0.005, lng: AUCKLAND.lng-0.004 } },
+    { place_id:'p1', name:'Central Park Pet Zone', vicinity:'123 Sample Road', rating:4.8, isOpen:true,  geometry:{ lat: AUCKLAND.lat+0.004, lng: AUCKLAND.lng+0.003 } },
+    { place_id:'p2', name:'Greenfield Dog Park',   vicinity:'456 Sample Road', rating:4.5, isOpen:true,  geometry:{ lat: AUCKLAND.lat-0.003, lng: AUCKLAND.lng+0.005 } },
+    { place_id:'p3', name:'Riverside Pet Park',   vicinity:'789 Sample Road', rating:4.2, isOpen:false, geometry:{ lat: AUCKLAND.lat+0.005, lng: AUCKLAND.lng-0.004 } },
   ],
   vet: [
-    { place_id:'v1', name:'爱宠动物医院',   vicinity:'医院路 11号',  rating:4.9, isOpen:true,  geometry:{ lat: AUCKLAND.lat+0.002, lng: AUCKLAND.lng-0.003 } },
-    { place_id:'v2', name:'萌宠24小时诊所', vicinity:'医院路 22号',  rating:4.6, isOpen:true,  geometry:{ lat: AUCKLAND.lat-0.004, lng: AUCKLAND.lng-0.002 } },
+    { place_id:'v1', name:'CarePaws Animal Hospital',   vicinity:'11 Clinic Road',  rating:4.9, isOpen:true,  geometry:{ lat: AUCKLAND.lat+0.002, lng: AUCKLAND.lng-0.003 } },
+    { place_id:'v2', name:'Happy Paws 24h Clinic', vicinity:'22 Clinic Road',  rating:4.6, isOpen:true,  geometry:{ lat: AUCKLAND.lat-0.004, lng: AUCKLAND.lng-0.002 } },
   ],
   petstore: [
-    { place_id:'s1', name:'宠爱生活馆',     vicinity:'商业街 33号',  rating:4.7, isOpen:true,  geometry:{ lat: AUCKLAND.lat+0.003, lng: AUCKLAND.lng+0.001 } },
-    { place_id:'s2', name:'毛孩子超市',     vicinity:'商业街 44号',  rating:4.4, isOpen:false, geometry:{ lat: AUCKLAND.lat-0.002, lng: AUCKLAND.lng+0.004 } },
+    { place_id:'s1', name:'Pet Life Store',     vicinity:'33 Market Street',  rating:4.7, isOpen:true,  geometry:{ lat: AUCKLAND.lat+0.003, lng: AUCKLAND.lng+0.001 } },
+    { place_id:'s2', name:'Fur Friends Market',     vicinity:'44 Market Street',  rating:4.4, isOpen:false, geometry:{ lat: AUCKLAND.lat-0.002, lng: AUCKLAND.lng+0.004 } },
   ],
 };
 
@@ -92,7 +92,7 @@ const PINK_MAP_STYLE = [
 ];
 
 export default function MapPage() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const { currentUser } = useAuth();
   const [type,  setType]  = useState('park');
   // Start with empty places + busy=true so the user sees a loading state
@@ -207,7 +207,7 @@ export default function MapPage() {
     userMarkerRef.current = new window.google.maps.Marker({
       position: loc,
       map: mapRef.current,
-      title: '你在这里',
+      title: lang === 'zh' ? '你在这里' : 'You are here',
       icon: {
         path: window.google.maps.SymbolPath.CIRCLE,
         scale: 8,
@@ -606,7 +606,7 @@ export default function MapPage() {
                             {h.placeName}
                           </div>
                           <div style={{ fontSize:11, color:'#9ca3af', marginTop:2 }}>
-                            {formatRelativeTime(h.createdAt)}
+                            {formatRelativeTime(h.createdAt, lang, t)}
                           </div>
                         </div>
                         <a href={dirUrl} target="_blank" rel="noopener"

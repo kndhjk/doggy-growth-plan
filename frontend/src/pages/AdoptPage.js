@@ -474,7 +474,7 @@ export default function AdoptPage() {
 
   const handleAdoptedClose = () => {
     setAdoptedPet(null);
-    toast.success(`${adoptedPet?.name} 已添加到您的宠物列表！`, { icon: '🐾' });
+    toast.success(t('adopt.success.msg', { name: adoptedPet?.name || 'Your new pet' }), { icon: '🐾' });
   };
 
   return (
