@@ -3,10 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useI18n } from '../i18n/I18nContext';
 import { useAuth } from '../context/AuthContext';
-import {
-  collection, query, orderBy, onSnapshot,
-} from 'firebase/firestore';
-import { db } from '../services/firebase';
+import { fetchConversations } from '../services/api';
 
 const LOCAL_CONVERSATIONS_KEY = 'gg_local_conversations';
 const readLocalConversations = () => {
@@ -59,15 +56,17 @@ export default function MessagesPage() {
         document.removeEventListener('visibilitychange', onVisible);
       };
     }
-    const q = query(collection(db, 'conversations'), orderBy('updatedAt', 'desc'));
-    const unsub = onSnapshot(q, snap => {
-      const convs = snap.docs
-        .map(d => ({ id: d.id, ...d.data() }))
-        .filter(c => c.participants && currentUser.uid in c.participants);
-      setConversations(convs);
-      setLoading(false);
-    });
-    return unsub;
+    let cancelled = false;
+    const refresh = () => {
+      fetchConversations(currentUser.uid)
+        .then(convs => { if (!cancelled) { setConversations(convs); setLoading(false); } })
+        .catch(() => { if (!cancelled) setLoading(false); });
+    };
+    refresh();
+    const timer = setInterval(refresh, 4000);
+    const onFocus = () => refresh();
+    window.addEventListener('focus', onFocus);
+    return () => { cancelled = true; clearInterval(timer); window.removeEventListener('focus', onFocus); };
   }, [currentUser, isLocal]);
 
   const getOther = (conv) => {

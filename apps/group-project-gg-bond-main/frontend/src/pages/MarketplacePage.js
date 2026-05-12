@@ -5,14 +5,9 @@ import toast from 'react-hot-toast';
 import { useI18n } from '../i18n/I18nContext';
 import { translateContent } from '../utils/translate';
 import { useAuth } from '../context/AuthContext';
-import {
-  collection, doc, addDoc, getDocs, getDoc, deleteDoc,
-  query, where, orderBy, onSnapshot, serverTimestamp, updateDoc,
-  arrayUnion, arrayRemove, increment,
-} from 'firebase/firestore';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { fetchMarketplace } from '../services/api';
-import { db, storage } from '../services/firebase';
+import { fetchMarketplace, createListing as createListingApi, fetchConversations } from '../services/api';
+import { storage } from '../services/firebase';
 
 /* ──────────────────────────────────────────────────────────────────────────
    Helper
@@ -127,7 +122,7 @@ function CreateListingModal({ onClose, onCreated }) {
       });
       const imageUrls = await Promise.all(uploadPromises);
 
-      await addDoc(collection(db, 'marketplace'), {
+      await createListingApi({
         title: form.title.trim(),
         description: form.description.trim(),
         category: form.category,
@@ -138,8 +133,6 @@ function CreateListingModal({ onClose, onCreated }) {
         sellerId: currentUser.uid,
         sellerName: currentUser.displayName || currentUser.email || t('marketplace.anonymousTrader'),
         sellerEmail: currentUser.email || '',
-        createdAt: serverTimestamp(),
-        status: 'active',
       });
 
       toast.success(t('marketplace.createSuccess'));
@@ -179,7 +172,7 @@ function CreateListingModal({ onClose, onCreated }) {
         <div style={{ display: 'flex', gap: 8, marginBottom: 20, background: '#fdf2f8', borderRadius: 12, padding: 4 }}>
           {[
             { key: 'sale', label: t('marketplace.forSale'), color: '#f59e0b' },
-            { key: 'adoption', label: t('marketplace.forFree'), color: '#10b981' },
+            { key: 'free', label: t('marketplace.forFree'), color: '#10b981' },
           ].map(opt => (
             <button
               key={opt.key}
@@ -636,23 +629,25 @@ export default function MarketplacePage() {
       };
     }
 
-    const q = query(
-      collection(db, 'conversations'),
-    );
-    const unsub = onSnapshot(q, snap => {
-      let count = 0;
-      snap.docs.forEach(d => {
-        const conv = d.data();
-        if (!conv.participants || !(currentUser.uid in conv.participants)) return;
-        const otherUid = Object.keys(conv.participants || {}).find(k => k !== currentUser.uid);
-        if (otherUid) {
-          const lastMsg = conv.lastMessage;
-          if (lastMsg && !lastMsg.read && lastMsg.senderId !== currentUser.uid) count++;
-        }
-      });
-      setUnreadCount(count);
-    });
-    return unsub;
+    let cancelled = false;
+    const refresh = () => {
+      fetchConversations(currentUser.uid)
+        .then(convs => {
+          if (cancelled) return;
+          let count = 0;
+          convs.forEach(conv => {
+            const lastMsg = conv.lastMessage;
+            if (lastMsg && !lastMsg.read && lastMsg.senderId !== currentUser.uid) count++;
+          });
+          setUnreadCount(count);
+        })
+        .catch(() => {});
+    };
+    refresh();
+    const timer = setInterval(refresh, 4000);
+    const onFocus = () => refresh();
+    window.addEventListener('focus', onFocus);
+    return () => { cancelled = true; clearInterval(timer); window.removeEventListener('focus', onFocus); };
   }, [currentUser, isLocal]);
 
   // Translate listings when language changes

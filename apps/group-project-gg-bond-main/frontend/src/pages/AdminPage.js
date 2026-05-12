@@ -707,7 +707,7 @@ export default function AdminPage() {
             <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
               <div style={{ background: 'white', borderRadius: 12, padding: '10px 20px', display: 'flex', gap: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
                 <span style={{ fontSize: 13, color: '#6b7280' }}>💰 <strong style={{ color: '#1f0933' }}>{listings.filter(l => l.listingType === 'sale').length}</strong> 在售</span>
-                <span style={{ fontSize: 13, color: '#6b7280' }}>🎁 <strong style={{ color: '#1f0933' }}>{listings.filter(l => l.listingType === 'adoption').length}</strong> 免费转让</span>
+                <span style={{ fontSize: 13, color: '#6b7280' }}>🎁 <strong style={{ color: '#1f0933' }}>{listings.filter(l => l.listingType === 'free').length}</strong> 免费转让</span>
                 <span style={{ fontSize: 13, color: '#6b7280' }}>🐕 <strong style={{ color: '#1f0933' }}>{listings.filter(l => l.category === 'dog').length}</strong> 狗粮</span>
                 <span style={{ fontSize: 13, color: '#6b7280' }}>🐈 <strong style={{ color: '#1f0933' }}>{listings.filter(l => l.category === 'cat').length}</strong> 猫粮</span>
                 <span style={{ fontSize: 13, color: '#6b7280' }}>📦 <strong style={{ color: '#1f0933' }}>{listings.filter(l => l.category === 'pet').length}</strong> 用品</span>

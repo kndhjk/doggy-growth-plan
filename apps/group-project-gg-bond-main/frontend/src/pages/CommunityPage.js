@@ -1,9 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import {
-  collection, query, orderBy, limit, onSnapshot,
-  addDoc, doc, updateDoc, increment, serverTimestamp,
-} from 'firebase/firestore';
-import { db } from '../services/firebase';
+import { fetchCommunityPosts, createCommunityPost, likeCommunityPost, fetchComments } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { usePet } from '../context/PetContext';
 import { breedEmoji } from '../data/breeds';
@@ -75,13 +71,11 @@ function Post({ p, liked, onLike, t }) {
       return () => window.removeEventListener('storage', onStorage);
     }
     if (!p.id) return;
-    try {
-      const qComments = query(collection(db, 'community_posts', p.id, 'comments'));
-      const unsub = onSnapshot(qComments,
-        snap => setActualCount(snap.size),
-        () => { /* permission denied — leave actualCount null, fall back to p.commentCount */ });
-      return unsub;
-    } catch { /* firestore unavailable */ }
+    let cancelled = false;
+    const refresh = () => fetchComments(p.id).then(list => { if (!cancelled) setActualCount(list.length); }).catch(() => {});
+    refresh();
+    const timer = setInterval(refresh, 5000);
+    return () => { cancelled = true; clearInterval(timer); };
   }, [p.id, isLocalPost]);
 
   const displayCount = actualCount != null ? actualCount : (p.commentCount || 0);
@@ -205,17 +199,13 @@ export default function CommunityPage() {
       return;
     }
     if (!currentUser) return;
-    try {
-      const q = query(collection(db, 'community_posts'),
-                      orderBy('createdAt', 'desc'), limit(30));
-      const unsub = onSnapshot(q, snap => {
-        setPosts(snap.docs.map(d => ({
-          id: d.id, ...d.data(),
-          createdAt: d.data().createdAt?.toDate?.() || null,
-        })));
-      }, () => {/* fall through silently — no posts shown */});
-      return unsub;
-    } catch { /* firestore not available — empty feed */ }
+    let cancelled = false;
+    const refresh = () => fetchCommunityPosts().then(data => { if (!cancelled) setPosts(data); }).catch(() => {});
+    refresh();
+    const timer = setInterval(refresh, 5000);
+    const onFocus = () => refresh();
+    window.addEventListener('focus', onFocus);
+    return () => { cancelled = true; clearInterval(timer); window.removeEventListener('focus', onFocus); };
   }, [currentUser, isLocal]);
 
   const publish = async () => {
@@ -240,8 +230,9 @@ export default function CommunityPage() {
       setPosts(next);
     } else {
       try {
-        await addDoc(collection(db, 'community_posts'), {
-          ...base, authorUid: currentUser.uid, createdAt: serverTimestamp(),
+        await createCommunityPost({
+          ...base,
+          authorUid: currentUser.uid,
         });
       } catch {
         toast.error(t('community.toast.publishFail'));
@@ -269,7 +260,7 @@ export default function CommunityPage() {
 
     setPosts(prev => bumpLike(prev));
     try {
-      await updateDoc(doc(db, 'community_posts', id), { likes: increment(1) });
+      await likeCommunityPost(id);
     } catch { /* optimistic UI already updated; ignore */ }
   };
 

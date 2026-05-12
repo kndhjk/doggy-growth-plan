@@ -4,11 +4,7 @@ import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { useI18n } from '../i18n/I18nContext';
 import { useAuth } from '../context/AuthContext';
-import {
-  collection, addDoc, query, orderBy, onSnapshot,
-  updateDoc, doc, serverTimestamp, setDoc,
-} from 'firebase/firestore';
-import { db } from '../services/firebase';
+import { fetchMessages, sendMessage as sendMessageApi, markConversationRead } from '../services/api';
 
 const LOCAL_CONVERSATIONS_KEY = 'gg_local_conversations';
 const localMessagesKey = (conversationId) => `gg_local_messages_${conversationId}`;
@@ -58,17 +54,23 @@ export default function ChatPage() {
       }, 100);
       return;
     }
-    const q = query(
-      collection(db, 'conversations', conversationId, 'messages'),
-      orderBy('createdAt', 'asc'),
-    );
-    const unsub = onSnapshot(q, snap => {
-      setMessages(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-      setTimeout(() => {
-        bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-      }, 100);
-    });
-    return unsub;
+    let cancelled = false;
+    const refresh = () => {
+      fetchMessages(conversationId)
+        .then(list => {
+          if (cancelled) return;
+          setMessages(list);
+          setTimeout(() => {
+            bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+          }, 100);
+        })
+        .catch(() => {});
+    };
+    refresh();
+    const timer = setInterval(refresh, 3000);
+    const onFocus = () => refresh();
+    window.addEventListener('focus', onFocus);
+    return () => { cancelled = true; clearInterval(timer); window.removeEventListener('focus', onFocus); };
   }, [conversationId, currentUser, isLocal]);
 
   // Mark messages as read
@@ -102,14 +104,7 @@ export default function ChatPage() {
       return;
     }
 
-    unread.forEach(m => {
-      updateDoc(doc(db, 'conversations', conversationId, 'messages', m.id), { read: true }).catch(() => {});
-    });
-    if (shouldMarkLastMessageRead) {
-      updateDoc(doc(db, 'conversations', conversationId), {
-        [`lastMessage.read`]: true,
-      }).catch(() => {});
-    }
+    markConversationRead(conversationId, currentUser.uid).catch(() => {});
   }, [messages, currentUser, conversationId, isLocal]);
 
   const sendMessage = async () => {
@@ -143,22 +138,16 @@ export default function ChatPage() {
         return;
       }
 
-      const msg = {
+      await sendMessageApi(conversationId, {
         senderId: currentUser.uid,
+        senderName: currentUser.displayName || currentUser.email || 'Me',
         text: text.trim(),
-        createdAt: serverTimestamp(),
-        read: false,
-      };
-      await addDoc(collection(db, 'conversations', conversationId, 'messages'), msg);
-      await setDoc(doc(db, 'conversations', conversationId), {
-        lastMessage: msg,
-        updatedAt: serverTimestamp(),
         participants: {
           [currentUser.uid]: { name: currentUser.displayName || currentUser.email || 'Me', uid: currentUser.uid },
           ...(otherUid ? { [otherUid]: { name: otherName, uid: otherUid } } : {}),
         },
         otherUid,
-      }, { merge: true });
+      });
       setText('');
       setTimeout(() => inputRef.current?.focus(), 50);
     } catch (err) {
