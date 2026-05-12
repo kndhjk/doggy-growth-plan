@@ -31,14 +31,6 @@ function categoryLabel(category, t) {
   return t('marketplace.catPet');
 }
 
-const LOCAL_LISTINGS_KEY = 'gg_local_marketplace_listings';
-const readLocalListings = () => {
-  try { return JSON.parse(localStorage.getItem(LOCAL_LISTINGS_KEY) || '[]'); }
-  catch { return []; }
-};
-const writeLocalListings = (items) => {
-  try { localStorage.setItem(LOCAL_LISTINGS_KEY, JSON.stringify(items)); } catch {}
-};
 const LOCAL_CONVERSATIONS_KEY = 'gg_local_conversations';
 const readLocalConversations = () => {
   try { return JSON.parse(localStorage.getItem(LOCAL_CONVERSATIONS_KEY) || '[]'); }
@@ -83,44 +75,25 @@ function CreateListingModal({ onClose, onCreated }) {
     if (images.length === 0) return toast.error(t('marketplace.errorPhotoRequired'));
     setUploading(true);
     try {
+      let imageUrls;
       if (currentUser?._local) {
-        const imageUrls = await Promise.all(images.map(fileToDataUrl));
-        const next = [{
-          id: `local-market-${Date.now()}`,
-          title: form.title.trim(),
-          description: form.description.trim(),
-          category: form.category,
-          price: form.listingType === 'free' ? 0 : Number(form.price),
-          location: form.location.trim(),
-          listingType: form.listingType,
-          images: imageUrls,
-          sellerId: currentUser.uid,
-          sellerName: currentUser.displayName || currentUser.email || t('marketplace.anonymousTrader'),
-          sellerEmail: currentUser.email || '',
-          createdAt: new Date().toISOString(),
-          status: 'active',
-        }, ...readLocalListings()];
-        writeLocalListings(next);
-        toast.success(t('marketplace.createSuccess'));
-        onCreated();
-        onClose();
-        return;
-      }
-
-      // Upload images to Firebase Storage
-      const uploadPromises = images.map((file, i) => {
-        return new Promise((resolve, reject) => {
-          const storageRef = ref(storage, `marketplace/${currentUser.uid}/${Date.now()}_${i}.jpg`);
-          const task = uploadBytesResumable(storageRef, file);
-          task.on(
-            'state_changed',
-            null,
-            reject,
-            () => getDownloadURL(task.snapshot.ref).then(resolve)
-          );
+        imageUrls = await Promise.all(images.map(fileToDataUrl));
+      } else {
+        // Upload images to Firebase Storage
+        const uploadPromises = images.map((file, i) => {
+          return new Promise((resolve, reject) => {
+            const storageRef = ref(storage, `marketplace/${currentUser.uid}/${Date.now()}_${i}.jpg`);
+            const task = uploadBytesResumable(storageRef, file);
+            task.on(
+              'state_changed',
+              null,
+              reject,
+              () => getDownloadURL(task.snapshot.ref).then(resolve)
+            );
+          });
         });
-      });
-      const imageUrls = await Promise.all(uploadPromises);
+        imageUrls = await Promise.all(uploadPromises);
+      }
 
       await createListingApi({
         title: form.title.trim(),
@@ -130,7 +103,7 @@ function CreateListingModal({ onClose, onCreated }) {
         location: form.location.trim(),
         listingType: form.listingType,
         images: imageUrls,
-        sellerId: currentUser.uid,
+        sellerId: currentUser.uid || `guest_${Date.now()}`,
         sellerName: currentUser.displayName || currentUser.email || t('marketplace.anonymousTrader'),
         sellerEmail: currentUser.email || '',
       });
@@ -559,35 +532,12 @@ export default function MarketplacePage() {
   const [listingType, setListingType] = useState('sale'); // 'sale' | 'free'
   const [page, setPage] = useState(1);
 
-  // Fetch listings via backend API (no compound index needed)
+  // Fetch listings via shared backend API (same data across devices)
   useEffect(() => {
     setLoading(true);
     let cancelled = false;
 
-    if (isLocal) {
-      const refresh = () => {
-        const local = readLocalListings().filter(item => item.listingType === listingType && (category === 'all' || item.category === category));
-        setListings(local);
-        setLoading(false);
-      };
-      refresh();
-      const onStorage = (e) => {
-        if (!e || e.key === LOCAL_LISTINGS_KEY) refresh();
-      };
-      const onFocus = () => refresh();
-      const onVisible = () => { if (document.visibilityState === 'visible') refresh(); };
-      window.addEventListener('storage', onStorage);
-      window.addEventListener('focus', onFocus);
-      document.addEventListener('visibilitychange', onVisible);
-      return () => {
-        cancelled = true;
-        window.removeEventListener('storage', onStorage);
-        window.removeEventListener('focus', onFocus);
-        document.removeEventListener('visibilitychange', onVisible);
-      };
-    }
-
-    fetchMarketplace({ type: listingType, category })
+    const refresh = () => fetchMarketplace({ type: listingType, category })
       .then(({ listings }) => {
         if (!cancelled) setListings(listings);
       })
@@ -596,8 +546,12 @@ export default function MarketplacePage() {
         if (!cancelled) setListings([]);
       })
       .finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
-  }, [category, listingType, isLocal]);
+
+    refresh();
+    const onFocus = () => refresh();
+    window.addEventListener('focus', onFocus);
+    return () => { cancelled = true; window.removeEventListener('focus', onFocus); };
+  }, [category, listingType]);
 
   // Unread count
   useEffect(() => {
