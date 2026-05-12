@@ -258,12 +258,16 @@ export default function CommunityPage() {
     setLiked(nextLiked);
     try { localStorage.setItem('gg_liked_posts', JSON.stringify([...nextLiked])); } catch {}
 
+    const bumpLike = (list) => list.map(p => p.id === id ? { ...p, likes: (p.likes || 0) + 1 } : p);
+
     if (isLocal || String(id).startsWith('local-')) {
-      const next = readLocalPosts().map(p => p.id === id ? { ...p, likes: (p.likes||0)+1 } : p);
+      const next = bumpLike(readLocalPosts());
       writeLocalPosts(next);
       setPosts(next);
       return;
     }
+
+    setPosts(prev => bumpLike(prev));
     try {
       await updateDoc(doc(db, 'community_posts', id), { likes: increment(1) });
     } catch { /* optimistic UI already updated; ignore */ }
