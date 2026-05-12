@@ -29,6 +29,21 @@ function timeAgo(ts) {
   return `${Math.floor(h / 24)}d ago`;
 }
 
+const LOCAL_LISTINGS_KEY = 'gg_local_marketplace_listings';
+const readLocalListings = () => {
+  try { return JSON.parse(localStorage.getItem(LOCAL_LISTINGS_KEY) || '[]'); }
+  catch { return []; }
+};
+const writeLocalListings = (items) => {
+  try { localStorage.setItem(LOCAL_LISTINGS_KEY, JSON.stringify(items)); } catch {}
+};
+const fileToDataUrl = (file) => new Promise((resolve, reject) => {
+  const reader = new FileReader();
+  reader.onload = () => resolve(reader.result);
+  reader.onerror = reject;
+  reader.readAsDataURL(file);
+});
+
 /* ──────────────────────────────────────────────────────────────────────────
    CreateListingModal
 ────────────────────────────────────────────────────────────────────────── */
@@ -61,6 +76,30 @@ function CreateListingModal({ onClose, onCreated }) {
     if (images.length === 0) return toast.error('Add at least one photo');
     setUploading(true);
     try {
+      if (currentUser?._local) {
+        const imageUrls = await Promise.all(images.map(fileToDataUrl));
+        const next = [{
+          id: `local-market-${Date.now()}`,
+          title: form.title.trim(),
+          description: form.description.trim(),
+          category: form.category,
+          price: form.listingType === 'adoption' ? 0 : Number(form.price),
+          location: form.location.trim(),
+          listingType: form.listingType,
+          images: imageUrls,
+          sellerId: currentUser.uid,
+          sellerName: currentUser.displayName || currentUser.email || 'Anonymous',
+          sellerEmail: currentUser.email || '',
+          createdAt: new Date().toISOString(),
+          status: 'active',
+        }, ...readLocalListings()];
+        writeLocalListings(next);
+        toast.success('Listing created! 🎉');
+        onCreated();
+        onClose();
+        return;
+      }
+
       // Upload images to Firebase Storage
       const uploadPromises = images.map((file, i) => {
         return new Promise((resolve, reject) => {
@@ -497,6 +536,7 @@ function ListingDetailModal({ item, currentUser, onClose, onContact }) {
 export default function MarketplacePage() {
   const { t, lang } = useI18n();
   const { currentUser } = useAuth();
+  const isLocal = currentUser?._local;
   const navigate = useNavigate();
 
   const [listings, setListings] = useState([]);
@@ -517,6 +557,14 @@ export default function MarketplacePage() {
   useEffect(() => {
     setLoading(true);
     let cancelled = false;
+
+    if (isLocal) {
+      const local = readLocalListings().filter(item => item.listingType === listingType && (category === 'all' || item.category === category));
+      setListings(local);
+      setLoading(false);
+      return () => { cancelled = true; };
+    }
+
     fetchMarketplace({ type: listingType, category })
       .then(({ listings }) => {
         if (!cancelled) setListings(listings);
@@ -527,7 +575,7 @@ export default function MarketplacePage() {
       })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [category, listingType]);
+  }, [category, listingType, isLocal]);
 
   // Unread count
   useEffect(() => {
@@ -749,7 +797,7 @@ export default function MarketplacePage() {
 
 
   // Show mock data when Firestore is empty
-  const showMock = listings.length === 0;
+  const showMock = !isLocal && listings.length === 0;
   const mockItems = listingType === 'adoption' ? MOCK_ADOPTIONS : MOCK_SALES;
   const rawItems = [...mockItems, ...listings];
   const allItems = rawItems
@@ -898,7 +946,12 @@ export default function MarketplacePage() {
         {showCreate && (
           <CreateListingModal
             onClose={() => setShowCreate(false)}
-            onCreated={() => {}}
+            onCreated={() => {
+              if (isLocal) {
+                const local = readLocalListings().filter(item => item.listingType === listingType && (category === 'all' || item.category === category));
+                setListings(local);
+              }
+            }}
           />
         )}
         {selected && (
