@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import { rp } from '../utils/responsive';
 import { TrainingAPI } from '../services/apiLayer';
 import { useI18n } from '../i18n/I18nContext';
+import { useAuth } from '../context/AuthContext';
 
 const SKILLS_KEY = 'gg_pet_skills';
 const POINTS_KEY = 'gg_training_points';
@@ -305,6 +306,7 @@ function StreakBanner({ streak, t }) {
 
 export default function PetTrainingPage() {
   const { t } = useI18n();
+  const { currentUser } = useAuth();
   const [skills, setSkills] = useState({});
   const [points, setPoints] = useState(5);
   const [history, setHistory] = useState([]);
@@ -318,48 +320,32 @@ export default function PetTrainingPage() {
   const [apiReady, setApiReady] = useState(false);
   const comboRef = useRef(0);
 
-  // Load from API (with localStorage fallback)
   useEffect(() => {
-    TrainingAPI.get().then(data => {
-      if (data) {
-        const mergedSkills = {};
-        SKILL_CATEGORIES.forEach(cat => cat.skills.forEach(s => {
-          mergedSkills[s.id] = data.skills?.[s.id] || { unlocked: false, progress: 0, mastered: false };
-        }));
-        setSkills(mergedSkills);
-        setPoints(data.trainingPoints ?? 5);
-        setHistory(data.history || []);
-        setStreak(data.streak || { last: null, days: 0 });
-      } else {
-        const raw = localStorage.getItem(SKILLS_KEY);
-        const init = raw ? JSON.parse(raw) : {};
-        SKILL_CATEGORIES.forEach(cat => cat.skills.forEach(s => {
-          if (!init[s.id]) init[s.id] = { unlocked: false, progress: 0, mastered: false };
-        }));
-        setSkills(init);
-        setPoints(parseInt(localStorage.getItem(POINTS_KEY) || '5', 10));
-        setHistory(JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'));
-        setStreak(JSON.parse(localStorage.getItem(STREAK_KEY) || '{"last":null,"days":0}'));
-      }
+    if (!currentUser?.uid) return;
+    TrainingAPI.get(currentUser.uid).then(data => {
+      const mergedSkills = {};
+      SKILL_CATEGORIES.forEach(cat => cat.skills.forEach(s => {
+        mergedSkills[s.id] = data?.skills?.[s.id] || { unlocked: false, progress: 0, mastered: false };
+      }));
+      setSkills(mergedSkills);
+      setPoints(data?.trainingPoints ?? 5);
+      setHistory(data?.history || []);
+      setStreak(data?.streak || { last: null, days: 0 });
       setApiReady(true);
     });
-    TrainingAPI.updateStreak();
-  }, []);
+    TrainingAPI.updateStreak(currentUser.uid);
+  }, [currentUser?.uid]);
 
   const addHistory = useCallback((type, skillName) => {
     const now = new Date();
     const time = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
     const entry = { type, skillName, time };
-    setHistory(prev => { const h = [entry, ...prev].slice(0, 20); localStorage.setItem(HISTORY_KEY, JSON.stringify(h)); return h; });
-    TrainingAPI.addHistory(type, null, skillName);
-  }, []);
+    setHistory(prev => [entry, ...prev].slice(0, 20));
+    if (currentUser?.uid) TrainingAPI.addHistory(currentUser.uid, type, null, skillName);
+  }, [currentUser?.uid]);
 
   const unlockSkill = useCallback((skillId) => {
-    setSkills(prev => {
-      const next = { ...prev, [skillId]: { ...prev[skillId] || {}, unlocked: true, progress: prev[skillId]?.progress || 0, mastered: prev[skillId]?.mastered || false } };
-      try { localStorage.setItem(SKILLS_KEY, JSON.stringify(next)); } catch {}
-      return next;
-    });
+    setSkills(prev => ({ ...prev, [skillId]: { ...prev[skillId] || {}, unlocked: true, progress: prev[skillId]?.progress || 0, mastered: prev[skillId]?.mastered || false } }));
   }, []);
 
   const handleStartTraining = useCallback((skill) => {
@@ -371,8 +357,7 @@ export default function PetTrainingPage() {
 
     const newPts = Math.max(0, points - 1);
     setPoints(newPts);
-    try { localStorage.setItem(POINTS_KEY, String(newPts)); } catch {}
-    TrainingAPI.deductPoint();
+    if (currentUser?.uid) TrainingAPI.deductPoint(currentUser.uid);
 
     setTrainingSkillId(skill.id);
     setTrainingProgress(0);
@@ -400,9 +385,8 @@ export default function PetTrainingPage() {
           const newProg = st.progress + 1;
           const mastered = newProg >= SESSIONS_TO_MASTER;
           const next = { ...prev, [skill.id]: { ...st, progress: newProg, mastered } };
-          try { localStorage.setItem(SKILLS_KEY, JSON.stringify(next)); } catch {}
-          TrainingAPI.updateSkill(skill.id, 'progress', 1);
-          if (mastered) TrainingAPI.updateSkill(skill.id, 'master', 0);
+          if (currentUser?.uid) TrainingAPI.updateSkill(currentUser.uid, skill.id, 'progress', 1);
+          if (mastered && currentUser?.uid) TrainingAPI.updateSkill(currentUser.uid, skill.id, 'master', 0);
           return next;
         });
         addHistory('success', skillName);

@@ -24,83 +24,56 @@ async function apiFetch(path, options = {}) {
 
 // ── Achievements ────────────────────────────────────────────────────────────
 export const AchievementsAPI = {
-  async get() {
-    const data = await apiFetch('/api/achievements');
-    if (data) return data;
-    // Fallback: localStorage
-    try {
-      const raw = localStorage.getItem('gg_achievement_counters');
-      const counters = raw ? JSON.parse(raw) : {};
-      const raw2 = localStorage.getItem('gg_achievement_unlock_dates');
-      const unlockDates = raw2 ? JSON.parse(raw2) : {};
-      const unlockedIds = Object.keys(unlockDates);
-      return { counters, unlockDates, unlockedIds, totalPoints: 0 };
-    } catch { return null; }
+  async get(uid) {
+    return apiFetch(`/api/achievements?uid=${encodeURIComponent(uid)}`);
   },
-  async incrementCounter(counter, delta = 1) {
-    const data = await apiFetch('/api/achievements/increment', {
-      method: 'POST', body: JSON.stringify({ counter, delta }),
+  async incrementCounter(uid, counter, delta = 1) {
+    return apiFetch('/api/achievements/increment', {
+      method: 'POST', body: JSON.stringify({ uid, counter, delta }),
     });
-    if (!data) {
-      // localStorage fallback: already handled by in-memory update
-    }
   },
-  async unlock(achievementId) {
-    await apiFetch('/api/achievements/unlock', {
-      method: 'POST', body: JSON.stringify({ achievementId }),
+  async unlock(uid, achievementId) {
+    return apiFetch('/api/achievements/unlock', {
+      method: 'POST', body: JSON.stringify({ uid, achievementId }),
     });
   },
 };
 
 // ── Training ────────────────────────────────────────────────────────────────
 export const TrainingAPI = {
-  async get() {
-    const data = await apiFetch('/api/training');
-    if (data) return data;
-    try {
-      const skills = JSON.parse(localStorage.getItem('gg_pet_skills') || '{}');
-      const points = parseInt(localStorage.getItem('gg_training_points') || '5', 10);
-      const history = JSON.parse(localStorage.getItem('gg_training_history') || '[]');
-      const streak = JSON.parse(localStorage.getItem('gg_training_streak') || '{"last":null,"days":0}');
-      return { skills, trainingPoints: points, history, streak };
-    } catch { return null; }
+  async get(uid) {
+    return apiFetch(`/api/training?uid=${encodeURIComponent(uid)}`);
   },
-  async updateSkill(skillId, action, delta) {
-    await apiFetch('/api/training/skill', {
-      method: 'POST', body: JSON.stringify({ skillId, action, delta }),
+  async updateSkill(uid, skillId, action, delta) {
+    return apiFetch('/api/training/skill', {
+      method: 'POST', body: JSON.stringify({ uid, skillId, action, delta }),
     });
   },
-  async deductPoint() {
-    await apiFetch('/api/training/deduct-point', { method: 'POST' });
+  async deductPoint(uid) {
+    return apiFetch('/api/training/deduct-point', { method: 'POST', body: JSON.stringify({ uid }) });
   },
-  async addPoints(delta) {
-    await apiFetch('/api/training/add-points', {
-      method: 'POST', body: JSON.stringify({ delta }),
+  async addPoints(uid, delta) {
+    return apiFetch('/api/training/add-points', {
+      method: 'POST', body: JSON.stringify({ uid, delta }),
     });
   },
-  async addHistory(type, skillId, skillName) {
-    await apiFetch('/api/training/history', {
-      method: 'POST', body: JSON.stringify({ type, skillId, skillName }),
+  async addHistory(uid, type, skillId, skillName) {
+    return apiFetch('/api/training/history', {
+      method: 'POST', body: JSON.stringify({ uid, type, skillId, skillName }),
     });
   },
-  async updateStreak() {
-    await apiFetch('/api/training/streak', { method: 'POST' });
+  async updateStreak(uid) {
+    return apiFetch('/api/training/streak', { method: 'POST', body: JSON.stringify({ uid }) });
   },
 };
 
 // ── Daily Rewards ───────────────────────────────────────────────────────────
 export const RewardsAPI = {
-  async get() {
-    const data = await apiFetch('/api/rewards');
-    if (data) return data;
-    try {
-      const raw = localStorage.getItem('gg_daily_rewards');
-      return raw ? JSON.parse(raw) : { lastClaimDate: null, streak: 0, todayClaimed: false, cycleDay: 0 };
-    } catch { return null; }
+  async get(uid) {
+    return apiFetch(`/api/rewards?uid=${encodeURIComponent(uid)}`);
   },
-  async claim() {
-    const data = await apiFetch('/api/rewards/claim', { method: 'POST' });
-    return data; // returns { streak, cycleDay, reward } or null (fallback)
+  async claim(uid) {
+    return apiFetch('/api/rewards/claim', { method: 'POST', body: JSON.stringify({ uid }) });
   },
 };
 

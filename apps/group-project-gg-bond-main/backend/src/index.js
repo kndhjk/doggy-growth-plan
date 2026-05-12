@@ -36,6 +36,12 @@ const toIso = (v) => {
   return new Date(v).toISOString();
 };
 
+const toDateOnly = (v) => {
+  if (!v) return null;
+  if (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v)) return v;
+  return new Date(v).toISOString().split('T')[0];
+};
+
 const DEFAULT_INVENTORY = [
   { itemCode: "i1", name: "高级狗粮罐", description: "食欲 +30", category: "food", quantity: 3 },
   { itemCode: "i2", name: "营养奶糕", description: "食欲 +15，心情 +8", category: "food", quantity: 5 },
@@ -56,6 +62,54 @@ const normalizeInventoryCategory = (value) => {
   if (["medicine", "药品", "medicine"].includes(value) || v.includes("med")) return "medicine";
   if (["accessory", "用品", "配件"].includes(value) || v.includes("acc")) return "accessory";
   return "food";
+};
+
+const defaultTrainingSkills = () => ({
+  sit: { unlocked: false, progress: 0, mastered: false },
+  shake: { unlocked: false, progress: 0, mastered: false },
+  lie_down: { unlocked: false, progress: 0, mastered: false },
+  stay: { unlocked: false, progress: 0, mastered: false },
+  come: { unlocked: false, progress: 0, mastered: false },
+  roll_over: { unlocked: false, progress: 0, mastered: false },
+  play_dead: { unlocked: false, progress: 0, mastered: false },
+  math: { unlocked: false, progress: 0, mastered: false },
+  fetch: { unlocked: false, progress: 0, mastered: false },
+});
+
+const defaultAchievementCounters = () => ({
+  feed_count: 7, exercise_count: 3, medicine_count: 2, post_count: 1, total_likes: 12,
+  message_count: 5, purchase_count: 1, sell_count: 0, inventory_size: 13, map_visit: 4,
+  ai_use_count: 2, achievements_unlocked: 3, login_streak: 2,
+});
+
+const ensureTrainingState = async (uid) => {
+  const [rows] = await pool.execute("SELECT * FROM training_state WHERE uid = ? LIMIT 1", [uid]);
+  if (rows[0]) return rows[0];
+  await pool.execute(
+    "INSERT INTO training_state (uid, skills, training_points, streak, history) VALUES (?, ?, 5, ?, ?)",
+    [uid, JSON.stringify(defaultTrainingSkills()), JSON.stringify({ last: null, days: 0 }), JSON.stringify([])]
+  );
+  const [fresh] = await pool.execute("SELECT * FROM training_state WHERE uid = ? LIMIT 1", [uid]);
+  return fresh[0];
+};
+
+const ensureRewardsState = async (uid) => {
+  const [rows] = await pool.execute("SELECT * FROM rewards_state WHERE uid = ? LIMIT 1", [uid]);
+  if (rows[0]) return rows[0];
+  await pool.execute("INSERT INTO rewards_state (uid, last_claim_date, streak, today_claimed, cycle_day) VALUES (?, NULL, 0, 0, 0)", [uid]);
+  const [fresh] = await pool.execute("SELECT * FROM rewards_state WHERE uid = ? LIMIT 1", [uid]);
+  return fresh[0];
+};
+
+const ensureAchievementsState = async (uid) => {
+  const [rows] = await pool.execute("SELECT * FROM achievements_state WHERE uid = ? LIMIT 1", [uid]);
+  if (rows[0]) return rows[0];
+  await pool.execute(
+    "INSERT INTO achievements_state (uid, counters, unlocked_ids, unlock_dates) VALUES (?, ?, ?, ?)",
+    [uid, JSON.stringify(defaultAchievementCounters()), JSON.stringify([]), JSON.stringify({})]
+  );
+  const [fresh] = await pool.execute("SELECT * FROM achievements_state WHERE uid = ? LIMIT 1", [uid]);
+  return fresh[0];
 };
 
 const mapHealthRecord = (r) => ({
@@ -430,6 +484,186 @@ app.delete("/api/admin/listings/:id", adminAuth, async (req, res) => {
   try {
     await pool.execute("UPDATE marketplace_listings SET status = 'deleted' WHERE id = ?", [req.params.id]);
     res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get("/api/training", async (req, res) => {
+  try {
+    const { uid } = req.query;
+    if (!uid) return res.status(400).json({ error: 'uid is required' });
+    const row = await ensureTrainingState(uid);
+    res.json({
+      skills: parseJsonField(row.skills, defaultTrainingSkills()),
+      trainingPoints: row.training_points ?? 5,
+      streak: parseJsonField(row.streak, { last: null, days: 0 }),
+      history: parseJsonField(row.history, []),
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/api/training/skill", async (req, res) => {
+  try {
+    const { uid, skillId, action, delta = 1 } = req.body;
+    if (!uid || !skillId) return res.status(400).json({ error: 'uid and skillId required' });
+    const row = await ensureTrainingState(uid);
+    const skills = parseJsonField(row.skills, defaultTrainingSkills());
+    const current = skills[skillId] || { unlocked: false, progress: 0, mastered: false };
+    if (action === 'progress') current.progress = (current.progress || 0) + Number(delta || 1);
+    if (action === 'master') current.mastered = true;
+    current.unlocked = true;
+    skills[skillId] = current;
+    await pool.execute("UPDATE training_state SET skills = ? WHERE uid = ?", [JSON.stringify(skills), uid]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/api/training/deduct-point", async (req, res) => {
+  try {
+    const { uid } = req.body;
+    if (!uid) return res.status(400).json({ error: 'uid required' });
+    await ensureTrainingState(uid);
+    await pool.execute("UPDATE training_state SET training_points = GREATEST(training_points - 1, 0) WHERE uid = ?", [uid]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/api/training/add-points", async (req, res) => {
+  try {
+    const { uid, delta = 1 } = req.body;
+    if (!uid) return res.status(400).json({ error: 'uid required' });
+    await ensureTrainingState(uid);
+    await pool.execute("UPDATE training_state SET training_points = training_points + ? WHERE uid = ?", [Number(delta || 1), uid]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/api/training/history", async (req, res) => {
+  try {
+    const { uid, type, skillId = null, skillName } = req.body;
+    if (!uid) return res.status(400).json({ error: 'uid required' });
+    const row = await ensureTrainingState(uid);
+    const history = parseJsonField(row.history, []);
+    history.unshift({ type, skillId, skillName, time: new Date().toISOString().slice(11,16) });
+    await pool.execute("UPDATE training_state SET history = ? WHERE uid = ?", [JSON.stringify(history.slice(0, 20)), uid]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/api/training/streak", async (req, res) => {
+  try {
+    const { uid } = req.body;
+    if (!uid) return res.status(400).json({ error: 'uid required' });
+    const row = await ensureTrainingState(uid);
+    const streak = parseJsonField(row.streak, { last: null, days: 0 });
+    const today = new Date().toISOString().split('T')[0];
+    const last = streak.last;
+    if (last !== today) {
+      const diff = last ? Math.floor((new Date(today) - new Date(last)) / 86400000) : null;
+      const days = diff === 1 ? (streak.days || 0) + 1 : 1;
+      const next = { last: today, days };
+      await pool.execute("UPDATE training_state SET streak = ? WHERE uid = ?", [JSON.stringify(next), uid]);
+      return res.json(next);
+    }
+    res.json(streak);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get("/api/rewards", async (req, res) => {
+  try {
+    const { uid } = req.query;
+    if (!uid) return res.status(400).json({ error: 'uid is required' });
+    const row = await ensureRewardsState(uid);
+    const today = new Date().toISOString().split('T')[0];
+    const last = toDateOnly(row.last_claim_date);
+    let todayClaimed = !!row.today_claimed;
+    let streak = row.streak || 0;
+    if (last && last !== today) {
+      const diff = Math.floor((new Date(today) - new Date(last)) / 86400000);
+      if (diff > 1) streak = 0;
+      todayClaimed = false;
+      await pool.execute("UPDATE rewards_state SET streak = ?, today_claimed = 0 WHERE uid = ?", [streak, uid]);
+    }
+    res.json({ lastClaimDate: last, streak, todayClaimed, cycleDay: row.cycle_day || 0 });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/api/rewards/claim", async (req, res) => {
+  try {
+    const { uid } = req.body;
+    if (!uid) return res.status(400).json({ error: 'uid required' });
+    const row = await ensureRewardsState(uid);
+    const today = new Date().toISOString().split('T')[0];
+    const last = toDateOnly(row.last_claim_date);
+    if (last === today && row.today_claimed) return res.json({ streak: row.streak, cycleDay: row.cycle_day, alreadyClaimed: true });
+    let streak = row.streak || 0;
+    if (last) {
+      const diff = Math.floor((new Date(today) - new Date(last)) / 86400000);
+      if (diff > 1) streak = 0;
+    }
+    const newStreak = streak + 1;
+    const cycleDay = ((row.cycle_day || 0) % 7) + 1;
+    await pool.execute("UPDATE rewards_state SET last_claim_date = ?, streak = ?, today_claimed = 1, cycle_day = ? WHERE uid = ?", [today, newStreak === 7 ? 0 : newStreak, cycleDay, uid]);
+    res.json({ streak: newStreak === 7 ? 0 : newStreak, cycleDay, rewardDay: newStreak });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get("/api/achievements", async (req, res) => {
+  try {
+    const { uid } = req.query;
+    if (!uid) return res.status(400).json({ error: 'uid is required' });
+    const row = await ensureAchievementsState(uid);
+    const counters = parseJsonField(row.counters, defaultAchievementCounters());
+    const unlockedIds = parseJsonField(row.unlocked_ids, []);
+    const unlockDates = parseJsonField(row.unlock_dates, {});
+    res.json({ counters, unlockedIds, unlockDates });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/api/achievements/increment", async (req, res) => {
+  try {
+    const { uid, counter, delta = 1 } = req.body;
+    if (!uid || !counter) return res.status(400).json({ error: 'uid and counter required' });
+    const row = await ensureAchievementsState(uid);
+    const counters = parseJsonField(row.counters, defaultAchievementCounters());
+    counters[counter] = (counters[counter] || 0) + Number(delta || 1);
+    await pool.execute("UPDATE achievements_state SET counters = ? WHERE uid = ?", [JSON.stringify(counters), uid]);
+    res.json({ success: true, counters });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/api/achievements/unlock", async (req, res) => {
+  try {
+    const { uid, achievementId } = req.body;
+    if (!uid || !achievementId) return res.status(400).json({ error: 'uid and achievementId required' });
+    const row = await ensureAchievementsState(uid);
+    const unlockedIds = parseJsonField(row.unlocked_ids, []);
+    const unlockDates = parseJsonField(row.unlock_dates, {});
+    if (!unlockedIds.includes(achievementId)) unlockedIds.push(achievementId);
+    if (!unlockDates[achievementId]) unlockDates[achievementId] = new Date().toLocaleDateString('zh-CN');
+    await pool.execute("UPDATE achievements_state SET unlocked_ids = ?, unlock_dates = ? WHERE uid = ?", [JSON.stringify(unlockedIds), JSON.stringify(unlockDates), uid]);
+    res.json({ success: true, unlockedIds, unlockDates });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
