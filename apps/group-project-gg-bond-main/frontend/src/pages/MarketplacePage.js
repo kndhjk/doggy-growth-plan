@@ -43,6 +43,27 @@ const fileToDataUrl = (file) => new Promise((resolve, reject) => {
   reader.readAsDataURL(file);
 });
 
+const fileToCompressedDataUrl = (file, maxSize = 1280, quality = 0.82) => new Promise((resolve, reject) => {
+  const reader = new FileReader();
+  reader.onload = () => {
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round(img.width * scale));
+      canvas.height = Math.max(1, Math.round(img.height * scale));
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return reject(new Error('canvas unavailable'));
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.onerror = reject;
+    img.src = reader.result;
+  };
+  reader.onerror = reject;
+  reader.readAsDataURL(file);
+});
+
 /* ──────────────────────────────────────────────────────────────────────────
    CreateListingModal
 ────────────────────────────────────────────────────────────────────────── */
@@ -77,22 +98,26 @@ function CreateListingModal({ onClose, onCreated }) {
     try {
       let imageUrls;
       if (currentUser?._local) {
-        imageUrls = await Promise.all(images.map(fileToDataUrl));
+        imageUrls = await Promise.all(images.map(fileToCompressedDataUrl));
       } else {
-        // Upload images to Firebase Storage
-        const uploadPromises = images.map((file, i) => {
-          return new Promise((resolve, reject) => {
-            const storageRef = ref(storage, `marketplace/${currentUser.uid}/${Date.now()}_${i}.jpg`);
-            const task = uploadBytesResumable(storageRef, file);
-            task.on(
-              'state_changed',
-              null,
-              reject,
-              () => getDownloadURL(task.snapshot.ref).then(resolve)
-            );
+        try {
+          const uploadPromises = images.map((file, i) => {
+            return new Promise((resolve, reject) => {
+              const storageRef = ref(storage, `marketplace/${currentUser.uid}/${Date.now()}_${i}.jpg`);
+              const task = uploadBytesResumable(storageRef, file);
+              task.on(
+                'state_changed',
+                null,
+                reject,
+                () => getDownloadURL(task.snapshot.ref).then(resolve)
+              );
+            });
           });
-        });
-        imageUrls = await Promise.all(uploadPromises);
+          imageUrls = await Promise.all(uploadPromises);
+        } catch (uploadErr) {
+          console.warn('Firebase upload failed, falling back to inline marketplace images:', uploadErr);
+          imageUrls = await Promise.all(images.map(fileToCompressedDataUrl));
+        }
       }
 
       await createListingApi({
