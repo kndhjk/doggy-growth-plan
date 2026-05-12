@@ -3,6 +3,9 @@
 > 这份 README 是给**第一次接手这个项目的队友**看的。  
 > 默认你对 React、Firebase、前后端结构都不熟。没关系，按这份文档看就行。
 
+**中文版本：** `README.md`  
+**English version:** `README_EN.md`
+
 ---
 
 ## 1. 先说最重要的：代码到底在哪？
