@@ -72,7 +72,9 @@ export default function MessagesPage() {
 
   const getOther = (conv) => {
     const otherId = Object.keys(conv.participants || {}).find(k => k !== currentUser?.uid);
-    return otherId ? conv.participants[otherId] : { name: 'Unknown', email: '' };
+    return otherId
+      ? { uid: otherId, ...conv.participants[otherId] }
+      : { uid: '', name: 'Unknown', email: '' };
   };
 
   const isUnread = (conv) => {
@@ -115,7 +117,7 @@ export default function MessagesPage() {
                 key={conv.id}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={() => navigate(`/messages/${conv.id}?other=${encodeURIComponent(other.name)}&sellerId=${conv.otherUid || ''}`)}
+                onClick={() => navigate(`/messages/${conv.id}?other=${encodeURIComponent(other.name)}&sellerId=${other.uid || ''}`)}
                 style={{
                   background: '#fff', borderRadius: 16, padding: '16px 20px',
                   cursor: 'pointer', display: 'flex', gap: 14, alignItems: 'center',
