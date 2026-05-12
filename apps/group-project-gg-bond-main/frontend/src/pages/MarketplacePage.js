@@ -37,6 +37,11 @@ const readLocalListings = () => {
 const writeLocalListings = (items) => {
   try { localStorage.setItem(LOCAL_LISTINGS_KEY, JSON.stringify(items)); } catch {}
 };
+const LOCAL_CONVERSATIONS_KEY = 'gg_local_conversations';
+const readLocalConversations = () => {
+  try { return JSON.parse(localStorage.getItem(LOCAL_CONVERSATIONS_KEY) || '[]'); }
+  catch { return []; }
+};
 const fileToDataUrl = (file) => new Promise((resolve, reject) => {
   const reader = new FileReader();
   reader.onload = () => resolve(reader.result);
@@ -596,6 +601,33 @@ export default function MarketplacePage() {
   // Unread count
   useEffect(() => {
     if (!currentUser) return;
+
+    if (isLocal) {
+      const refresh = () => {
+        let count = 0;
+        readLocalConversations().forEach(conv => {
+          if (!conv.participants || !(currentUser.uid in conv.participants)) return;
+          const lastMsg = conv.lastMessage;
+          if (lastMsg && !lastMsg.read && lastMsg.senderId !== currentUser.uid) count++;
+        });
+        setUnreadCount(count);
+      };
+      refresh();
+      const onStorage = (e) => {
+        if (!e || e.key === LOCAL_CONVERSATIONS_KEY) refresh();
+      };
+      const onFocus = () => refresh();
+      const onVisible = () => { if (document.visibilityState === 'visible') refresh(); };
+      window.addEventListener('storage', onStorage);
+      window.addEventListener('focus', onFocus);
+      document.addEventListener('visibilitychange', onVisible);
+      return () => {
+        window.removeEventListener('storage', onStorage);
+        window.removeEventListener('focus', onFocus);
+        document.removeEventListener('visibilitychange', onVisible);
+      };
+    }
+
     const q = query(
       collection(db, 'conversations'),
     );
@@ -613,7 +645,7 @@ export default function MarketplacePage() {
       setUnreadCount(count);
     });
     return unsub;
-  }, [currentUser]);
+  }, [currentUser, isLocal]);
 
   // Translate listings when language changes
   useEffect(() => {
