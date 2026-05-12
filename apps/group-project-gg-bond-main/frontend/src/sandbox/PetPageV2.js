@@ -816,26 +816,18 @@ function MobilePetPage({ pet, statuses, displayStatuses, previewAge, handlePrevi
 // ─── Empty state ───────────────────────────────────────────────────────────────
 function EmptyState({ t, setShowCreate }) {
   return (
-    <>
-      <GlobalStyles />
-      <div style={{ minHeight:'100vh', background:'linear-gradient(160deg,#fdf2f8,#fce7f3)',
-                   display:'flex', flexDirection:'column', alignItems:'center',
-                   justifyContent:'center', padding:32 }}>
-        <motion.div animate={{y:[0,-14,0],rotate:[0,-4,4,0]}}
-          transition={{duration:3,repeat:Infinity,ease:'easeInOut'}}
-          style={{fontSize:96,marginBottom:16}}>🐾</motion.div>
-        <h1 style={{fontSize:24,fontWeight:800,color:'#9d174d',marginBottom:8}}>{t('pet.empty.heading')}</h1>
-        <p style={{color:'#f472b6',fontSize:14,marginBottom:40,textAlign:'center',lineHeight:1.8}}>
-          {t('pet.empty.line1')}<br/>{t('pet.empty.line2')}
-        </p>
-        <motion.button onClick={() => setShowCreate(true)}
-          style={{...btnPrimary,flex:'none',padding:'16px 40px',fontSize:16}}
-          whileHover={{scale:1.05,y:-2}} whileTap={{scale:0.95}}
-          transition={{type:'spring',stiffness:400,damping:18}}>
-          {t('pet.empty.cta')}
-        </motion.button>
-      </div>
-    </>
+    <div style={{minHeight:'100vh',background:'linear-gradient(160deg,#fdf2f8,#fce7f3)',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:32}}>
+      <div style={{fontSize:96,marginBottom:16,marginTop:24}}>🐾</div>
+      <h1 style={{fontSize:24,fontWeight:800,color:'#9d174d',marginBottom:8}}>{t('pet.empty.heading')}</h1>
+      <p style={{color:'#f472b6',fontSize:14,marginBottom:40,textAlign:'center',lineHeight:1.8}}>
+        {t('pet.empty.line1')}<br/>{t('pet.empty.line2')}
+      </p>
+      <button
+        onClick={() => setShowCreate(true)}
+        style={{background:'linear-gradient(135deg,#f472b6,#fb7185)',color:'white',fontWeight:700,cursor:'pointer',fontSize:16,padding:'16px 40px',border:'none',borderRadius:16,boxShadow:'0 4px 15px rgba(244,114,182,0.4)'}}>
+        {t('pet.empty.cta')}
+      </button>
+    </div>
   );
 }
 
@@ -887,12 +879,6 @@ export default function PetPageV2() {
     offerAiFollowUp(nav, t, label);
   }, [writeActivity, t, nav]);
 
-  if (!pet) {
-    return (
-      <EmptyState t={t} setShowCreate={setShowCreate} />
-    );
-  }
-
   const warning = Object.entries(STATUS_META).some(([k]) => statuses[k] < 40);
   const stageLabel = t('pet.stage.'+(displayStatuses.avatarStage||'adult'));
 
@@ -900,6 +886,14 @@ export default function PetPageV2() {
     handleMain, handleSecondary, warning, stageLabel, avatarTick, lastAction,
     showCreate, setShowCreate, t };
 
+  if (!pet) {
+    return (
+      <>
+        <EmptyState t={t} setShowCreate={setShowCreate} />
+        <AnimatePresence>{showCreate && <CreatePetModal key="create" onClose={() => setShowCreate(false)} />}</AnimatePresence>
+      </>
+    );
+  }
   if (screenWidth >= 1024) return <DesktopPetPage {...sharedProps} nav={nav} />;
   if (screenWidth >= 640)  return <TabletPetPage {...sharedProps} />;
   return <MobilePetPage {...sharedProps} clearPreview={clearPreview} />;

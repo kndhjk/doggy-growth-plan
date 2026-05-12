@@ -53,6 +53,8 @@ export function PetProvider({ children }) {
       lastActivity: {},
       createdAt: serverTimestamp(),
     };
+    // Timeout after 5 seconds — reject so caller's catch {} fallback activates
+    await new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 5000));
     await setDoc(ref, data);
   };
 

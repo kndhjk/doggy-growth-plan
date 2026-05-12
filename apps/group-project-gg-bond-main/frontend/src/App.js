@@ -26,7 +26,7 @@ import PetTrainingPage from './pages/PetTrainingPage';
 
 function Private({ children }) {
   const { currentUser, loading } = useAuth();
-  if (loading !== false) return null;
+  if (loading === true) return null;
   return currentUser ? children : <Navigate to="/login" replace />;
 }
 
@@ -36,6 +36,7 @@ function HomeRoute() {
 }
 
 export default function App() {
+  console.log("[App] rendering");
   return (
     <AuthProvider>
       <PetProvider>

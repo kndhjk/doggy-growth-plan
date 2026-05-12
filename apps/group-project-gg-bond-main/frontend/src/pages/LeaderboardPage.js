@@ -2,36 +2,34 @@ import React, { useState, useRef, useEffect } from 'react';
 import { LeaderboardAPI } from '../services/apiLayer';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useI18n } from '../i18n/I18nContext';
-import { translateContent } from '../utils/translate';
 import { isMobile } from '../utils/responsive';
 
 // ─── Mock Data ───────────────────────────────────────────────────────────────
 const MOCK_RANKINGS = [
-  { rank: 1,  petName: '毛毛',   owner: '张*',    level: 45, happiness: 98, activity: 312, badge: '🥇', joinedAt: '2025-01-10', avatar: '🐕' },
-  { rank: 2,  petName: '豆豆',   owner: '李*',    level: 42, happiness: 95, activity: 287, badge: '🥈', joinedAt: '2025-02-03', avatar: '🐶' },
-  { rank: 3,  petName: '雪球',   owner: '王*',    level: 40, happiness: 99, activity: 265, badge: '🥉', joinedAt: '2025-01-22', avatar: '🐩' },
-  { rank: 4,  petName: '旺财',   owner: '赵*',    level: 38, happiness: 90, activity: 241, badge: '',   joinedAt: '2025-03-05', avatar: '🦮' },
-  { rank: 5,  petName: '小白',   owner: '钱*',    level: 37, happiness: 88, activity: 220, badge: '',   joinedAt: '2025-03-12', avatar: '🐕🦺' },
-  { rank: 6,  petName: '阿福',   owner: '孙*',    level: 36, happiness: 92, activity: 205, badge: '',   joinedAt: '2025-04-01', avatar: '🐶' },
-  { rank: 7,  petName: '花花',   owner: '周*',    level: 35, happiness: 85, activity: 198, badge: '',   joinedAt: '2025-04-15', avatar: '🐾' },
-  { rank: 8,  petName: '贝贝',   owner: '吴*',    level: 34, happiness: 91, activity: 185, badge: '',   joinedAt: '2025-04-20', avatar: '🐕' },
-  { rank: 9,  petName: '球球',   owner: '郑*',    level: 33, happiness: 87, activity: 176, badge: '',   joinedAt: '2025-05-01', avatar: '🐩' },
-  { rank: 10, petName: '巧巧',   owner: '冯*',    level: 32, happiness: 89, activity: 162, badge: '',   joinedAt: '2025-05-10', avatar: '🐶' },
-  { rank: 11, petName: '朵朵',   owner: '陈*',    level: 31, happiness: 86, activity: 155, badge: '',   joinedAt: '2025-05-18', avatar: '🐾' },
-  { rank: 12, petName: '嘟嘟',   owner: '楚*',    level: 30, happiness: 83, activity: 148, badge: '',   joinedAt: '2025-05-25', avatar: '🐕' },
-  { rank: 13, petName: '棉花',   owner: '卫*',    level: 29, happiness: 88, activity: 140, badge: '',   joinedAt: '2025-06-01', avatar: '🐕🦺' },
-  { rank: 14, petName: '果冻',   owner: '蒋*',    level: 28, happiness: 84, activity: 132, badge: '',   joinedAt: '2025-06-08', avatar: '🐶' },
-  { rank: 15, petName: '奶茶',   owner: '沈*',    level: 27, happiness: 82, activity: 125, badge: '',   joinedAt: '2025-06-15', avatar: '🐩' },
-  { rank: 16, petName: '小熊',   owner: '韩*',    level: 26, happiness: 80, activity: 118, badge: '',   joinedAt: '2025-06-22', avatar: '🐾' },
-  { rank: 17, petName: '小鹿',   owner: '杨*',    level: 25, happiness: 79, activity: 110, badge: '',   joinedAt: '2025-07-01', avatar: '🐕' },
-  { rank: 18, petName: '米粒',   owner: '朱*',    level: 24, happiness: 77, activity: 102, badge: '',   joinedAt: '2025-07-08', avatar: '🐶' },
-  { rank: 19, petName: '豆奶',   owner: '秦*',    level: 23, happiness: 75, activity: 95,  badge: '',   joinedAt: '2025-07-15', avatar: '🐩' },
-  { rank: 20, petName: '布丁',   owner: '许*',    level: 22, happiness: 73, activity: 88,  badge: '',   joinedAt: '2025-07-22', avatar: '🐾' },
+  { rank: 1,  petName: 'Max',     owner: '张*',    level: 45, happiness: 98, activity: 312, badge: '🥇', joinedAt: '2025-01-10', avatar: '🐕'  },
+  { rank: 2,  petName: 'Bella',   owner: '李*',    level: 42, happiness: 95, activity: 287, badge: '🥈', joinedAt: '2025-02-03', avatar: '🐶'  },
+  { rank: 3,  petName: 'Charlie', owner: '王*',    level: 40, happiness: 99, activity: 265, badge: '🥉', joinedAt: '2025-01-22', avatar: '🐩'  },
+  { rank: 4,  petName: 'Luna',     owner: '赵*',    level: 38, happiness: 90, activity: 241, badge: '',   joinedAt: '2025-03-05', avatar: '🦮'  },
+  { rank: 5,  petName: 'Cooper',   owner: '钱*',    level: 37, happiness: 88, activity: 220, badge: '',   joinedAt: '2025-03-12', avatar: '🐕🦺' },
+  { rank: 6,  petName: 'Daisy',     owner: '孙*',    level: 36, happiness: 92, activity: 205, badge: '',   joinedAt: '2025-04-01', avatar: '🐶'  },
+  { rank: 7,  petName: 'Milo',     owner: '周*',    level: 35, happiness: 85, activity: 198, badge: '',   joinedAt: '2025-04-15', avatar: '🐾'  },
+  { rank: 8,  petName: 'Coco',     owner: '吴*',    level: 34, happiness: 91, activity: 185, badge: '',   joinedAt: '2025-04-20', avatar: '🐕'  },
+  { rank: 9,  petName: 'Buddy',    owner: '郑*',    level: 33, happiness: 87, activity: 176, badge: '',   joinedAt: '2025-05-01', avatar: '🐩'  },
+  { rank: 10, petName: 'Sadie',    owner: '冯*',    level: 32, happiness: 89, activity: 162, badge: '',   joinedAt: '2025-05-10', avatar: '🐶'  },
+  { rank: 11, petName: 'Rocky',    owner: '陈*',    level: 31, happiness: 86, activity: 155, badge: '',   joinedAt: '2025-05-18', avatar: '🐾'  },
+  { rank: 12, petName: 'Bailey',   owner: '楚*',    level: 30, happiness: 83, activity: 148, badge: '',   joinedAt: '2025-05-25', avatar: '🐕'  },
+  { rank: 13, petName: 'Tucker',  owner: '卫*',    level: 29, happiness: 88, activity: 140, badge: '',   joinedAt: '2025-06-01', avatar: '🐕🦺' },
+  { rank: 14, petName: 'Sophie',   owner: '蒋*',    level: 28, happiness: 84, activity: 132, badge: '',   joinedAt: '2025-06-08', avatar: '🐶'  },
+  { rank: 15, petName: 'Duke',     owner: '沈*',    level: 27, happiness: 82, activity: 125, badge: '',   joinedAt: '2025-06-15', avatar: '🐩'  },
+  { rank: 16, petName: 'Maggie',  owner: '韩*',    level: 26, happiness: 80, activity: 118, badge: '',   joinedAt: '2025-06-22', avatar: '🐾'  },
+  { rank: 17, petName: 'Oscar',    owner: '杨*',    level: 25, happiness: 79, activity: 110, badge: '',   joinedAt: '2025-07-01', avatar: '🐕'  },
+  { rank: 18, petName: 'Penny',    owner: '朱*',    level: 24, happiness: 77, activity: 102, badge: '',   joinedAt: '2025-07-08', avatar: '🐶'  },
+  { rank: 19, petName: 'Leo',      owner: '秦*',    level: 23, happiness: 75, activity: 95,  badge: '',   joinedAt: '2025-07-15', avatar: '🐩'  },
+  { rank: 20, petName: 'Gracie',  owner: '许*',    level: 22, happiness: 73, activity: 88,  badge: '',   joinedAt: '2025-07-22', avatar: '🐾'  },
 ];
 
 const CURRENT_USER_RANK = 7;
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
 const medalGradients = {
   1: 'linear-gradient(135deg, #ffd700, #ffb400, #ffd700)',
   2: 'linear-gradient(135deg, #d4d4d4, #b0b0b0, #d4d4d4)',
@@ -47,6 +45,7 @@ function rankBadge(rank) {
 
 // ─── Row Component ─────────────────────────────────────────────────────────────
 function RankingRow({ entry, isCurrentUser, index }) {
+  const { t } = useI18n();
   const isTop3 = entry.rank <= 3;
   const gradient = medalGradients[entry.rank];
 
@@ -60,7 +59,7 @@ function RankingRow({ entry, isCurrentUser, index }) {
         display: 'flex',
         alignItems: 'center',
         gap: 12,
-        padding: isMobile() ? '16px 12px' : '12px 16px',
+        padding: '10px 8px',
         borderRadius: 14,
         background: isCurrentUser
           ? 'rgba(244,114,182,0.2)'
@@ -77,57 +76,51 @@ function RankingRow({ entry, isCurrentUser, index }) {
           : '0 2px 8px rgba(244,114,182,0.08)',
       }}
     >
-      {/* Rank */}
       <div style={{
-        width: 36, minWidth: 36,
-        height: 36,
-        borderRadius: 10,
+        width: 28, minWidth: 28,
+        height: 28,
+        borderRadius: 8,
         background: gradient || 'rgba(244,114,182,0.15)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: isTop3 ? 18 : 13,
+        fontSize: isTop3 ? 14 : 11,
         fontWeight: 800,
         color: isTop3 ? '#fff' : '#9d174d',
       }}>
         {rankBadge(entry.rank)}
       </div>
 
-      {/* Avatar */}
       <div style={{
-        width: 44, height: 44,
-        borderRadius: 12,
+        width: 34, height: 34,
+        borderRadius: 10,
         background: 'linear-gradient(135deg, #fce7f3, #fbcfe8)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: 22, flexShrink: 0,
+        fontSize: 18, flexShrink: 0,
       }}>
         {entry.avatar}
       </div>
 
-      {/* Pet info */}
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontWeight: 700, fontSize: 15, color: '#9d174d', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <div style={{ fontWeight: 700, fontSize: 13, color: '#9d174d', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {entry.petName}
         </div>
-        <div style={{ fontSize: 12, color: '#f9a8d4', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <div style={{ fontSize: 10, color: '#f9a8d4', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {t('leaderboard.ownerPrefix')} {entry.owner}
         </div>
       </div>
 
-      {/* Level */}
-      <div style={{ textAlign: 'center', minWidth: 44 }}>
+      <div style={{ textAlign: 'center', minWidth: 44, display: isMobile() ? 'none' : 'block' }}>
         <div style={{ fontSize: 10, color: '#f9a8d4', fontWeight: 600 }}>{t('leaderboard.col.level')}</div>
         <div style={{ fontSize: 15, fontWeight: 800, color: '#9d174d' }}>{entry.level}</div>
       </div>
 
-      {/* Happiness */}
-      <div style={{ textAlign: 'center', minWidth: 44 }}>
-        <div style={{ fontSize: 10, color: '#f9a8d4', fontWeight: 600 }}>{t('leaderboard.col.happiness')}</div>
-        <div style={{ fontSize: 15, fontWeight: 800, color: entry.happiness >= 90 ? '#ec4899' : '#9d174d' }}>
+      <div style={{ textAlign: 'center', minWidth: isMobile() ? 32 : 44 }}>
+        <div style={{ fontSize: 10, color: '#f9a8d4', fontWeight: 600, display: isMobile() ? 'none' : 'block' }}>{t('leaderboard.col.happiness')}</div>
+        <div style={{ fontSize: isMobile() ? 12 : 15, fontWeight: 800, color: entry.happiness >= 90 ? '#ec4899' : '#9d174d' }}>
           {entry.happiness}%
         </div>
       </div>
 
-      {/* Activity */}
-      <div style={{ textAlign: 'right', minWidth: 50 }}>
+      <div style={{ textAlign: 'right', minWidth: 50, display: isMobile() ? 'none' : 'block' }}>
         <div style={{ fontSize: 10, color: '#f9a8d4', fontWeight: 600 }}>{t('leaderboard.col.activity')}</div>
         <div style={{ fontSize: 15, fontWeight: 800, color: '#9d174d' }}>{entry.activity}</div>
       </div>
@@ -137,29 +130,27 @@ function RankingRow({ entry, isCurrentUser, index }) {
 
 // ─── Page ──────────────────────────────────────────────────────────────────────
 export default function LeaderboardPage() {
-  const { t, lang } = useI18n();
+  const { t } = useI18n();
   const [activeTab, setActiveTab] = useState('total');
   const [rankings, setRankings] = useState(MOCK_RANKINGS);
-  const [translatedRankings, setTranslatedRankings] = useState(MOCK_RANKINGS);
   const myRankRef = useRef(null);
 
+  // Always start with mock data immediately — no waiting for API
   useEffect(() => {
-    let cancelled = false;
-    Promise.all(MOCK_RANKINGS.map(entry =>
-      Promise.all([
-        translateContent(entry.petName, lang),
-        translateContent(entry.owner, lang),
-      ]).then(([petName, owner]) => ({ ...entry, petName, owner }))
-    )).then(data => {
-      if (!cancelled) setTranslatedRankings(data);
-    });
-    return () => { cancelled = true; };
-  }, [lang]);
+    setRankings(MOCK_RANKINGS);
+  }, []);
 
+  // Try to load real data from API with 4-second timeout
   useEffect(() => {
-    LeaderboardAPI.get(activeTab, 30).then(data => {
-      if (data && data.length > 0) setRankings(data);
-    });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 4000);
+
+    LeaderboardAPI.get(activeTab, 30)
+      .then(data => {
+        if (data && data.length > 0) setRankings(data);
+      })
+      .catch(() => {})
+      .finally(() => clearTimeout(timeout));
   }, [activeTab]);
 
   const tabs = [
@@ -168,7 +159,7 @@ export default function LeaderboardPage() {
     { key: 'newcomer', label: t('leaderboard.tab.newcomer') },
   ];
 
-  const sortedData = [...translatedRankings].sort((a, b) => {
+  const sortedData = [...rankings].sort((a, b) => {
     if (activeTab === 'total')    return b.happiness - a.happiness;
     if (activeTab === 'active')   return b.activity - a.activity;
     if (activeTab === 'newcomer') return new Date(b.joinedAt) - new Date(a.joinedAt);
@@ -188,9 +179,8 @@ export default function LeaderboardPage() {
       fontFamily: "-apple-system, 'PingFang SC', 'Helvetica Neue', sans-serif",
       padding: '0 0 40px',
     }}>
-      {/* Banner */}
       <div style={{
-        padding: '32px 20px 20px',
+        padding: '24px 16px 16px',
         textAlign: 'center',
         background: 'linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%)',
         borderBottom: '1px solid rgba(244,114,182,0.15)',
@@ -204,7 +194,6 @@ export default function LeaderboardPage() {
         </div>
       </div>
 
-      {/* Tabs */}
       <div style={{
         display: 'flex', gap: 8, padding: '16px 20px',
         background: 'rgba(255,255,255,0.6)',
@@ -235,22 +224,20 @@ export default function LeaderboardPage() {
         ))}
       </div>
 
-      {/* List header */}
       <div style={{
         display: 'flex', alignItems: 'center',
-        padding: '8px 20px', gap: 12,
-        fontSize: 11, fontWeight: 700, color: '#f9a8d4',
+        padding: '8px 12px', gap: 6,
+        fontSize: 9, fontWeight: 700, color: '#f9a8d4',
         textTransform: 'uppercase', letterSpacing: '0.05em',
       }}>
-        <div style={{ width: 36, minWidth: 36, textAlign: 'center' }}>{t('leaderboard.col.rank')}</div>
-        <div style={{ width: 44, textAlign: 'center' }}></div>
+        <div style={{ width: 28, minWidth: 28, textAlign: 'center' }}>{t('leaderboard.col.rank')}</div>
+        <div style={{ width: 34, textAlign: 'center' }}></div>
         <div style={{ flex: 1 }}>{t('leaderboard.col.pet')}</div>
-        <div style={{ minWidth: 44, textAlign: 'center' }}>{t('leaderboard.col.level')}</div>
-        <div style={{ minWidth: 44, textAlign: 'center' }}>{t('leaderboard.col.happiness')}</div>
-        <div style={{ minWidth: 50, textAlign: 'right' }}>{t('leaderboard.col.activity')}</div>
+        <div style={{ minWidth: 44, textAlign: 'center', display: 'none' }}>{t('leaderboard.col.level')}</div>
+        <div style={{ minWidth: 32, textAlign: 'center' }}>{t('leaderboard.col.happiness')}</div>
+        <div style={{ minWidth: 50, textAlign: 'right', display: 'none' }}>{t('leaderboard.col.activity')}</div>
       </div>
 
-      {/* Ranking rows */}
       <div style={{ padding: '8px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
         <AnimatePresence mode="wait">
           <motion.div
@@ -261,7 +248,7 @@ export default function LeaderboardPage() {
             transition={{ duration: 0.2 }}
           >
             {sortedData.map((entry, index) => (
-              <div key={entry.rank} style={{ marginBottom: 8 }}>
+              <div key={entry.rank} style={{ marginBottom: 4 }}>
                 <RankingRow
                   entry={entry}
                   isCurrentUser={entry.rank === CURRENT_USER_RANK}
@@ -273,7 +260,6 @@ export default function LeaderboardPage() {
         </AnimatePresence>
       </div>
 
-      {/* "My Rank" button */}
       <div style={{ padding: '16px 20px', textAlign: 'center' }}>
         <button
           ref={myRankRef}
