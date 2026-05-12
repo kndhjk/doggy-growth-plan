@@ -117,6 +117,24 @@ DB_NAME=ggbond
 | `inventory` | 用户宠物用品库存 | `uid (FK)` |
 | `pet_activities` | 宠物每日活动日志 | `uid (FK)`, `pet_id (FK)` |
 
+### 服务持久化（重要）
+
+后端现在由 **systemd** 托管，不再依赖 `nohup`，服务器重启后也会自动拉起。
+
+- 服务名：`ggbond-backend.service`
+- 测试服务器后端路径：`/home/destiny/backend`
+- MySQL 服务：`mysql`
+- 数据库名：`ggbond`
+
+常用命令：
+
+```bash
+sudo systemctl status ggbond-backend
+sudo systemctl restart ggbond-backend
+sudo systemctl enable ggbond-backend
+curl http://127.0.0.1:5000/health
+```
+
 ### 字段说明
 
 - `listing_type` 枚举：`'sale'` = 出售，`'free'` = 免费转让

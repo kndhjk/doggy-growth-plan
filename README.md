@@ -119,6 +119,24 @@ DB_NAME=ggbond
 | `inventory` | User pet supplies inventory | `uid (FK)` |
 | `pet_activities` | Daily activity log | `uid (FK)`, `pet_id (FK)` |
 
+### Service Persistence (Important)
+
+The backend is now managed by **systemd**, so it survives reboot without relying on `nohup`.
+
+- Service name: `ggbond-backend.service`
+- Backend path on test server: `/home/destiny/backend`
+- MySQL service: `mysql`
+- Database name: `ggbond`
+
+Useful commands:
+
+```bash
+sudo systemctl status ggbond-backend
+sudo systemctl restart ggbond-backend
+sudo systemctl enable ggbond-backend
+curl http://127.0.0.1:5000/health
+```
+
 ### Notes
 
 - `listing_type` enum: `'sale'` = for sale, `'free'` = free giveaway
