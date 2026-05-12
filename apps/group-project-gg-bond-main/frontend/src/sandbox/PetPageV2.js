@@ -48,11 +48,30 @@ function getLastActivityTime(lastActivity, type) {
   return last.toDate ? last.toDate() : new Date(last);
 }
 
-function getPetAge(birthday) {
+function parseBirthdayDate(birthday) {
   if (!birthday) return null;
-  const b = new Date(birthday);
+  const raw = String(birthday).trim();
+  if (!/^\d{4}-\d{2}-\d{2}(T.*)?$/.test(raw)) return null;
+  const b = new Date(raw.length === 10 ? `${raw}T00:00:00` : raw);
+  if (Number.isNaN(b.getTime())) return null;
+  const ageYears = (Date.now() - b.getTime()) / (1000 * 60 * 60 * 24 * 365);
+  if (ageYears < 0 || ageYears > 30) return null;
+  return b;
+}
+
+function getPetAgeYears(birthday) {
+  const b = parseBirthdayDate(birthday);
+  if (!b) return null;
+  return (Date.now() - b.getTime()) / (1000 * 60 * 60 * 24 * 365);
+}
+
+function getPetAge(birthday) {
+  const b = parseBirthdayDate(birthday);
+  if (!b) return null;
   const now = new Date();
-  const totalMonths = (now.getFullYear() - b.getFullYear()) * 12 + (now.getMonth() - b.getMonth());
+  let totalMonths = (now.getFullYear() - b.getFullYear()) * 12 + (now.getMonth() - b.getMonth());
+  if (now.getDate() < b.getDate()) totalMonths -= 1;
+  totalMonths = Math.max(0, totalMonths);
   const years = Math.floor(totalMonths / 12);
   const months = totalMonths % 12;
   if (years === 0) return `${months}个月`;
@@ -484,8 +503,7 @@ function DesktopPetPage({ pet, statuses, displayStatuses, previewAge, handlePrev
           {/* Age preview */}
           <div style={{ width:'100%', maxWidth:540 }}>
             <AgePreviewBar
-              previewAge={previewAge !== null ? previewAge : (pet?.birthday
-                ? (Date.now() - new Date(pet.birthday).getTime()) / (1000*60*60*24*365) : 2)}
+              previewAge={previewAge !== null ? previewAge : (getPetAgeYears(pet?.birthday) ?? 2)}
               onChange={handlePreviewAgeChange}
               disabled={false}
             />
@@ -785,7 +803,7 @@ function MobilePetPage({ pet, statuses, displayStatuses, previewAge, handlePrevi
         </div>
       </div>
       <AgePreviewBar
-        previewAge={previewAge !== null ? previewAge : (pet?.birthday ? (Date.now()-new Date(pet.birthday).getTime())/(1000*60*60*24*365) : 2)}
+        previewAge={previewAge !== null ? previewAge : (getPetAgeYears(pet?.birthday) ?? 2)}
         onChange={handlePreviewAgeChange} disabled={false}
       />
       <div className="v2-stage">

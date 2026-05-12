@@ -30,6 +30,17 @@ function lerpSize(a, b, t) {
   return Math.round(a + (b - a) * c);
 }
 
+function getPetAgeYears(birthday) {
+  if (!birthday) return null;
+  const raw = String(birthday).trim();
+  if (!/^\d{4}-\d{2}-\d{2}(T.*)?$/.test(raw)) return null;
+  const d = new Date(raw.length === 10 ? `${raw}T00:00:00` : raw);
+  if (Number.isNaN(d.getTime())) return null;
+  const age = (Date.now() - d.getTime()) / (1000 * 60 * 60 * 24 * 365);
+  if (age < 0 || age > 30) return null;
+  return age;
+}
+
 function sumStatus(entry, hours) {
   if (!entry) return 0;
   const arr = Array.isArray(entry) ? entry : [entry];
@@ -57,8 +68,8 @@ export function computeStatusesV2(pet) {
   // in a pet-care context).
   let avatarStage = 'adult';
   let avatarSize = 260;
-  if (pet?.birthday) {
-    const age = (Date.now() - new Date(pet.birthday).getTime()) / (1000 * 60 * 60 * 24 * 365);
+  const age = getPetAgeYears(pet?.birthday);
+  if (age !== null) {
     if (age < 1) {
       avatarStage = 'puppy';
       avatarSize = lerpSize(230, 240, age);

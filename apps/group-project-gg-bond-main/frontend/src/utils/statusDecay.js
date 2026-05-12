@@ -10,6 +10,17 @@ function decay(ts, hours) {
   return Math.max(0, Math.min(100, Math.round(100 * Math.exp(-k * elapsed))));
 }
 
+function getPetAgeYears(birthday) {
+  if (!birthday) return null;
+  const raw = String(birthday).trim();
+  if (!/^\d{4}-\d{2}-\d{2}(T.*)?$/.test(raw)) return null;
+  const d = new Date(raw.length === 10 ? `${raw}T00:00:00` : raw);
+  if (Number.isNaN(d.getTime())) return null;
+  const age = (Date.now() - d.getTime()) / (1000 * 60 * 60 * 24 * 365);
+  if (age < 0 || age > 30) return null;
+  return age;
+}
+
 export function computeStatuses(pet) {
   const la = pet?.lastActivity || {};
   const appetite  = decay(la.feed,   WINDOWS.appetite);
@@ -19,8 +30,8 @@ export function computeStatuses(pet) {
   const social    = decay(la.social, WINDOWS.social);
 
   let avatarStage = 'adult';
-  if (pet?.birthday) {
-    const age = (Date.now() - new Date(pet.birthday).getTime()) / (1000*60*60*24*365);
+  const age = getPetAgeYears(pet?.birthday);
+  if (age !== null) {
     avatarStage =
       age < 1 ? 'puppy' :
       age < 2 ? 'teen'  :

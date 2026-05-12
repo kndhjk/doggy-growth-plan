@@ -7,6 +7,12 @@ import { DEFAULT_BREED_ZH, breedEmoji } from '../../data/breeds';
 import BreedPicker from './BreedPicker';
 import PhotoUpload from '../PhotoUpload';
 
+function normalizeBirthday(value) {
+  if (!value) return '';
+  const trimmed = String(value).trim();
+  return /^\d{4}-\d{2}-\d{2}$/.test(trimmed) ? trimmed : '';
+}
+
 export default function CreatePetModal({ onClose }) {
   const { t } = useI18n();
   const [name, setName]         = useState('');
@@ -22,7 +28,9 @@ export default function CreatePetModal({ onClose }) {
     if (trimmed.length > 20)     return t('create.error.nameLong');
     if (!breed.trim())                   return t('create.error.breed');
     if (birthday) {
-      const d = new Date(birthday);
+      const normalized = normalizeBirthday(birthday);
+      if (!normalized) return t('create.error.birthBad');
+      const d = new Date(`${normalized}T00:00:00`);
       if (Number.isNaN(d.getTime())) return t('create.error.birthBad');
       if (d.getTime() > Date.now())  return t('create.error.birthFuture');
     }
@@ -33,7 +41,7 @@ export default function CreatePetModal({ onClose }) {
     const err = validate();
     if (err) { toast.error(err); return; }
     const payload = {
-      name: name.trim(), breed, birthday,
+      name: name.trim(), breed, birthday: normalizeBirthday(birthday) || null,
       photoURL: photoURL || null,
     };
     setBusy(true);
@@ -89,7 +97,7 @@ export default function CreatePetModal({ onClose }) {
           <BreedPicker value={breed} onChange={setBreed} />
         </Field>
         <Field label={t('create.field.birthday')}>
-          <input type="date" value={birthday} onChange={e => setBirthday(e.target.value)}
+          <input type="date" value={birthday} onChange={e => setBirthday(normalizeBirthday(e.target.value))}
                  max={new Date().toISOString().slice(0, 10)} style={inputStyle} />
         </Field>
 
