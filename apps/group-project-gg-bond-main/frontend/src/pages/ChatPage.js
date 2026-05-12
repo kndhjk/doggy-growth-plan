@@ -79,6 +79,9 @@ export default function ChatPage() {
     );
     if (unread.length === 0) return;
 
+    const latestMessage = messages[messages.length - 1];
+    const shouldMarkLastMessageRead = latestMessage && latestMessage.senderId !== currentUser.uid;
+
     if (isLocal) {
       const nextMessages = messages.map(m => (
         m.senderId !== currentUser.uid ? { ...m, read: true } : m
@@ -87,7 +90,12 @@ export default function ChatPage() {
       writeLocalMessages(conversationId, nextMessages);
       const nextConversations = readLocalConversations().map(conv => (
         conv.id === conversationId
-          ? { ...conv, lastMessage: conv.lastMessage ? { ...conv.lastMessage, read: true } : conv.lastMessage }
+          ? {
+              ...conv,
+              lastMessage: shouldMarkLastMessageRead && conv.lastMessage
+                ? { ...conv.lastMessage, read: true }
+                : conv.lastMessage,
+            }
           : conv
       ));
       writeLocalConversations(nextConversations);
@@ -97,9 +105,11 @@ export default function ChatPage() {
     unread.forEach(m => {
       updateDoc(doc(db, 'conversations', conversationId, 'messages', m.id), { read: true }).catch(() => {});
     });
-    updateDoc(doc(db, 'conversations', conversationId), {
-      [`lastMessage.read`]: true,
-    }).catch(() => {});
+    if (shouldMarkLastMessageRead) {
+      updateDoc(doc(db, 'conversations', conversationId), {
+        [`lastMessage.read`]: true,
+      }).catch(() => {});
+    }
   }, [messages, currentUser, conversationId, isLocal]);
 
   const sendMessage = async () => {
