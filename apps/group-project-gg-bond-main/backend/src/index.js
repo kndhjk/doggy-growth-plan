@@ -251,13 +251,16 @@ app.delete("/api/users/:uid/pet", async (req, res) => {
 app.get("/api/marketplace", async (req, res) => {
   try {
     const { type = "all", category = "all" } = req.query;
-    let sql = "SELECT * FROM marketplace_listings WHERE status = 'active' ";
+    let sql = "SELECT id, title, description, category, price, location, listing_type, JSON_UNQUOTE(JSON_EXTRACT(images, '$[0]')) as first_image, seller_id, seller_name, seller_email, created_at FROM marketplace_listings WHERE status = 'active' ";
     const params = [];
     if (type !== "all") { sql += " AND listing_type = ? "; params.push(type); }
     if (category !== "all") { sql += " AND category = ? "; params.push(category); }
-    sql += " ORDER BY created_at DESC";
+    sql += " LIMIT 100";
     const [rows] = await pool.execute(sql, params);
-    res.json({ listings: rows.map(mapListing), count: rows.length });
+    const listings = rows
+      .map(r => ({ id: r.id, title: r.title, description: r.description, category: r.category, price: parseFloat(r.price), location: r.location, listingType: r.listing_type, images: r.first_image ? [r.first_image] : [], sellerId: r.seller_id, sellerName: r.seller_name, sellerEmail: r.seller_email, createdAt: r.created_at ? new Date(r.created_at).toISOString() : null }))
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    res.json({ listings, count: listings.length });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -274,6 +277,26 @@ app.post("/api/marketplace", async (req, res) => {
       [title.trim(), description?.trim() || "", category || "pet", price || 0, location.trim(), listingType || "sale", JSON.stringify(images || []), sellerId, sellerName || "Anonymous Trader", sellerEmail || ""]
     );
     res.status(201).json({ id: result.insertId, message: "Listing created" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get("/api/marketplace/:id", async (req, res) => {
+  try {
+    const [rows] = await pool.execute(
+      "SELECT id, title, description, category, price, location, listing_type, images, seller_id, seller_name, seller_email, created_at FROM marketplace_listings WHERE id = ? AND status = 'active' LIMIT 1",
+      [req.params.id]
+    );
+    if (!rows[0]) return res.status(404).json({ error: "Not found" });
+    const r = rows[0];
+    res.json({
+      id: r.id, title: r.title, description: r.description, category: r.category,
+      price: parseFloat(r.price), location: r.location, listingType: r.listing_type,
+      images: parseJsonField(r.images, []),
+      sellerId: r.seller_id, sellerName: r.seller_name, sellerEmail: r.seller_email,
+      createdAt: r.created_at ? new Date(r.created_at).toISOString() : null,
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -473,8 +496,8 @@ app.get("/api/admin/stats", adminAuth, async (req, res) => {
 
 app.get("/api/admin/listings", adminAuth, async (_req, res) => {
   try {
-    const [rows] = await pool.execute("SELECT * FROM marketplace_listings ORDER BY created_at DESC");
-    res.json(rows.map(mapListing));
+    const [rows] = await pool.execute("SELECT id, title, description, category, price, location, listing_type, seller_id, seller_name, seller_email, status, created_at FROM marketplace_listings ORDER BY created_at DESC");
+    res.json(rows.map(r => ({ id: r.id, title: r.title, description: r.description, category: r.category, price: parseFloat(r.price), location: r.location, listingType: r.listing_type, sellerId: r.seller_id, sellerName: r.seller_name, sellerEmail: r.seller_email, status: r.status, createdAt: r.created_at ? new Date(r.created_at).toISOString() : null })));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
