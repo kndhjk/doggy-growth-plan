@@ -3,7 +3,7 @@ const mi = {
   'nav.home':      'Kāinga',
   'nav.ai':        'Kaiwhiriwhiri AI',
   'nav.map':       'Mahere',
-  'nav.marketplace': ' Mākete',
+  'nav.marketplace': 'Tauhokohoko',
   'nav.community': 'Hapori',
   'nav.profile':   'Pūkenga',
   'nav.adopt':     'Ka hao',

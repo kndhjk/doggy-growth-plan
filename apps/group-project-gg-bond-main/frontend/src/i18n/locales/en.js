@@ -3,7 +3,7 @@ const en = {
   'nav.home':      'Home',
   'nav.ai':        'AI Advisor',
   'nav.map':       'Map',
-  'nav.marketplace': 'Marketplace',
+  'nav.marketplace': 'Trading',
   'nav.community': 'Community',
   'nav.profile':   'Profile',
   'nav.adopt':     'Adopt',

@@ -4,7 +4,7 @@ const zh = {
   'nav.home':      '主页',
   'nav.ai':        'AI顾问',
   'nav.map':       '地图',
-  'nav.marketplace': '市场',
+  'nav.marketplace': '交易',
   'nav.community': '社区',
   'nav.profile':   '我',
   'nav.adopt':     '领养',

@@ -3,7 +3,7 @@ const ja = {
   'nav.home':      'ホーム',
   'nav.ai':        'AIアドバイザー',
   'nav.map':       'マップ',
-  'nav.marketplace': 'マーケットプレイス',
+  'nav.marketplace': '取引',
   'nav.community': 'コミュニティ',
   'nav.profile':   'プロフィール',
   'nav.adopt':     '飼う',
