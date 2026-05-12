@@ -1,0 +1,737 @@
+# GG Bond / Doggy Growth Plan — 新手完整上手 README
+
+> 这份 README 是给**第一次接手这个项目的队友**看的。  
+> 默认你对 React、Firebase、前后端结构都不熟。没关系，按这份文档看就行。
+
+---
+
+## 1. 先说最重要的：代码到底在哪？
+
+当前这个 `master` 分支是从测试服务器推上来的快照，所以仓库根目录看起来会像服务器家目录。
+
+### 真正的项目代码在这里：
+
+```bash
+apps/group-project-gg-bond-main/
+```
+
+以后你要改功能，**请直接进这个目录看**。
+
+项目核心目录：
+
+```bash
+apps/group-project-gg-bond-main/
+├── frontend/   # React 前端
+├── backend/    # Express 后端
+└── README.md   # （如果后面补充了局部说明，会放这里）
+```
+
+---
+
+## 2. 项目是做什么的？
+
+这是一个**虚拟宠物成长平台**，主要功能包括：
+
+- 创建宠物、养宠互动
+- AI 问答
+- 地图探索
+- 社区发帖评论
+- 宠物市场
+- 领养页面
+- 背包系统
+- 排行榜
+- 健康记录
+- 成就系统
+- 每日奖励
+- 宠物训练
+- 用户资料页
+- 消息聊天
+- 管理员后台
+
+---
+
+## 3. 技术栈（先有个大概概念）
+
+### 前端
+- React
+- React Router
+- Framer Motion
+- react-hot-toast
+- 自定义内联样式为主
+- i18n 多语言（中文 / 英文 / 日文 / 毛利语）
+
+### 后端
+- Node.js
+- Express
+- Firebase Admin
+- REST API
+
+### 数据侧
+- Firebase Auth：登录注册
+- Firestore：用户、社区、消息等
+- Firebase Storage：图片上传
+- localStorage fallback：后端挂了时，部分功能本地兜底
+
+---
+
+## 4. 整体架构，先像地图一样记住
+
+```text
+用户打开页面
+  ↓
+frontend/src/App.js
+  ↓
+React Router 根据 URL 分发到各个页面
+  ↓
+页面从以下几层拿数据：
+    1) context（全局登录/宠物状态）
+    2) services/apiLayer.js（调用后端 API）
+    3) services/firebase.js（直接走 Firebase）
+    4) localStorage fallback（兜底）
+  ↓
+backend/src/index.js 挂载各个 /api/* 路由
+```
+
+---
+
+## 5. 新手先看哪几个文件？
+
+如果你时间很少，先按这个顺序看：
+
+### 必看 1：前端路由总入口
+```bash
+apps/group-project-gg-bond-main/frontend/src/App.js
+```
+看这个文件，你能知道：
+- 一共有多少页面
+- 每个页面的路由是什么
+- 哪些页面需要登录
+- 哪些是 tab 页，哪些不是
+
+### 必看 2：13 个 tab 的定义
+```bash
+apps/group-project-gg-bond-main/frontend/src/components/Layout/Layout.js
+```
+看这个文件，你能知道：
+- 底部 tab / 侧边栏 tab 是怎么定义的
+- tab 的顺序
+- tab 的图标和路由对应关系
+- 手机 / 平板 / 桌面三套布局怎么切换
+
+### 必看 3：登录状态
+```bash
+apps/group-project-gg-bond-main/frontend/src/context/AuthContext.js
+```
+看这个文件，你能知道：
+- 登录注册怎么做
+- Firebase 登录失败时，怎么切本地 fallback
+- `currentUser` 从哪来
+
+### 必看 4：宠物状态
+```bash
+apps/group-project-gg-bond-main/frontend/src/context/PetContext.js
+```
+看这个文件，你能知道：
+- 当前宠物怎么读取
+- 新宠物怎么创建
+- 为什么有些按钮点了会更新宠物状态
+- 没后端时为什么还能本地跑
+
+### 必看 5：后端总入口
+```bash
+apps/group-project-gg-bond-main/backend/src/index.js
+```
+看这个文件，你能知道：
+- 后端有哪些 API 模块
+- 每个模块的挂载路径
+- 比如 `/api/health`、`/api/training`、`/api/leaderboard` 等从哪进
+
+---
+
+## 6. 13 个 Tab 完整代码对照表（最重要）
+
+> 下面这个表是给新手找代码用的。  
+> 你要改哪个 tab，就从这里开始找。
+
+| # | Tab 名称 | 路由 | 主页面文件 | 相关组件/逻辑 | 数据来源 |
+|---|---|---|---|---|---|
+| 1 | Home / 宠物主页 | `/` | `frontend/src/sandbox/PetPageV2.js` | `components/Pet/*`、`sandbox/statusDecayV2.js`、`context/PetContext.js` | Firestore / local pet fallback |
+| 2 | AI | `/ai` | `frontend/src/pages/AIPage.js` | `context/AuthContext.js`、`context/PetContext.js` | Firebase + AI API |
+| 3 | Map | `/map` | `frontend/src/pages/MapPage.js` | Google Maps、Firebase | Firebase / 地图 API |
+| 4 | Marketplace | `/marketplace` | `frontend/src/pages/MarketplacePage.js` | `services/api.js`、Firebase Storage | API + Firebase |
+| 5 | Community | `/community` | `frontend/src/pages/CommunityPage.js` | `components/Community/*`、PhotoUpload | Firestore |
+| 6 | Profile | `/profile` | `frontend/src/pages/ProfilePage.js` | `components/Profile/*`、语言切换 | Auth + PetContext |
+| 7 | Adopt | `/adopt` | `frontend/src/pages/AdoptPage.js` | 领养卡片 UI | 前端静态/本地数据 |
+| 8 | Achievements | `/achievements` | `frontend/src/pages/AchievementsPage.js` | `services/apiLayer.js` → `AchievementsAPI` | `/api/achievements` + localStorage fallback |
+| 9 | Inventory | `/inventory` | `frontend/src/pages/InventoryPage.js` | Pet item 使用逻辑 | `/api/inventory` + 本地状态 |
+| 10 | Leaderboard | `/leaderboard` | `frontend/src/pages/LeaderboardPage.js` | `LeaderboardAPI` | `/api/leaderboard` |
+| 11 | Health | `/health` | `frontend/src/pages/HealthRecordsPage.js` | `HealthAPI` | `/api/health` + localStorage fallback |
+| 12 | Rewards | `/rewards` | `frontend/src/pages/DailyRewardsPage.js` | `RewardsAPI` | `/api/rewards` + localStorage fallback |
+| 13 | Training | `/training` | `frontend/src/pages/PetTrainingPage.js` | `TrainingAPI` | `/api/training` + localStorage fallback |
+
+---
+
+## 7. 另外两个“不是 tab，但很重要”的页面
+
+### Messages
+- 路由：`/messages`
+- 文件：`frontend/src/pages/MessagesPage.js`
+- 用途：聊天会话列表
+
+### Chat
+- 路由：`/messages/:conversationId`
+- 文件：`frontend/src/pages/ChatPage.js`
+- 用途：具体聊天窗口
+
+---
+
+## 8. 每个 tab 更详细的“改代码入口”
+
+---
+
+### 1) Home / 宠物主页
+**主文件：**
+```bash
+frontend/src/sandbox/PetPageV2.js
+```
+
+**你会在这里改什么：**
+- 宠物主页布局
+- 创建宠物弹窗显示逻辑
+- 喂食 / 喝水 / 洗澡 / 散步 等动作
+- 空状态（新用户没宠物时）
+- 桌面/平板/手机三种显示
+
+**相关文件：**
+```bash
+frontend/src/components/Pet/CreatePetModal.js
+frontend/src/components/Pet/ActionRing.js
+frontend/src/components/Pet/StatusRow.js
+frontend/src/components/Pet/DogCharacter.js
+frontend/src/context/PetContext.js
+frontend/src/sandbox/statusDecayV2.js
+```
+
+**怎么理解：**
+- `PetPageV2.js` = 页面本体
+- `PetContext.js` = 当前宠物数据来源
+- `statusDecayV2.js` = 宠物状态衰减算法
+- `CreatePetModal.js` = 新建宠物弹窗
+
+---
+
+### 2) AI
+**主文件：**
+```bash
+frontend/src/pages/AIPage.js
+```
+
+**你会在这里改什么：**
+- AI 对话界面
+- 发送问题
+- 把宠物信息拼进 prompt
+- 显示 AI 返回结果
+
+**相关文件：**
+```bash
+backend/src/routes/ai.js
+frontend/src/context/AuthContext.js
+frontend/src/context/PetContext.js
+frontend/src/services/firebase.js
+```
+
+**新手理解：**
+前端收集用户问题 + 当前宠物状态，然后发给 AI 接口，后端/服务端再去请求模型。
+
+---
+
+### 3) Map
+**主文件：**
+```bash
+frontend/src/pages/MapPage.js
+```
+
+**相关后端：**
+```bash
+backend/src/routes/map.js
+```
+
+**你会在这里改什么：**
+- 地图中心点
+- 标记点样式
+- 周边宠物/用户展示
+- Google Maps 加载逻辑
+
+---
+
+### 4) Marketplace
+**主文件：**
+```bash
+frontend/src/pages/MarketplacePage.js
+```
+
+**相关文件：**
+```bash
+frontend/src/services/api.js
+backend/src/routes/marketplace.js
+frontend/src/services/firebase.js
+frontend/src/services/storage.js
+```
+
+**你会在这里改什么：**
+- 商品列表
+- 商品详情
+- 发布商品
+- 上传商品图片
+- 搜索 / 分类 / 过滤 / sale tab
+
+**新手理解：**
+这个页面功能比较大，优先看页面顶部 state，然后看数据加载函数，再看发布表单。
+
+---
+
+### 5) Community
+**主文件：**
+```bash
+frontend/src/pages/CommunityPage.js
+```
+
+**相关文件：**
+```bash
+frontend/src/components/Community/CommentList.js
+frontend/src/components/Community/MyMatchCard.js
+frontend/src/components/PhotoUpload.js
+backend/src/routes/community.js
+```
+
+**你会在这里改什么：**
+- 发帖
+- 评论
+- 上传图片
+- 匹配卡片
+- 帖子展示布局
+
+---
+
+### 6) Profile
+**主文件：**
+```bash
+frontend/src/pages/ProfilePage.js
+```
+
+**相关文件：**
+```bash
+frontend/src/components/Profile/PetEditCard.js
+frontend/src/components/Profile/AchievementWall.js
+frontend/src/context/AuthContext.js
+frontend/src/context/PetContext.js
+frontend/src/i18n/I18nContext.js
+```
+
+**你会在这里改什么：**
+- 用户资料展示
+- 宠物资料编辑
+- 头像修改
+- 语言切换
+- 成就墙
+
+---
+
+### 7) Adopt
+**主文件：**
+```bash
+frontend/src/pages/AdoptPage.js
+```
+
+**你会在这里改什么：**
+- 领养卡片 UI
+- 领养信息展示
+- 领养筛选
+
+**说明：**
+这个页面相对独立，适合新手先练手改样式。
+
+---
+
+### 8) Achievements
+**主文件：**
+```bash
+frontend/src/pages/AchievementsPage.js
+```
+
+**相关文件：**
+```bash
+frontend/src/services/apiLayer.js
+backend/src/routes/achievements.js
+frontend/src/services/achievementsService.js
+```
+
+**你会在这里改什么：**
+- 成就列表
+- 解锁条件
+- 进度条
+- 稀有度显示
+
+**新手理解：**
+前端页面主要负责显示，真正的数据读写入口在 `AchievementsAPI`。
+
+---
+
+### 9) Inventory
+**主文件：**
+```bash
+frontend/src/pages/InventoryPage.js
+```
+
+**相关文件：**
+```bash
+backend/src/routes/inventory.js
+frontend/src/context/PetContext.js
+```
+
+**你会在这里改什么：**
+- 背包物品列表
+- 使用物品
+- 物品分类
+- 使用后如何影响宠物状态
+
+---
+
+### 10) Leaderboard
+**主文件：**
+```bash
+frontend/src/pages/LeaderboardPage.js
+```
+
+**相关文件：**
+```bash
+frontend/src/services/apiLayer.js
+backend/src/routes/leaderboard.js
+```
+
+**你会在这里改什么：**
+- 排行榜 tab
+- 排名规则
+- 用户显示文案
+- 多语言文案
+
+---
+
+### 11) Health
+**主文件：**
+```bash
+frontend/src/pages/HealthRecordsPage.js
+```
+
+**相关文件：**
+```bash
+frontend/src/services/apiLayer.js
+backend/src/routes/health.js
+```
+
+**你会在这里改什么：**
+- 健康记录列表
+- 新增记录弹窗
+- 删除记录
+- 疫苗/检查/药物分类
+
+---
+
+### 12) Rewards
+**主文件：**
+```bash
+frontend/src/pages/DailyRewardsPage.js
+```
+
+**相关文件：**
+```bash
+frontend/src/services/apiLayer.js
+backend/src/routes/rewards.js
+```
+
+**你会在这里改什么：**
+- 每日签到
+- 连续签到天数
+- 奖励 UI
+- 今日是否已领取
+
+---
+
+### 13) Training
+**主文件：**
+```bash
+frontend/src/pages/PetTrainingPage.js
+```
+
+**相关文件：**
+```bash
+frontend/src/services/apiLayer.js
+backend/src/routes/training.js
+```
+
+**你会在这里改什么：**
+- 宠物技能训练
+- 技能等级
+- 训练点数
+- 训练历史
+- streak（连续训练）
+
+---
+
+## 9. “一个功能到底前后端分别在哪”——超实用对照
+
+### 登录 / 注册
+- 前端页面：
+  - `frontend/src/pages/LoginPage.js`
+  - `frontend/src/pages/RegisterPage.js`
+- 登录逻辑：
+  - `frontend/src/context/AuthContext.js`
+- Firebase 初始化：
+  - `frontend/src/services/firebase.js`
+
+### 宠物创建 / 宠物主页
+- 页面：`frontend/src/sandbox/PetPageV2.js`
+- 弹窗：`frontend/src/components/Pet/CreatePetModal.js`
+- 数据：`frontend/src/context/PetContext.js`
+- 状态算法：`frontend/src/sandbox/statusDecayV2.js`
+- 后端：`backend/src/routes/pet.js`
+
+### 发帖 / 评论 / 社区
+- 页面：`frontend/src/pages/CommunityPage.js`
+- 评论组件：`frontend/src/components/Community/CommentList.js`
+- 后端：`backend/src/routes/community.js`
+
+### 地图
+- 页面：`frontend/src/pages/MapPage.js`
+- 后端：`backend/src/routes/map.js`
+
+### 市场
+- 页面：`frontend/src/pages/MarketplacePage.js`
+- API：`frontend/src/services/api.js`
+- 后端：`backend/src/routes/marketplace.js`
+
+### 背包 / 健康 / 成就 / 奖励 / 训练 / 排行榜
+- 这些大多统一走：
+  - `frontend/src/services/apiLayer.js`
+- 后端分别对应：
+  - `backend/src/routes/inventory.js`
+  - `backend/src/routes/health.js`
+  - `backend/src/routes/achievements.js`
+  - `backend/src/routes/rewards.js`
+  - `backend/src/routes/training.js`
+  - `backend/src/routes/leaderboard.js`
+
+---
+
+## 10. 如果你只想“改某个 tab 的 UI”，怎么做？
+
+### 最快方法
+1. 打开 `frontend/src/components/Layout/Layout.js`
+2. 找到 tab 对应的路由
+3. 去 `frontend/src/App.js` 找对应 page 文件
+4. 进入对应 `frontend/src/pages/xxxPage.js`
+5. 直接改 JSX / 样式
+
+### 例子：我要改排行榜页面
+1. `Layout.js` 看到 leaderboard → `/leaderboard`
+2. `App.js` 看到 `/leaderboard` → `LeaderboardPage`
+3. 打开：
+```bash
+frontend/src/pages/LeaderboardPage.js
+```
+4. 开始改页面
+
+---
+
+## 11. 如果你要“改功能逻辑”，怎么找？
+
+### 看 imports（最简单）
+比如你打开一个 page 文件，先看顶部 `import`：
+
+- import 了 `context/...` → 说明数据来自全局状态
+- import 了 `services/apiLayer` → 说明走后端 API
+- import 了 `services/firebase` → 说明直接打 Firebase
+- import 了 `components/...` → 说明 UI 是拆出来的组件
+
+这一步对新手非常有用。
+
+---
+
+## 12. 后端 API 总表
+
+后端总入口：
+```bash
+backend/src/index.js
+```
+
+挂载的 API：
+
+| 路由前缀 | 文件 |
+|---|---|
+| `/api/pet` | `backend/src/routes/pet.js` |
+| `/api/activities` | `backend/src/routes/activities.js` |
+| `/api/ai` | `backend/src/routes/ai.js` |
+| `/api/community` | `backend/src/routes/community.js` |
+| `/api/map` | `backend/src/routes/map.js` |
+| `/api/marketplace` | `backend/src/routes/marketplace.js` |
+| `/api/inventory` | `backend/src/routes/inventory.js` |
+| `/api/admin` | `backend/src/routes/admin.js` |
+| `/api/achievements` | `backend/src/routes/achievements.js` |
+| `/api/training` | `backend/src/routes/training.js` |
+| `/api/rewards` | `backend/src/routes/rewards.js` |
+| `/api/health` | `backend/src/routes/health.js` |
+| `/api/leaderboard` | `backend/src/routes/leaderboard.js` |
+| `/health` | 健康检查 |
+
+---
+
+## 13. 前端常用目录说明
+
+```bash
+frontend/src/
+├── pages/         # 页面级组件（一个路由一个页面）
+├── components/    # 可复用组件
+├── context/       # 全局状态（登录、宠物）
+├── services/      # 接口层 / Firebase / fallback
+├── sandbox/       # 实验页或复杂版本（当前首页 V2 在这里）
+├── i18n/          # 多语言字典和切换逻辑
+├── data/          # 静态数据（比如 breeds）
+└── utils/         # 工具函数
+```
+
+---
+
+## 14. 推荐新手的阅读顺序
+
+### 第 1 轮（只看结构）
+1. `frontend/src/App.js`
+2. `frontend/src/components/Layout/Layout.js`
+3. `backend/src/index.js`
+
+### 第 2 轮（看核心业务）
+4. `frontend/src/context/AuthContext.js`
+5. `frontend/src/context/PetContext.js`
+6. `frontend/src/sandbox/PetPageV2.js`
+
+### 第 3 轮（按你负责的 tab 看）
+7. 找到你负责的 page 文件
+8. 再看它 import 的 service / component / backend route
+
+---
+
+## 15. 推荐新手第一次改动做什么？
+
+如果你是第一次接手，建议按难度从低到高：
+
+### 最容易
+- 改 `AdoptPage.js` 的 UI
+- 改 `ProfilePage.js` 的文字或布局
+- 改某个 tab 的图标或文案（`Layout.js`）
+
+### 中等
+- 改 `LeaderboardPage.js` 的显示逻辑
+- 改 `HealthRecordsPage.js` 的表单
+- 改 `DailyRewardsPage.js` 的奖励展示
+
+### 较复杂
+- 改 `MarketplacePage.js`
+- 改 `CommunityPage.js`
+- 改 `PetPageV2.js`
+- 改 AI / Firebase / Admin 相关逻辑
+
+---
+
+## 16. 最近修过的重要坑（接手前最好知道）
+
+### 1) 新用户没有宠物时会白屏
+修复点：
+- `frontend/src/sandbox/PetPageV2.js`
+- 原因：桌面/平板布局在 `pet` 为空时先读了 `pet.name`
+
+### 2) 宠物创建按钮/空状态页有调试残留
+修复点：
+- `frontend/src/sandbox/PetPageV2.js`
+
+### 3) 服务器回滚后浏览器缓存导致白屏
+修复点：
+- Nginx 缓存头（服务器配置）
+
+---
+
+## 17. 本地开发怎么跑
+
+### 前端
+```bash
+cd apps/group-project-gg-bond-main/frontend
+npm install
+npm start
+```
+
+### 后端
+```bash
+cd apps/group-project-gg-bond-main/backend
+npm install
+npm start
+```
+
+默认后端：
+- `http://localhost:5000`
+
+健康检查：
+```bash
+curl http://localhost:5000/health
+```
+
+---
+
+## 18. 测试服务器信息
+
+- IP: `4.155.227.179`
+- SSH: `destiny@4.155.227.179`
+- 线上前端静态目录：`/var/www/gg-bond`
+- 线上后端代码目录：
+  ```bash
+  /home/destiny/apps/group-project-gg-bond-main/backend
+  ```
+- 线上前端代码目录：
+  ```bash
+  /home/destiny/apps/group-project-gg-bond-main/frontend
+  ```
+
+---
+
+## 19. 给队友的最后一句话
+
+如果你完全不知道从哪里下手，记住一句就够：
+
+> **先看 `App.js` 找页面，再看 `Layout.js` 找 tab，再看对应 page 文件。**
+
+如果还是迷路，就按这个链路找：
+
+```text
+Tab 名称
+→ Layout.js
+→ App.js route
+→ pages/xxxPage.js
+→ imports 里的 service/context/component
+→ backend/src/routes/xxx.js
+```
+
+这条链基本能把 90% 的代码找到。
+
+---
+
+## 20. 团队信息
+
+- Team: **GG Bond**
+- 课程：CS732
+- 项目：Virtual Pet Growth Platform
+- 维护仓库：`kndhjk/doggy-growth-plan`
+- 测试服版本：当前 `master` 已同步到测试服运行版本
+
+如果后面你们要继续整理仓库，建议下一步做两件事：
+
+1. 把真正项目根目录从 `apps/group-project-gg-bond-main/` 提到仓库根目录
+2. 把服务器无关文件（如 `.bash_history`、`.npm/`、压缩包等）从仓库历史里清出去
+
+这两个不影响现在开发，但会让仓库干净很多。
