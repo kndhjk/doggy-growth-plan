@@ -56,8 +56,22 @@ export default function CommentList({ postId, isLocalPost, onCountChange }) {
   // Subscribe to Firestore comments for real-mode posts
   useEffect(() => {
     if (useLocal) {
-      setComments(readLocal(postId));
-      return;
+      const refresh = () => setComments(readLocal(postId));
+      refresh();
+      const key = localKey(postId);
+      const onStorage = (e) => {
+        if (!e || e.key === key) refresh();
+      };
+      const onFocus = () => refresh();
+      const onVisible = () => { if (document.visibilityState === 'visible') refresh(); };
+      window.addEventListener('storage', onStorage);
+      window.addEventListener('focus', onFocus);
+      document.addEventListener('visibilitychange', onVisible);
+      return () => {
+        window.removeEventListener('storage', onStorage);
+        window.removeEventListener('focus', onFocus);
+        document.removeEventListener('visibilitychange', onVisible);
+      };
     }
     if (!postId) return;
     try {
