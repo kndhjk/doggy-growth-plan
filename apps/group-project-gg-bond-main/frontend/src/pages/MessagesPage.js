@@ -37,12 +37,27 @@ export default function MessagesPage() {
   useEffect(() => {
     if (!currentUser) return;
     if (isLocal) {
-      const convs = readLocalConversations()
-        .filter(c => c.participants && currentUser.uid in c.participants)
-        .sort((a, b) => new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0));
-      setConversations(convs);
-      setLoading(false);
-      return;
+      const refresh = () => {
+        const convs = readLocalConversations()
+          .filter(c => c.participants && currentUser.uid in c.participants)
+          .sort((a, b) => new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0));
+        setConversations(convs);
+        setLoading(false);
+      };
+      refresh();
+      const onStorage = (e) => {
+        if (!e || e.key === LOCAL_CONVERSATIONS_KEY) refresh();
+      };
+      const onFocus = () => refresh();
+      const onVisible = () => { if (document.visibilityState === 'visible') refresh(); };
+      window.addEventListener('storage', onStorage);
+      window.addEventListener('focus', onFocus);
+      document.addEventListener('visibilitychange', onVisible);
+      return () => {
+        window.removeEventListener('storage', onStorage);
+        window.removeEventListener('focus', onFocus);
+        document.removeEventListener('visibilitychange', onVisible);
+      };
     }
     const q = query(collection(db, 'conversations'), orderBy('updatedAt', 'desc'));
     const unsub = onSnapshot(q, snap => {

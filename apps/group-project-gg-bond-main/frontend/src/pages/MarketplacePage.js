@@ -559,10 +559,26 @@ export default function MarketplacePage() {
     let cancelled = false;
 
     if (isLocal) {
-      const local = readLocalListings().filter(item => item.listingType === listingType && (category === 'all' || item.category === category));
-      setListings(local);
-      setLoading(false);
-      return () => { cancelled = true; };
+      const refresh = () => {
+        const local = readLocalListings().filter(item => item.listingType === listingType && (category === 'all' || item.category === category));
+        setListings(local);
+        setLoading(false);
+      };
+      refresh();
+      const onStorage = (e) => {
+        if (!e || e.key === LOCAL_LISTINGS_KEY) refresh();
+      };
+      const onFocus = () => refresh();
+      const onVisible = () => { if (document.visibilityState === 'visible') refresh(); };
+      window.addEventListener('storage', onStorage);
+      window.addEventListener('focus', onFocus);
+      document.addEventListener('visibilitychange', onVisible);
+      return () => {
+        cancelled = true;
+        window.removeEventListener('storage', onStorage);
+        window.removeEventListener('focus', onFocus);
+        document.removeEventListener('visibilitychange', onVisible);
+      };
     }
 
     fetchMarketplace({ type: listingType, category })
