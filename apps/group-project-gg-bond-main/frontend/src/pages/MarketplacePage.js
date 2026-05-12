@@ -54,7 +54,9 @@ function CreateListingModal({ onClose, onCreated }) {
 
   const handleSubmit = async () => {
     if (!form.title.trim()) return toast.error('Title is required');
-    if (!form.price || isNaN(Number(form.price)) || Number(form.price) <= 0) return toast.error('Enter a valid price');
+    if (form.listingType !== 'adoption' && (!form.price || isNaN(Number(form.price)) || Number(form.price) <= 0)) {
+      return toast.error('Enter a valid price');
+    }
     if (!form.location.trim()) return toast.error('Location is required');
     if (images.length === 0) return toast.error('Add at least one photo');
     setUploading(true);
@@ -537,6 +539,7 @@ export default function MarketplacePage() {
       let count = 0;
       snap.docs.forEach(d => {
         const conv = d.data();
+        if (!conv.participants || !(currentUser.uid in conv.participants)) return;
         const otherUid = Object.keys(conv.participants || {}).find(k => k !== currentUser.uid);
         if (otherUid) {
           const lastMsg = conv.lastMessage;
