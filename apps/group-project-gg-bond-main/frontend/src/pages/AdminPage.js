@@ -2,15 +2,17 @@ import React, { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 
-const ADMIN_KEY = 'ggbond_admin_secure_2026';
+const ADMIN_SESSION_KEY = 'ggbond_admin_key';
 
 async function adminFetch(path, opts = {}) {
+  const adminKey = opts.adminKey || sessionStorage.getItem(ADMIN_SESSION_KEY) || '';
+  const { adminKey: _adminKey, ...rest } = opts;
   const r = await fetch(`/api/admin${path}`, {
-    ...opts,
+    ...rest,
     headers: {
-      'x-admin-key': ADMIN_KEY,
+      'x-admin-key': adminKey,
       'Content-Type': 'application/json',
-      ...(opts.headers || {}),
+      ...(rest.headers || {}),
     },
   });
   if (!r.ok) {
@@ -32,7 +34,8 @@ function LoginPage({ onLogin }) {
     setLoading(true);
     setErr('');
     try {
-      await adminFetch('/stats');
+      await adminFetch('/stats', { adminKey: pw });
+      sessionStorage.setItem(ADMIN_SESSION_KEY, pw);
       onLogin(pw);
     } catch {
       setErr('密码错误，请重试');
@@ -176,7 +179,7 @@ function PetEditModal({ pet, onSave, onClose }) {
 
 // ─── Main Admin ────────────────────────────────────────────────────────────────
 export default function AdminPage() {
-  const [authed, setAuthed] = useState(false);
+  const [authed, setAuthed] = useState(() => !!sessionStorage.getItem(ADMIN_SESSION_KEY));
   const [step, setStep] = useState('dashboard');
   const [stats, setStats] = useState(null);
   const [users, setUsers] = useState([]);
@@ -241,6 +244,12 @@ export default function AdminPage() {
     else if (t === 'pets') await loadPets();
     else if (t === 'activities') await loadActivities();
   }, [loadAll, loadUsers, loadPets, loadActivities]);
+
+  const logoutAdmin = () => {
+    sessionStorage.removeItem(ADMIN_SESSION_KEY);
+    setAuthed(false);
+    setStep('dashboard');
+  };
 
   // ─── User actions ───────────────────────────────────────────────────────────
   const disableUser = async (uid, currentlyDisabled) => {
@@ -375,7 +384,7 @@ export default function AdminPage() {
             <NavBtn key={t} label={label} active={step === t} onClick={() => switchTab(t)} />
           ))}
         </div>
-        <button onClick={() => setAuthed(false)}
+        <button onClick={logoutAdmin}
           style={{ marginLeft: 'auto', padding: '7px 16px', borderRadius: 100, border: '2px solid #f3e8ff',
                    background: 'white', color: '#9ca3af', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
           退出

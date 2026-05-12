@@ -53,9 +53,18 @@ export function PetProvider({ children }) {
       lastActivity: {},
       createdAt: serverTimestamp(),
     };
-    // Timeout after 5 seconds — reject so caller's catch {} fallback activates
-    await new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 5000));
-    await setDoc(ref, data);
+
+    let timeoutId;
+    try {
+      await Promise.race([
+        setDoc(ref, data),
+        new Promise((_, rej) => {
+          timeoutId = setTimeout(() => rej(new Error('timeout')), 5000);
+        }),
+      ]);
+    } finally {
+      if (timeoutId) clearTimeout(timeoutId);
+    }
   };
 
   // Log activity timestamp. Local users: no-op (writeActivity already

@@ -36,7 +36,6 @@ function HomeRoute() {
 }
 
 export default function App() {
-  console.log("[App] rendering");
   return (
     <AuthProvider>
       <PetProvider>
@@ -73,8 +72,8 @@ export default function App() {
             </Route>
 
             {/* Standalone routes (no Layout nav) */}
-            <Route path="/messages" element={<MessagesPage />} />
-            <Route path="/messages/:conversationId" element={<ChatPage />} />
+            <Route path="/messages" element={<Private><MessagesPage /></Private>} />
+            <Route path="/messages/:conversationId" element={<Private><ChatPage /></Private>} />
           </Routes>
         </BrowserRouter>
         </I18nProvider>
