@@ -993,3 +993,123 @@ Pet state: frontend/src/context/PetContext.js
 Backend entry: backend/src/index.js
 API routes: backend/src/routes/*.js
 ```
+
+---
+
+## 51. Route → Page → Data source quick table
+
+| Route | Page file | Primary data source | Secondary / fallback |
+|---|---|---|---|
+| `/` | `frontend/src/sandbox/PetPageV2.js` | `PetContext` + Firestore | local pet store |
+| `/ai` | `frontend/src/pages/AIPage.js` | Firebase + AI route | current pet context |
+| `/map` | `frontend/src/pages/MapPage.js` | Firebase / map API | local UI state |
+| `/marketplace` | `frontend/src/pages/MarketplacePage.js` | API + Firebase Storage | page-local state |
+| `/community` | `frontend/src/pages/CommunityPage.js` | Firestore | local UI state |
+| `/profile` | `frontend/src/pages/ProfilePage.js` | AuthContext + PetContext | local avatar storage |
+| `/adopt` | `frontend/src/pages/AdoptPage.js` | static/front-end data | local UI state |
+| `/achievements` | `frontend/src/pages/AchievementsPage.js` | `AchievementsAPI` | localStorage fallback |
+| `/inventory` | `frontend/src/pages/InventoryPage.js` | inventory API / pet context | local state |
+| `/leaderboard` | `frontend/src/pages/LeaderboardPage.js` | `LeaderboardAPI` | none/minimal |
+| `/health` | `frontend/src/pages/HealthRecordsPage.js` | `HealthAPI` | localStorage fallback |
+| `/rewards` | `frontend/src/pages/DailyRewardsPage.js` | `RewardsAPI` | localStorage fallback |
+| `/training` | `frontend/src/pages/PetTrainingPage.js` | `TrainingAPI` | localStorage fallback |
+| `/messages` | `frontend/src/pages/MessagesPage.js` | Firestore | local UI state |
+| `/messages/:conversationId` | `frontend/src/pages/ChatPage.js` | Firestore | local UI state |
+| `/admin` | `frontend/src/pages/AdminPage.js` | admin API routes | none |
+
+---
+
+## 52. Admin / Messages / Chat code map
+
+These are not part of the 13 tabs, but they are important enough to deserve their own map.
+
+### Admin
+- Route: `/admin`
+- Page: `frontend/src/pages/AdminPage.js`
+- Backend: `backend/src/routes/admin.js`
+- Typical changes:
+  - stats cards
+  - user list actions
+  - pet moderation
+  - activity log table
+  - broadcast UI
+
+### Messages
+- Route: `/messages`
+- Page: `frontend/src/pages/MessagesPage.js`
+- Main data source: Firestore
+- Typical changes:
+  - conversation list
+  - unread badge logic
+  - conversation preview text
+
+### Chat
+- Route: `/messages/:conversationId`
+- Page: `frontend/src/pages/ChatPage.js`
+- Main data source: Firestore
+- Typical changes:
+  - message rendering
+  - send box
+  - timestamp formatting
+  - message ordering
+
+---
+
+## 53. Practical test checklist after we change a feature
+
+Use this before saying “done”.
+
+### UI check
+- page loads without blank screen
+- desktop layout looks normal
+- mobile layout does not overflow badly
+- buttons are clickable
+- no obvious console error
+
+### Data check
+- correct data appears
+- loading state is reasonable
+- empty state is reasonable
+- error state does not break the page
+- fallback still works if the API fails
+
+### i18n check
+- English text still renders
+- Chinese text still renders
+- newly added labels are not missing in locale files
+
+### Auth / state check
+- logged-in flow still works
+- logged-out flow still works
+- current pet / current user state still updates correctly
+
+### Deployment check
+- if frontend changed: rebuild happened
+- if backend changed: restart happened
+- `/health` still returns ok
+- browser cache is not fooling us
+
+---
+
+## 54. Small but important data keys beginners will likely touch
+
+### localStorage keys
+- `gg_lang`
+- `gg_health_records`
+- `gg_daily_rewards`
+- `gg_training_points`
+- `gg_training_history`
+- `gg_pet_skills`
+- `gg_achievement_counters`
+- `gg_achievement_unlock_dates`
+
+### Context objects beginners will often read
+- `currentUser` from `AuthContext`
+- `pet` from `PetContext`
+- `statuses` from `PetContext`
+
+### Backend health endpoint
+```bash
+GET /health
+```
+If this fails, stop guessing and check the backend first.

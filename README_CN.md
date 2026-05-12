@@ -1595,3 +1595,123 @@ API 路由：backend/src/routes/*.js
 ```
 
 这 7 行，就是这个项目的最短导航图。
+
+---
+
+## 51. Route → 页面 → 数据源总表
+
+| 路由 | 页面文件 | 主要数据源 | 次要 / fallback |
+|---|---|---|---|
+| `/` | `frontend/src/sandbox/PetPageV2.js` | `PetContext` + Firestore | 本地 pet store |
+| `/ai` | `frontend/src/pages/AIPage.js` | Firebase + AI route | 当前宠物 context |
+| `/map` | `frontend/src/pages/MapPage.js` | Firebase / 地图 API | 页面本地 state |
+| `/marketplace` | `frontend/src/pages/MarketplacePage.js` | API + Firebase Storage | 页面本地 state |
+| `/community` | `frontend/src/pages/CommunityPage.js` | Firestore | 页面本地 state |
+| `/profile` | `frontend/src/pages/ProfilePage.js` | AuthContext + PetContext | 本地头像存储 |
+| `/adopt` | `frontend/src/pages/AdoptPage.js` | 前端静态数据 | 页面本地 state |
+| `/achievements` | `frontend/src/pages/AchievementsPage.js` | `AchievementsAPI` | localStorage fallback |
+| `/inventory` | `frontend/src/pages/InventoryPage.js` | inventory API / pet context | 本地 state |
+| `/leaderboard` | `frontend/src/pages/LeaderboardPage.js` | `LeaderboardAPI` | 几乎无 fallback |
+| `/health` | `frontend/src/pages/HealthRecordsPage.js` | `HealthAPI` | localStorage fallback |
+| `/rewards` | `frontend/src/pages/DailyRewardsPage.js` | `RewardsAPI` | localStorage fallback |
+| `/training` | `frontend/src/pages/PetTrainingPage.js` | `TrainingAPI` | localStorage fallback |
+| `/messages` | `frontend/src/pages/MessagesPage.js` | Firestore | 页面本地 state |
+| `/messages/:conversationId` | `frontend/src/pages/ChatPage.js` | Firestore | 页面本地 state |
+| `/admin` | `frontend/src/pages/AdminPage.js` | admin API routes | 无 |
+
+---
+
+## 52. Admin / Messages / Chat 代码地图
+
+这三个不在 13 个 tab 里，但重要程度够高，值得单独列出来。
+
+### Admin
+- 路由：`/admin`
+- 页面：`frontend/src/pages/AdminPage.js`
+- 后端：`backend/src/routes/admin.js`
+- 常改内容：
+  - 统计卡片
+  - 用户列表操作
+  - 宠物管理
+  - 活动日志表格
+  - 广播 UI
+
+### Messages
+- 路由：`/messages`
+- 页面：`frontend/src/pages/MessagesPage.js`
+- 主要数据源：Firestore
+- 常改内容：
+  - 会话列表
+  - 未读徽标逻辑
+  - 会话预览文案
+
+### Chat
+- 路由：`/messages/:conversationId`
+- 页面：`frontend/src/pages/ChatPage.js`
+- 主要数据源：Firestore
+- 常改内容：
+  - 消息渲染
+  - 发送框
+  - 时间格式化
+  - 消息排序
+
+---
+
+## 53. 我们改完功能后的实用自测清单
+
+在说“改好了”之前，最好过一遍这个。
+
+### UI 检查
+- 页面打开不白屏
+- 桌面端布局正常
+- 手机端没有明显溢出
+- 按钮能点
+- console 没有明显报错
+
+### 数据检查
+- 数据显示正确
+- loading 状态合理
+- empty state 合理
+- error state 不会把页面搞炸
+- API 挂掉时 fallback 还能工作
+
+### i18n 检查
+- 英文还能正常显示
+- 中文还能正常显示
+- 新增文案没有漏 locale 文件
+
+### Auth / state 检查
+- 登录后流程正常
+- 未登录流程正常
+- 当前用户 / 当前宠物状态还能正常更新
+
+### 部署检查
+- 如果改了前端：确认重新 build
+- 如果改了后端：确认重启服务
+- `/health` 仍然返回 ok
+- 不是浏览器缓存把我们骗了
+
+---
+
+## 54. 新手最容易碰到的一些关键数据名
+
+### localStorage keys
+- `gg_lang`
+- `gg_health_records`
+- `gg_daily_rewards`
+- `gg_training_points`
+- `gg_training_history`
+- `gg_pet_skills`
+- `gg_achievement_counters`
+- `gg_achievement_unlock_dates`
+
+### context 里最常会读到的对象
+- `AuthContext` 里的 `currentUser`
+- `PetContext` 里的 `pet`
+- `PetContext` 里的 `statuses`
+
+### 后端健康检查接口
+```bash
+GET /health
+```
+如果这个都挂了，就别先猜前端，先查后端。
