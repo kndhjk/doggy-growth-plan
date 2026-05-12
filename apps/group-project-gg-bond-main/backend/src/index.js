@@ -70,7 +70,7 @@ function adminAuth(req, res, next) {
 
 app.get("/api/admin/stats", adminAuth, async (req, res) => {
   try {
-    const [[{ totalUsers }], [{ totalPets }], [{ activeToday }], [{ totalListings }], [{ saleListings }], [{ adoptionListings }]] = await Promise.all([
+    const [[userRows], [petRows], [activityRows], [listingRows], [saleRows], [adoptionRows]] = await Promise.all([
       pool.execute("SELECT COUNT(*) as totalUsers FROM users"),
       pool.execute("SELECT COUNT(*) as totalPets FROM pets"),
       pool.execute("SELECT COUNT(DISTINCT uid) as activeToday FROM pet_activities WHERE performed_at >= DATE_SUB(NOW(), INTERVAL 1 DAY)"),
@@ -78,7 +78,13 @@ app.get("/api/admin/stats", adminAuth, async (req, res) => {
       pool.execute("SELECT COUNT(*) as saleListings FROM marketplace_listings WHERE status = 'active' AND listing_type = 'sale'"),
       pool.execute("SELECT COUNT(*) as adoptionListings FROM marketplace_listings WHERE status = 'active' AND listing_type = 'free'"),
     ]);
-    res.json({ totalUsers, totalPets, activeToday: activeToday || 0, avgHealth: 82, totalListings, saleListings, adoptionListings });
+    const totalUsers = userRows[0] ? Object.values(userRows[0])[0] : 0;
+    const totalPets = petRows[0] ? Object.values(petRows[0])[0] : 0;
+    const activeToday = activityRows[0] ? Object.values(activityRows[0])[0] : 0;
+    const totalListings = listingRows[0] ? Object.values(listingRows[0])[0] : 0;
+    const saleListings = saleRows[0] ? Object.values(saleRows[0])[0] : 0;
+    const adoptionListings = adoptionRows[0] ? Object.values(adoptionRows[0])[0] : 0;
+    res.json({ totalUsers, totalPets, activeToday, avgHealth: 82, totalListings, saleListings, adoptionListings });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
