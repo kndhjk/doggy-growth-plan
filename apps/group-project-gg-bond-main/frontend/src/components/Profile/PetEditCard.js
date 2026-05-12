@@ -9,6 +9,7 @@ import { useI18n } from '../../i18n/I18nContext';
 import toast from 'react-hot-toast';
 import BreedPicker from '../Pet/BreedPicker';
 import { breedLabel } from '../../data/breeds';
+import { savePet, deletePet as deletePetApi } from '../../services/api';
 
 export default function PetEditCard() {
   const { currentUser } = useAuth();
@@ -61,7 +62,8 @@ export default function PetEditCard() {
     // Firebase never resolves nor rejects, leaving busy stuck (same root cause
     // as the deleteDoc() guard in remove() below).
     if (currentUser?._local) {
-      setPetLocal(next);
+      const { pet: saved } = await savePet(currentUser.uid, next);
+      setPetLocal(saved);
       toast.success(t('petEdit.toastSavedLocal'));
       setEditing(false);
       setBusy(false);
@@ -87,7 +89,9 @@ export default function PetEditCard() {
     setBusy(true);
     // _local users skip Firestore entirely — deleteDoc() against demo-key
     // Firebase never resolves nor rejects, leaving busy stuck.
-    if (!currentUser?._local) {
+    if (currentUser?._local) {
+      try { await deletePetApi(currentUser.uid); } catch {}
+    } else {
       try {
         const ref = doc(db, 'users', currentUser.uid, 'pets', 'active');
         await deleteDoc(ref);

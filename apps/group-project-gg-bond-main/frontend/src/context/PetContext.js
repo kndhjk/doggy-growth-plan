@@ -4,6 +4,7 @@ import { db } from '../services/firebase';
 import { useAuth } from './AuthContext';
 import { computeStatuses } from '../utils/statusDecay';
 import { readPetLocal, writePetLocal } from '../services/petLocalStore';
+import { fetchPet, savePet as savePetApi, logPetActivity as logPetActivityApi } from '../services/api';
 
 const Ctx = createContext(null);
 
@@ -18,10 +19,18 @@ export function PetProvider({ children }) {
     // Local fallback user — never subscribe to Firestore, otherwise an empty
     // `onSnapshot` clobbers the locally-set pet on every action click.
     if (currentUser._local) {
-      const local = readPetLocal(currentUser.uid);
-      setPet(local);
-      setStatuses(local ? computeStatuses(local) : null);
-      setLoading(false);
+      fetchPet(currentUser.uid)
+        .then(({ pet }) => {
+          setPet(pet);
+          setStatuses(pet ? computeStatuses(pet) : null);
+          setLoading(false);
+        })
+        .catch(() => {
+          const local = readPetLocal(currentUser.uid);
+          setPet(local);
+          setStatuses(local ? computeStatuses(local) : null);
+          setLoading(false);
+        });
       return;
     }
     const ref = doc(db, 'users', currentUser.uid, 'pets', 'active');
@@ -43,7 +52,18 @@ export function PetProvider({ children }) {
   // through to setPetLocal — otherwise `setDoc` against demo-key Firebase
   // hangs forever and the create button spins on "创建中…".
   const createPet = async ({ name, breed, birthday, photoURL }) => {
-    if (currentUser?._local) throw new Error('local-mode');
+    if (currentUser?._local) {
+      const { pet } = await savePetApi(currentUser.uid, {
+        name,
+        breed,
+        birthday: birthday || null,
+        photoURL: photoURL || null,
+        lastActivity: {},
+      });
+      setPet(pet);
+      setStatuses(pet ? computeStatuses(pet) : null);
+      return;
+    }
     const ref = doc(db, 'users', currentUser.uid, 'pets', 'active');
     const data = {
       name,
@@ -71,7 +91,16 @@ export function PetProvider({ children }) {
   // persists locally via setPetLocal).
   const logActivity = async (type) => {
     if (!currentUser) return;
-    if (currentUser._local) return;
+    if (currentUser._local) {
+      const resp = await logPetActivityApi(currentUser.uid, type);
+      setPet(prev => {
+        if (!prev) return prev;
+        const nextPet = { ...prev, lastActivity: resp.lastActivity };
+        setStatuses(computeStatuses(nextPet));
+        return nextPet;
+      });
+      return;
+    }
     const ref = doc(db, 'users', currentUser.uid, 'pets', 'active');
     await updateDoc(ref, { [`lastActivity.${type}`]: serverTimestamp() });
   };

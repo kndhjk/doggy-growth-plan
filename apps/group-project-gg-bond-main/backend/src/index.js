@@ -2,6 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const mysql = require("mysql2/promise");
+const crypto = require("crypto");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -52,6 +53,114 @@ const mapListing = (r) => ({
 });
 
 app.get("/health", (req, res) => res.json({ status: "ok" }));
+
+
+const hashPassword = (password, salt = crypto.randomBytes(16).toString("hex")) => {
+  const hash = crypto.scryptSync(password, salt, 64).toString("hex");
+  return `${salt}:${hash}`;
+};
+const verifyPassword = (password, stored) => {
+  if (!stored || !stored.includes(":")) return false;
+  const [salt, original] = stored.split(":");
+  const hash = crypto.scryptSync(password, salt, 64).toString("hex");
+  return crypto.timingSafeEqual(Buffer.from(original, "hex"), Buffer.from(hash, "hex"));
+};
+const mapPet = (r) => r ? ({
+  id: r.id,
+  name: r.name,
+  breed: r.breed,
+  birthday: r.birthday ? String(r.birthday) : null,
+  photoURL: r.photo_url || null,
+  lastActivity: parseJsonField(r.last_activity, {}),
+  health: r.health,
+  happiness: r.happiness,
+  hunger: r.hunger,
+}) : null;
+
+// Online fallback auth
+app.post("/api/auth/register", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password || password.length < 6) return res.status(400).json({ error: "invalid credentials" });
+    const uid = `online-${Date.now()}`;
+    const displayName = email.split("@")[0];
+    const passwordHash = hashPassword(password);
+    await pool.execute(
+      "INSERT INTO users (uid, email, display_name, password_hash) VALUES (?, ?, ?, ?)",
+      [uid, email.trim().toLowerCase(), displayName, passwordHash]
+    );
+    res.status(201).json({ user: { uid, email: email.trim().toLowerCase(), displayName, _local: true } });
+  } catch (err) {
+    if (String(err.message || err).includes('Duplicate')) return res.status(409).json({ code: 'auth/email-already-in-use', error: 'email exists' });
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/api/auth/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const [rows] = await pool.execute("SELECT uid, email, display_name, password_hash FROM users WHERE email = ? LIMIT 1", [String(email || '').trim().toLowerCase()]);
+    const row = rows[0];
+    if (!row) return res.status(404).json({ code: 'auth/user-not-found', error: 'not found' });
+    if (!verifyPassword(password || '', row.password_hash)) return res.status(401).json({ code: 'auth/wrong-password', error: 'wrong password' });
+    res.json({ user: { uid: row.uid, email: row.email, displayName: row.display_name, _local: true } });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Online pet fallback
+app.get("/api/users/:uid/pet", async (req, res) => {
+  try {
+    const [rows] = await pool.execute("SELECT * FROM pets WHERE uid = ? ORDER BY created_at DESC LIMIT 1", [req.params.uid]);
+    res.json({ pet: mapPet(rows[0]) });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put("/api/users/:uid/pet", async (req, res) => {
+  try {
+    const { name, breed, birthday, photoURL, lastActivity = {} } = req.body;
+    if (!name?.trim() || !breed?.trim()) return res.status(400).json({ error: 'name and breed required' });
+    const id = `pet-${req.params.uid}`;
+    await pool.execute(
+      `INSERT INTO pets (id, uid, name, breed, birthday, photo_url, last_activity, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+       ON DUPLICATE KEY UPDATE name = VALUES(name), breed = VALUES(breed), birthday = VALUES(birthday), photo_url = VALUES(photo_url), last_activity = VALUES(last_activity), updated_at = NOW()`,
+      [id, req.params.uid, name.trim(), breed.trim(), birthday || null, photoURL || null, JSON.stringify(lastActivity || {})]
+    );
+    const [rows] = await pool.execute("SELECT * FROM pets WHERE id = ? LIMIT 1", [id]);
+    res.json({ pet: mapPet(rows[0]) });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/api/users/:uid/pet/activity", async (req, res) => {
+  try {
+    const { type } = req.body;
+    const [rows] = await pool.execute("SELECT * FROM pets WHERE uid = ? ORDER BY created_at DESC LIMIT 1", [req.params.uid]);
+    const pet = rows[0];
+    if (!pet) return res.status(404).json({ error: 'pet not found' });
+    const lastActivity = parseJsonField(pet.last_activity, {});
+    lastActivity[type] = new Date().toISOString();
+    await pool.execute("UPDATE pets SET last_activity = ?, updated_at = NOW() WHERE id = ?", [JSON.stringify(lastActivity), pet.id]);
+    await pool.execute("INSERT INTO pet_activities (uid, pet_id, activity_type, performed_at) VALUES (?, ?, ?, NOW())", [req.params.uid, pet.id, type || 'unknown']);
+    res.json({ success: true, lastActivity });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete("/api/users/:uid/pet", async (req, res) => {
+  try {
+    await pool.execute("DELETE FROM pets WHERE uid = ?", [req.params.uid]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // Marketplace
 app.get("/api/marketplace", async (req, res) => {

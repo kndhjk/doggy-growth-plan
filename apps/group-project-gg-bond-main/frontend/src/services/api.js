@@ -56,3 +56,19 @@ export async function fetchComments(postId) {
 export async function createComment(postId, payload) {
   return api(`/api/community/posts/${postId}/comments`, { method: 'POST', body: JSON.stringify(payload) });
 }
+
+export async function fetchPet(uid) {
+  return api(`/api/users/${uid}/pet`);
+}
+
+export async function savePet(uid, payload) {
+  return api(`/api/users/${uid}/pet`, { method: 'PUT', body: JSON.stringify(payload) });
+}
+
+export async function deletePet(uid) {
+  return api(`/api/users/${uid}/pet`, { method: 'DELETE' });
+}
+
+export async function logPetActivity(uid, type) {
+  return api(`/api/users/${uid}/pet/activity`, { method: 'POST', body: JSON.stringify({ type }) });
+}
