@@ -5,6 +5,8 @@
 
 **中文版请看：[`README_CN.md`](./README_CN.md)**
 
+**🌐 Live Demo: [http://4.155.227.179/](http://4.155.227.179/)**
+
 **English version (default):** `README.md`  
 **中文版 / Chinese version:** `README_CN.md`
 

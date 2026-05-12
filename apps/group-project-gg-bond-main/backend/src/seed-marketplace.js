@@ -61,7 +61,7 @@ const MOCK_ADOPTIONS = [
       'https://images.unsplash.com/photo-1596727147705-61a532a659bd?w=600&q=80',
     ],
     sellerName: '小美', sellerEmail: 'xiaomei@example.com', sellerId: 'mock_seller_1',
-    status: 'active', listingType: 'adoption',
+    status: 'active', listingType: 'free',
   },
   {
     title: '免费分享：冻干狗零食大礼包',
@@ -72,7 +72,7 @@ const MOCK_ADOPTIONS = [
       'https://images.unsplash.com/photo-1552053831-71594a27632d?w=600&q=80',
     ],
     sellerName: '阿Ben', sellerEmail: 'aben@example.com', sellerId: 'mock_seller_2',
-    status: 'active', listingType: 'adoption',
+    status: 'active', listingType: 'free',
   },
   {
     title: '免费送：成猫主食罐头 24 罐',
@@ -80,7 +80,7 @@ const MOCK_ADOPTIONS = [
     category: 'cat', price: 0, location: 'Mount Albert',
     images: ['https://images.unsplash.com/photo-1573865526739-10659fec78a5?w=600&q=80'],
     sellerName: '猫奴小李', sellerEmail: 'lili@example.com', sellerId: 'mock_seller_3',
-    status: 'active', listingType: 'adoption',
+    status: 'active', listingType: 'free',
   },
   {
     title: '免费转让：宠物用品组合包',
@@ -88,7 +88,7 @@ const MOCK_ADOPTIONS = [
     category: 'pet', price: 0, location: 'Epsom',
     images: ['https://images.unsplash.com/photo-1592194996308-7b43878e84a6?w=600&q=80'],
     sellerName: '救助人阿花', sellerEmail: 'ahua@example.com', sellerId: 'mock_seller_4',
-    status: 'active', listingType: 'adoption',
+    status: 'active', listingType: 'free',
   },
   {
     title: '免费送：猫抓板和逗猫玩具',
@@ -96,7 +96,7 @@ const MOCK_ADOPTIONS = [
     category: 'cat', price: 0, location: 'Parnell',
     images: ['https://images.unsplash.com/photo-1503256207526-0d5d80fa2f47?w=600&q=80'],
     sellerName: 'David W', sellerEmail: 'david@example.com', sellerId: 'mock_seller_5',
-    status: 'active', listingType: 'adoption',
+    status: 'active', listingType: 'free',
   },
 ];
 

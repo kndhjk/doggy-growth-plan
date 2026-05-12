@@ -81,7 +81,7 @@ function CreateListingModal({ onClose, onCreated }) {
 
   const handleSubmit = async () => {
     if (!form.title.trim()) return toast.error(t('marketplace.errorTitleRequired'));
-    if (form.listingType !== 'adoption' && (!form.price || isNaN(Number(form.price)) || Number(form.price) <= 0)) {
+    if (form.listingType !== 'free' && (!form.price || isNaN(Number(form.price)) || Number(form.price) <= 0)) {
       return toast.error(t('marketplace.errorPriceRequired'));
     }
     if (!form.location.trim()) return toast.error(t('marketplace.errorLocationRequired'));
@@ -95,7 +95,7 @@ function CreateListingModal({ onClose, onCreated }) {
           title: form.title.trim(),
           description: form.description.trim(),
           category: form.category,
-          price: form.listingType === 'adoption' ? 0 : Number(form.price),
+          price: form.listingType === 'free' ? 0 : Number(form.price),
           location: form.location.trim(),
           listingType: form.listingType,
           images: imageUrls,
@@ -131,7 +131,7 @@ function CreateListingModal({ onClose, onCreated }) {
         title: form.title.trim(),
         description: form.description.trim(),
         category: form.category,
-        price: form.listingType === 'adoption' ? 0 : Number(form.price),
+        price: form.listingType === 'free' ? 0 : Number(form.price),
         location: form.location.trim(),
         listingType: form.listingType,
         images: imageUrls,
@@ -179,11 +179,11 @@ function CreateListingModal({ onClose, onCreated }) {
         <div style={{ display: 'flex', gap: 8, marginBottom: 20, background: '#fdf2f8', borderRadius: 12, padding: 4 }}>
           {[
             { key: 'sale', label: t('marketplace.forSale'), color: '#f59e0b' },
-            { key: 'adoption', label: t('marketplace.forAdoption'), color: '#10b981' },
+            { key: 'adoption', label: t('marketplace.forFree'), color: '#10b981' },
           ].map(opt => (
             <button
               key={opt.key}
-              onClick={() => setForm(f => ({ ...f, listingType: opt.key, price: opt.key === 'adoption' ? '0' : f.price }))}
+              onClick={() => setForm(f => ({ ...f, listingType: opt.key, price: opt.key === 'free' ? '0' : f.price }))}
               style={{
                 flex: 1, padding: '10px', borderRadius: 10, border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 13,
                 background: form.listingType === opt.key ? `linear-gradient(135deg,${opt.color},${opt.color}cc)` : 'transparent',
@@ -191,14 +191,14 @@ function CreateListingModal({ onClose, onCreated }) {
                 transition: 'all 0.2s',
               }}
             >
-              {opt.key === 'sale' ? `💰 ${t('marketplace.forSale')}` : `🎁 ${t('marketplace.forAdoption')}`}
+              {opt.key === 'sale' ? `💰 ${t('marketplace.forSale')}` : `🎁 ${t('marketplace.forFree')}`}
             </button>
           ))}
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
           <h2 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: '#9d174d' }}>
-            {form.listingType === 'adoption' ? t('marketplace.createFreeListing') : t('marketplace.createListing')}
+            {form.listingType === 'free' ? t('marketplace.createFreeListing') : t('marketplace.createListing')}
           </h2>
           <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 24, cursor: 'pointer', color: '#f9a8d4' }}>✕</button>
         </div>
@@ -234,16 +234,16 @@ function CreateListingModal({ onClose, onCreated }) {
           </div>
           <div style={{ flex: 1 }}>
             <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#9d174d', marginBottom: 6 }}>
-              {form.listingType === 'adoption' ? t('marketplace.adoptionFee') : t('marketplace.priceNZD')} {form.listingType === 'sale' ? '*' : ''}
+              {form.listingType === 'free' ? t('marketplace.freePriceLabel') : t('marketplace.priceNZD')} {form.listingType === 'sale' ? '*' : ''}
             </label>
             <input
               type="number"
               value={form.price}
               onChange={e => setForm(f => ({ ...f, price: e.target.value }))}
-              placeholder={form.listingType === 'adoption' ? t('marketplace.freePricePlaceholder') : '0'}
+              placeholder={form.listingType === 'free' ? t('marketplace.freePricePlaceholder') : '0'}
               min="0"
               style={inputStyle}
-              disabled={form.listingType === 'adoption'}
+              disabled={form.listingType === 'free'}
             />
           </div>
         </div>
@@ -251,7 +251,7 @@ function CreateListingModal({ onClose, onCreated }) {
         {/* Location */}
         <div style={{ marginBottom: 16 }}>
           <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#9d174d', marginBottom: 6 }}>
-            {t('marketplace.location')} {form.listingType === 'adoption' ? '' : '*'}
+            {t('marketplace.location')} {form.listingType === 'free' ? '' : '*'}
           </label>
           <input
             value={form.location}
@@ -563,7 +563,7 @@ export default function MarketplacePage() {
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('all');
   const [sort, setSort] = useState('newest');
-  const [listingType, setListingType] = useState('sale'); // 'sale' | 'adoption'
+  const [listingType, setListingType] = useState('sale'); // 'sale' | 'free'
   const [page, setPage] = useState(1);
 
   // Fetch listings via backend API (no compound index needed)
@@ -688,7 +688,7 @@ export default function MarketplacePage() {
       sellerEmail: 'xiaomei@example.com',
       sellerId: 'mock_seller_1',
       createdAt: { toDate: () => new Date(Date.now() - 86400000 * 2) },
-      listingType: 'adoption',
+      listingType: 'free',
     },
     {
       id: 'mock_a2',
@@ -705,7 +705,7 @@ export default function MarketplacePage() {
       sellerEmail: 'aben@example.com',
       sellerId: 'mock_seller_2',
       createdAt: { toDate: () => new Date(Date.now() - 86400000 * 5) },
-      listingType: 'adoption',
+      listingType: 'free',
     },
     {
       id: 'mock_a3',
@@ -721,7 +721,7 @@ export default function MarketplacePage() {
       sellerEmail: 'lili@example.com',
       sellerId: 'mock_seller_3',
       createdAt: { toDate: () => new Date(Date.now() - 86400000 * 1) },
-      listingType: 'adoption',
+      listingType: 'free',
     },
     {
       id: 'mock_a4',
@@ -737,7 +737,7 @@ export default function MarketplacePage() {
       sellerEmail: 'ahua@example.com',
       sellerId: 'mock_seller_4',
       createdAt: { toDate: () => new Date(Date.now() - 86400000 * 3) },
-      listingType: 'adoption',
+      listingType: 'free',
     },
     {
       id: 'mock_a5',
@@ -753,7 +753,7 @@ export default function MarketplacePage() {
       sellerEmail: 'david@example.com',
       sellerId: 'mock_seller_5',
       createdAt: { toDate: () => new Date(Date.now() - 86400000 * 7) },
-      listingType: 'adoption',
+      listingType: 'free',
     },
   ];
 
@@ -844,7 +844,7 @@ export default function MarketplacePage() {
 
   // Show mock data when Firestore is empty
   const showMock = !isLocal && listings.length === 0;
-  const mockItems = listingType === 'adoption' ? MOCK_ADOPTIONS : MOCK_SALES;
+  const mockItems = listingType === 'free' ? MOCK_ADOPTIONS : MOCK_SALES;
   const rawItems = showMock ? [...mockItems, ...listings] : listings;
   const allItems = rawItems
     .filter(l => {

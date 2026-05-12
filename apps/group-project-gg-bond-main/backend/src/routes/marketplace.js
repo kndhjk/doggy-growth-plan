@@ -39,7 +39,7 @@ router.post('/', async (req, res, next) => {
       title: title.trim(),
       description: description?.trim() || '',
       category: category || 'pet',
-      price: listingType === 'adoption' ? 0 : (Number(price) || 0),
+      price: listingType === 'free' ? 0 : (Number(price) || 0),
       location: location.trim(),
       listingType: listingType || 'sale',
       images: Array.isArray(images) ? images : [],
