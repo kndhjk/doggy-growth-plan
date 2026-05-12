@@ -1,0 +1,10 @@
+[Unit]
+Description=Run GG Bond MySQL backup daily
+
+[Timer]
+OnCalendar=*-*-* 03:20:00
+Persistent=true
+Unit=ggbond-mysql-backup.service
+
+[Install]
+WantedBy=timers.target

@@ -117,6 +117,26 @@ DB_NAME=ggbond
 | `inventory` | 用户宠物用品库存 | `uid (FK)` |
 | `pet_activities` | 宠物每日活动日志 | `uid (FK)`, `pet_id (FK)` |
 
+### MySQL 自动备份（每日）
+
+我们还加了 MySQL 自动备份，避免重启、崩溃或错误部署后数据丢失。
+
+- 备份脚本：`/home/destiny/backend/backup-mysql.sh`
+- 备份目录：`/home/destiny/backups/ggbond-mysql`
+- systemd service：`ggbond-mysql-backup.service`
+- systemd timer：`ggbond-mysql-backup.timer`
+- 计划时间：**每天 UTC 03:20**
+- 保留策略：**仅保留最近 14 份**
+- 最新软链：`ggbond-latest.sql.gz`
+
+常用命令：
+
+```bash
+sudo systemctl status ggbond-mysql-backup.timer
+sudo systemctl start ggbond-mysql-backup.service
+ls -lh /home/destiny/backups/ggbond-mysql
+```
+
 ### 服务持久化（重要）
 
 后端现在由 **systemd** 托管，不再依赖 `nohup`，服务器重启后也会自动拉起。

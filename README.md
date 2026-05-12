@@ -119,6 +119,26 @@ DB_NAME=ggbond
 | `inventory` | User pet supplies inventory | `uid (FK)` |
 | `pet_activities` | Daily activity log | `uid (FK)`, `pet_id (FK)` |
 
+### MySQL Backup (Daily)
+
+We also added automatic MySQL backups so data is not lost after reboot, crash, or bad deploy.
+
+- Backup script: `/home/destiny/backend/backup-mysql.sh`
+- Backup folder: `/home/destiny/backups/ggbond-mysql`
+- systemd service: `ggbond-mysql-backup.service`
+- systemd timer: `ggbond-mysql-backup.timer`
+- Schedule: **daily at 03:20 UTC**
+- Retention: **latest 14 backups**
+- Latest symlink: `ggbond-latest.sql.gz`
+
+Useful commands:
+
+```bash
+sudo systemctl status ggbond-mysql-backup.timer
+sudo systemctl start ggbond-mysql-backup.service
+ls -lh /home/destiny/backups/ggbond-mysql
+```
+
 ### Service Persistence (Important)
 
 The backend is now managed by **systemd**, so it survives reboot without relying on `nohup`.
