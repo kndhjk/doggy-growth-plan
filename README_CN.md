@@ -10,6 +10,122 @@
 
 ---
 
+---
+
+## DB. MySQL 数据库结构（ER 图）
+
+后端使用 **MySQL 8.0** 作为持久化数据库，所有表均在 `ggbond` 库中。
+
+### 连接信息
+
+```env
+DB_HOST=localhost
+DB_USER=ggbond_app
+DB_PASS=ggbond_app_pass_2026
+DB_NAME=ggbond
+```
+
+### ER 图
+
+```
+┌─────────────────┐       ┌─────────────────┐
+│     users       │       │     pets        │
+├─────────────────┤       ├─────────────────┤
+│ uid (PK)        │───1:N─│ uid (FK)        │
+│ email           │       │ id (PK)         │
+│ display_name    │       │ name            │
+│ created_at      │       │ breed            │
+│ disabled        │       │ birthday         │
+└─────────────────┘       │ photo_url       │
+        │                 │ health          │
+        │ 1:N             │ happiness       │
+        ▼                 │ hunger          │
+┌─────────────────┐       │ created_at      │
+│ marketplace_    │       └─────────────────┘
+│ listings        │               │
+├─────────────────┤               │ 1:N
+│ id (PK, AI)    │               ▼
+│ title           │       ┌─────────────────┐
+│ description     │       │ pet_activities │
+│ category        │       ├─────────────────┤
+│ price           │       │ uid (FK)        │
+│ location        │       │ pet_id (FK)     │
+│ listing_type    │       │ activity_type   │
+│ images (JSON)   │       │ performed_at    │
+│ seller_id       │       └─────────────────┘
+│ seller_name     │
+│ seller_email    │       ┌─────────────────┐
+│ status          │       │ health_records │
+│ created_at      │       ├─────────────────┤
+└─────────────────┘       │ uid (FK)       │
+        │                 │ title          │
+        │ 1:N             │ notes          │
+        ▼                 │ vet            │
+┌─────────────────┐       │ record_date    │
+│  conversations  │       └─────────────────┘
+├─────────────────┤
+│ id (PK)        │       ┌─────────────────┐
+│ participants    │       │   inventory     │
+│   (JSON)       │       ├─────────────────┤
+│ last_message    │       │ uid (FK)       │
+│   (JSON)       │       │ name           │
+│ created_at      │       │ description    │
+│ updated_at      │       │ quantity       │
+└─────────────────┘       │ category       │
+        │                 └─────────────────┘
+        │ 1:N
+        ▼
+┌─────────────────┐
+│    messages     │
+├─────────────────┤
+│ id (PK, AI)    │
+│ conversation_id │───N:1─→ conversations.id
+│ sender_id      │
+│ sender_name    │
+│ text           │
+│ is_read        │
+│ created_at     │
+└─────────────────┘
+
+┌─────────────────┐       ┌─────────────────┐
+│ community_posts │       │   comments     │
+├─────────────────┤       ├─────────────────┤
+│ id (PK, AI)    │───1:N─│ post_id (FK)   │
+│ uid (FK)       │       │ uid (FK)       │
+│ pet_name       │       │ content        │
+│ pet_breed      │       │ created_at     │
+│ content        │       └─────────────────┘
+│ image_url      │
+│ likes          │
+│ comment_count  │
+│ created_at     │
+└─────────────────┘
+```
+
+### 表清单
+
+| 表名 | 说明 | 关键字段 |
+|------|------|---------|
+| `users` | 用户账户 | `uid (PK)` |
+| `pets` | 宠物档案（属于用户） | `uid (FK)`, `id (PK)` |
+| `marketplace_listings` | 商品 listing（粮/用品） | `seller_id`, `listing_type` |
+| `conversations` | 聊天会话 | `id (PK)` |
+| `messages` | 聊天消息 | `conversation_id (FK)` |
+| `community_posts` | 社区帖子 | `uid (FK)` |
+| `comments` | 帖子评论 | `post_id (FK)` |
+| `health_records` | 宠物健康记录 | `uid (FK)` |
+| `inventory` | 用户宠物用品库存 | `uid (FK)` |
+| `pet_activities` | 宠物每日活动日志 | `uid (FK)`, `pet_id (FK)` |
+
+### 字段说明
+
+- `listing_type` 枚举：`'sale'` = 出售，`'free'` = 免费转让
+- `category` 枚举：`'dog'` / `'cat'` / `'pet'`
+- `status` 枚举：`'active'` / `'deleted'`（软删除）
+- `participants` / `last_message` 以 JSON 列存储
+- `images` 以 JSON 数组存储
+- `is_read` 为避免 MySQL 保留字冲突（MySQL 不允许 `read` 作为列名）
+
 ## 1. 先说最重要的：代码到底在哪？
 
 当前这个 `master` 分支是从测试服务器推上来的快照，所以仓库根目录看起来会像服务器家目录。

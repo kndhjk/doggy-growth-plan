@@ -12,6 +12,122 @@
 
 ---
 
+---
+
+## DB. MySQL Database Schema (ER Diagram)
+
+The backend uses **MySQL 8.0** as the persistent database. All tables are in the `ggbond` database.
+
+### Connection
+
+```env
+DB_HOST=localhost
+DB_USER=ggbond_app
+DB_PASS=ggbond_app_pass_2026
+DB_NAME=ggbond
+```
+
+### ER Diagram
+
+```
+┌─────────────────┐       ┌─────────────────┐
+│     users       │       │     pets        │
+├─────────────────┤       ├─────────────────┤
+│ uid (PK)        │───1:N─│ uid (FK)        │
+│ email           │       │ id (PK)         │
+│ display_name    │       │ name            │
+│ created_at      │       │ breed            │
+│ disabled        │       │ birthday         │
+└─────────────────┘       │ photo_url       │
+        │                 │ health          │
+        │ 1:N             │ happiness       │
+        ▼                 │ hunger          │
+┌─────────────────┐       │ created_at      │
+│ marketplace_     │       └─────────────────┘
+│ listings        │               │
+├─────────────────┤               │ 1:N
+│ id (PK, AI)    │               ▼
+│ title           │       ┌─────────────────┐
+│ description     │       │ pet_activities │
+│ category        │       ├─────────────────┤
+│ price           │       │ uid (FK)        │
+│ location        │       │ pet_id (FK)     │
+│ listing_type    │       │ activity_type   │
+│ images (JSON)   │       │ performed_at    │
+│ seller_id       │       └─────────────────┘
+│ seller_name     │
+│ seller_email    │       ┌─────────────────┐
+│ status          │       │ health_records │
+│ created_at      │       ├─────────────────┤
+└─────────────────┘       │ uid (FK)       │
+        │                 │ title          │
+        │ 1:N             │ notes          │
+        ▼                 │ vet            │
+┌─────────────────┐       │ record_date    │
+│  conversations  │       └─────────────────┘
+├─────────────────┤
+│ id (PK)        │       ┌─────────────────┐
+│ participants    │       │   inventory     │
+│   (JSON)       │       ├─────────────────┤
+│ last_message    │       │ uid (FK)       │
+│   (JSON)       │       │ name           │
+│ created_at      │       │ description    │
+│ updated_at      │       │ quantity       │
+└─────────────────┘       │ category       │
+        │                 └─────────────────┘
+        │ 1:N
+        ▼
+┌─────────────────┐
+│    messages     │
+├─────────────────┤
+│ id (PK, AI)    │
+│ conversation_id │───N:1─→ conversations.id
+│ sender_id      │
+│ sender_name    │
+│ text           │
+│ is_read        │
+│ created_at     │
+└─────────────────┘
+
+┌─────────────────┐       ┌─────────────────┐
+│ community_posts │       │   comments     │
+├─────────────────┤       ├─────────────────┤
+│ id (PK, AI)    │───1:N─│ post_id (FK)   │
+│ uid (FK)       │       │ uid (FK)       │
+│ pet_name       │       │ content        │
+│ pet_breed      │       │ created_at     │
+│ content        │       └─────────────────┘
+│ image_url      │
+│ likes          │
+│ comment_count  │
+│ created_at     │
+└─────────────────┘
+```
+
+### Table Summary
+
+| Table | Description | Key Columns |
+|-------|-------------|-------------|
+| `users` | User accounts | `uid (PK)` |
+| `pets` | Pet profiles linked to users | `uid (FK)`, `id (PK)` |
+| `marketplace_listings` | Product listings (food/supplies) | `seller_id`, `listing_type` |
+| `conversations` | Chat conversations | `id (PK)` |
+| `messages` | Chat messages per conversation | `conversation_id (FK)` |
+| `community_posts` | Community posts | `uid (FK)` |
+| `comments` | Comments on community posts | `post_id (FK)` |
+| `health_records` | Pet health records | `uid (FK)` |
+| `inventory` | User pet supplies inventory | `uid (FK)` |
+| `pet_activities` | Daily activity log | `uid (FK)`, `pet_id (FK)` |
+
+### Notes
+
+- `listing_type` enum: `'sale'` = for sale, `'free'` = free giveaway
+- `category` enum: `'dog'`, `'cat'`, `'pet'`
+- `status` enum: `'active'`, `'deleted'` (soft delete)
+- `participants` / `last_message` stored as JSON columns
+- `images` stored as JSON array
+- `is_read` replaces `read` (reserved word in MySQL)
+
 ## 1. Most important first: where is the real project code?
 
 The current `master` branch was pushed from the test server, so the repository root looks like a server home directory.
