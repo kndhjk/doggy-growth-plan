@@ -5,8 +5,8 @@ import toast from 'react-hot-toast';
 import { useI18n } from '../i18n/I18nContext';
 import { useAuth } from '../context/AuthContext';
 import {
-  collection, addDoc, query, orderBy, onSnapshot, where,
-  updateDoc, doc, serverTimestamp,
+  collection, addDoc, query, orderBy, onSnapshot,
+  updateDoc, doc, serverTimestamp, setDoc,
 } from 'firebase/firestore';
 import { db } from '../services/firebase';
 
@@ -23,6 +23,7 @@ export default function ChatPage() {
   const [searchParams] = useSearchParams();
   const otherName = searchParams.get('other') || 'User';
   const sellerId = searchParams.get('sellerId') || '';
+  const otherUid = sellerId || conversationId.split('_').find(uid => uid !== currentUser?.uid) || '';
 
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState('');
@@ -74,13 +75,15 @@ export default function ChatPage() {
       };
       await addDoc(collection(db, 'conversations', conversationId, 'messages'), msg);
       // Update conversation lastMessage
-      await updateDoc(doc(db, 'conversations', conversationId), {
+      await setDoc(doc(db, 'conversations', conversationId), {
         lastMessage: msg,
         updatedAt: serverTimestamp(),
-        [`participants.${currentUser.uid}`]: { name: currentUser.displayName || currentUser.email || 'Me', uid: currentUser.uid },
-        [`participants.${sellerId}`]: { name: otherName, uid: sellerId },
-        otherUid: sellerId,
-      });
+        participants: {
+          [currentUser.uid]: { name: currentUser.displayName || currentUser.email || 'Me', uid: currentUser.uid },
+          ...(otherUid ? { [otherUid]: { name: otherName, uid: otherUid } } : {}),
+        },
+        otherUid,
+      }, { merge: true });
       setText('');
       setTimeout(() => inputRef.current?.focus(), 50);
     } catch (err) {
