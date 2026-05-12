@@ -1113,3 +1113,54 @@ Use this before saying “done”.
 GET /health
 ```
 If this fails, stop guessing and check the backend first.
+
+---
+
+## 55. Screenshot reference (captured from the deployed test server)
+
+These screenshots were captured from the live test server so new teammates can match route names, page visuals, and code files faster.
+
+### Home (`/`)
+<img src="./docs/screenshots/home.png" alt="Home tab screenshot" width="900" />
+
+### AI (`/ai`)
+<img src="./docs/screenshots/ai.png" alt="AI tab screenshot" width="900" />
+
+### Map (`/map`)
+<img src="./docs/screenshots/map.png" alt="Map tab screenshot" width="900" />
+
+### Marketplace (`/marketplace`)
+<img src="./docs/screenshots/marketplace.png" alt="Marketplace tab screenshot" width="900" />
+
+### Community (`/community`)
+<img src="./docs/screenshots/community.png" alt="Community tab screenshot" width="900" />
+
+### Profile (`/profile`)
+<img src="./docs/screenshots/profile.png" alt="Profile tab screenshot" width="900" />
+
+### Adopt (`/adopt`)
+<img src="./docs/screenshots/adopt.png" alt="Adopt tab screenshot" width="900" />
+
+### Achievements (`/achievements`)
+<img src="./docs/screenshots/achievements.png" alt="Achievements tab screenshot" width="900" />
+
+### Inventory (`/inventory`)
+<img src="./docs/screenshots/inventory.png" alt="Inventory tab screenshot" width="900" />
+
+### Leaderboard (`/leaderboard`)
+<img src="./docs/screenshots/leaderboard.png" alt="Leaderboard tab screenshot" width="900" />
+
+### Health (`/health`)
+<img src="./docs/screenshots/health.png" alt="Health tab screenshot" width="900" />
+
+### Rewards (`/rewards`)
+<img src="./docs/screenshots/rewards.png" alt="Rewards tab screenshot" width="900" />
+
+### Training (`/training`)
+<img src="./docs/screenshots/training.png" alt="Training tab screenshot" width="900" />
+
+### Extra: Messages (`/messages`)
+<img src="./docs/screenshots/messages.png" alt="Messages page screenshot" width="900" />
+
+### Extra: Admin (`/admin`)
+<img src="./docs/screenshots/admin.png" alt="Admin page screenshot" width="900" />
