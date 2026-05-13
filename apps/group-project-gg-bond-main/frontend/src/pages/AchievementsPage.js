@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import { rp } from '../utils/responsive';
 import { AchievementsAPI } from '../services/apiLayer';
 import { useI18n } from '../i18n/I18nContext';
+import { useAuth } from '../context/AuthContext';
 
 const RARITY_PTS = { common: 10, uncommon: 25, rare: 50, legendary: 100 };
 const ACHIEVEMENTS = [
@@ -239,6 +240,7 @@ const DEFAULT_COUNTERS = {
 
 export default function AchievementsPage() {
   const { t } = useI18n();
+  const { currentUser } = useAuth();
   const [counters, setCounters]       = useState(DEFAULT_COUNTERS);
   const [unlockedIds, setUnlockedIds] = useState(new Set());
   const [unlockDates, setUnlockDates] = useState({});
@@ -254,17 +256,15 @@ export default function AchievementsPage() {
   const CATEGORIES = getCategories(t);
   const RARITY_COLORS = getRarityColors(t);
 
-  // Load from API (with localStorage fallback inside API layer)
   useEffect(() => {
-    AchievementsAPI.get().then(data => {
-      if (data) {
-        setCounters(data.counters || DEFAULT_COUNTERS);
-        setUnlockedIds(new Set(data.unlockedIds || []));
-        setUnlockDates(data.unlockDates || {});
-      }
+    if (!currentUser?.uid) return;
+    AchievementsAPI.get(currentUser.uid).then(data => {
+      setCounters(data?.counters || DEFAULT_COUNTERS);
+      setUnlockedIds(new Set(data?.unlockedIds || []));
+      setUnlockDates(data?.unlockDates || {});
       setApiReady(true);
     });
-  }, []);
+  }, [currentUser?.uid]);
 
   useEffect(() => {
     const onResize = () => setIsDesktop(window.innerWidth >= 1024);
@@ -287,13 +287,9 @@ export default function AchievementsPage() {
                   achievements_unlocked:'achievements_unlocked', login_streak:'login_streak' };
     const key = map[type];
     if (!key) return;
-    setCounters(prev => {
-      const next = { ...prev, [key]: (prev[key] || 0) + delta };
-      try { localStorage.setItem('gg_achievement_counters', JSON.stringify(next)); } catch {}
-      return next;
-    });
-    AchievementsAPI.incrementCounter(key, delta);
-  }, []);
+    setCounters(prev => ({ ...prev, [key]: (prev[key] || 0) + delta }));
+    if (currentUser?.uid) AchievementsAPI.incrementCounter(currentUser.uid, key, delta);
+  }, [currentUser?.uid]);
 
   const handleSimulateUnlock = useCallback((ach) => {
     const { type, count, level, days } = ach.condition;
@@ -311,23 +307,14 @@ export default function AchievementsPage() {
     else if (type === 'rare_item_obtain') delta = 1;
     else delta = count || level || days || 999;
 
-    setCounters(prev => {
-      const next = { ...prev, [key]: (prev[key] || 0) + delta };
-      try { localStorage.setItem('gg_achievement_counters', JSON.stringify(next)); } catch {}
-      return next;
-    });
-    AchievementsAPI.unlock(ach.id);
+    setCounters(prev => ({ ...prev, [key]: (prev[key] || 0) + delta }));
+    if (currentUser?.uid) AchievementsAPI.unlock(currentUser.uid, ach.id);
     setUnlockedIds(prev => {
       const next = new Set(prev);
       next.add(ach.id);
-      try { localStorage.setItem('gg_achievement_unlock_dates', JSON.stringify({ ...unlockDates, [ach.id]: new Date().toLocaleDateString('zh-CN') })); } catch {}
       return next;
     });
-    setUnlockDates(prev => {
-      const next = { ...prev, [ach.id]: new Date().toLocaleDateString('zh-CN') };
-      try { localStorage.setItem('gg_achievement_unlock_dates', JSON.stringify(next)); } catch {}
-      return next;
-    });
+    setUnlockDates(prev => ({ ...prev, [ach.id]: new Date().toLocaleDateString('zh-CN') }));
     setShowConfetti(true);
     setTimeout(() => setShowConfetti(false), 3000);
   }, [unlockDates]);
@@ -345,12 +332,13 @@ export default function AchievementsPage() {
         newIds.forEach(id => { next[id] = new Date().toLocaleDateString('zh-CN'); });
         return next;
       });
+      if (currentUser?.uid) newIds.forEach(id => AchievementsAPI.unlock(currentUser.uid, id));
       setShowConfetti(true);
       setTimeout(() => setShowConfetti(false), 3000);
       const ach = ACHIEVEMENTS.find(a => a.id === newIds[0]);
       if (ach) toast.success(t('achieve.unlockedToast', { emoji: ach.emoji, label: t(ach.title) }));
     }
-  }, [counters, apiReady, recalc, unlockedIds, t]);
+  }, [counters, apiReady, recalc, unlockedIds, t, currentUser?.uid]);
 
   const totalPoints = getTotalPoints(unlockedIds);
   const level = getLevel(totalPoints, LEVELS);

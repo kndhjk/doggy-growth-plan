@@ -1,9 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import {
-  collection, query, orderBy, limit, onSnapshot,
-  addDoc, doc, updateDoc, increment, serverTimestamp,
-} from 'firebase/firestore';
-import { db } from '../../services/firebase';
+import { fetchComments, createComment } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { usePet } from '../../context/PetContext';
 import { useI18n } from '../../i18n/I18nContext';
@@ -56,24 +52,31 @@ export default function CommentList({ postId, isLocalPost, onCountChange }) {
   // Subscribe to Firestore comments for real-mode posts
   useEffect(() => {
     if (useLocal) {
-      setComments(readLocal(postId));
-      return;
+      const refresh = () => setComments(readLocal(postId));
+      refresh();
+      const key = localKey(postId);
+      const onStorage = (e) => {
+        if (!e || e.key === key) refresh();
+      };
+      const onFocus = () => refresh();
+      const onVisible = () => { if (document.visibilityState === 'visible') refresh(); };
+      window.addEventListener('storage', onStorage);
+      window.addEventListener('focus', onFocus);
+      document.addEventListener('visibilitychange', onVisible);
+      return () => {
+        window.removeEventListener('storage', onStorage);
+        window.removeEventListener('focus', onFocus);
+        document.removeEventListener('visibilitychange', onVisible);
+      };
     }
     if (!postId) return;
-    try {
-      const q = query(
-        collection(db, 'community_posts', postId, 'comments'),
-        orderBy('createdAt', 'asc'),
-        limit(50)
-      );
-      const unsub = onSnapshot(q, snap => {
-        setComments(snap.docs.map(d => ({
-          id: d.id, ...d.data(),
-          createdAt: d.data().createdAt?.toDate?.() || null,
-        })));
-      }, () => { /* permission / network — silent fallback to empty */ });
-      return unsub;
-    } catch { /* firestore not available */ }
+    let cancelled = false;
+    const refresh = () => fetchComments(postId).then(list => { if (!cancelled) setComments(list); }).catch(() => {});
+    refresh();
+    const timer = setInterval(refresh, 5000);
+    const onFocus = () => refresh();
+    window.addEventListener('focus', onFocus);
+    return () => { cancelled = true; clearInterval(timer); window.removeEventListener('focus', onFocus); };
   }, [postId, useLocal]);
 
   const submit = async () => {
@@ -98,20 +101,13 @@ export default function CommentList({ postId, isLocalPost, onCountChange }) {
     }
 
     try {
-      await addDoc(collection(db, 'community_posts', postId, 'comments'), {
+      await createComment(postId, {
         text,
-        authorUid:  currentUser?.uid || 'anon',
+        authorUid: currentUser?.uid || 'anon',
         authorName,
         avatarEmoji,
         authorPhotoURL,
-        createdAt:  serverTimestamp(),
       });
-      // Best-effort post counter bump (non-atomic; cosmetic drift OK)
-      try {
-        await updateDoc(doc(db, 'community_posts', postId), {
-          commentCount: increment(1),
-        });
-      } catch { /* ignore */ }
       setDraft('');
     } catch {
       toast.error(t('common.error'));

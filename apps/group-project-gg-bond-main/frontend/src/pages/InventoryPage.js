@@ -6,8 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import { useI18n } from '../i18n/I18nContext';
 import { translateContent } from '../utils/translate';
 import { rp, isMobile } from '../utils/responsive';
-
-const BASE = process.env.REACT_APP_API_URL || '';
+import { InventoryAPI } from '../services/apiLayer';
 
 // ─── 道具分类 ────────────────────────────────────────────────────────────────
 const CATEGORIES_KEYS = [
@@ -154,53 +153,14 @@ function UseEffectModal({ item, onConfirm, onClose, t }) {
   );
 }
 
-// ─── API helpers ─────────────────────────────────────────────────────────────
-async function apiUseItem(uid, item) {
-  const res = await fetch(`${BASE}/api/inventory/use`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ uid, itemId: item.id, item }),
-  });
-  if (!res.ok) throw new Error(`API ${res.status}`);
-  return res.json();
-}
-
-async function apiLoadInventory(uid) {
-  try {
-    const res = await fetch(`${BASE}/api/inventory?uid=${uid}`);
-    if (!res.ok) return null;
-    const data = await res.json();
-    return data.items || null;
-  } catch {
-    return null;
-  }
-}
-
-function loadLocalInventory() {
-  try {
-    const raw = localStorage.getItem('gg_inventory');
-    return raw ? JSON.parse(raw) : null;
-  } catch { return null; }
-}
-
-function saveLocalInventory(items) {
-  localStorage.setItem('gg_inventory', JSON.stringify(items));
-}
-
 // ─── 主页面 ───────────────────────────────────────────────────────────────────
 export default function InventoryPage() {
   const { t, lang } = useI18n();
   const { pet, statuses } = usePet();
   const { currentUser } = useAuth();
   const [cat, setCat] = useState('all');
-  const [inventory, setInventory] = useState(() => {
-    const local = loadLocalInventory();
-    return local || ITEM_DEFINITIONS.map(i => ({ ...i }));
-  });
-  const [displayItems, setDisplayItems] = useState(() => {
-    const local = loadLocalInventory();
-    return local || ITEM_DEFINITIONS.map(i => ({ ...i }));
-  });
+  const [inventory, setInventory] = useState(() => ITEM_DEFINITIONS.map(i => ({ ...i })));
+  const [displayItems, setDisplayItems] = useState(() => ITEM_DEFINITIONS.map(i => ({ ...i })));
   const [selectedItem, setSelectedItem] = useState(null);
   const [animKey, setAnimKey] = useState(0);
   const [loaded, setLoaded] = useState(false);
@@ -237,16 +197,12 @@ export default function InventoryPage() {
 
   useEffect(() => {
     if (!currentUser?.uid) { setLoaded(true); return; }
-    if (currentUser._local) { setLoaded(true); return; }
-    apiLoadInventory(currentUser.uid).then(backendItems => {
-      if (backendItems && backendItems.length > 0) {
-        const merged = ITEM_DEFINITIONS.map(def => {
-          const backend = backendItems.find(b => b.id === def.id);
-          return backend ? { ...def, quantity: backend.quantity ?? def.quantity } : def;
-        });
-        setInventory(merged);
-        saveLocalInventory(merged);
-      }
+    InventoryAPI.list(currentUser.uid).then(backendItems => {
+      const merged = ITEM_DEFINITIONS.map(def => {
+        const backend = (backendItems || []).find(b => b.id === def.id);
+        return backend ? { ...def, quantity: backend.quantity ?? def.quantity } : { ...def, quantity: 0 };
+      });
+      setInventory(merged);
       setLoaded(true);
     }).catch(() => setLoaded(true));
   }, [currentUser?.uid]);
@@ -264,8 +220,6 @@ export default function InventoryPage() {
     const item = selectedItem;
     setInventory(prev => {
       const next = prev.map(it => it.id === item.id ? { ...it, quantity: Math.max(0, it.quantity - 1) } : it);
-      saveLocalInventory(next);
-      // Sync displayItems with translated version of the new inventory
       setDisplayItems(next.map(it => {
         const display = displayItems.find(d => d.id === it.id);
         return { ...it, name: display?.name || it.name, desc: display?.desc || it.desc };
@@ -273,9 +227,9 @@ export default function InventoryPage() {
       return next;
     });
 
-    if (currentUser?.uid && !currentUser._local) {
+    if (currentUser?.uid) {
       try {
-        await apiUseItem(currentUser.uid, item);
+        await InventoryAPI.use(currentUser.uid, item);
       } catch (e) {
         console.warn('Inventory API error (non-fatal):', e.message);
       }

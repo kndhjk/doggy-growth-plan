@@ -3,8 +3,8 @@ import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { RewardsAPI } from '../services/apiLayer';
 import { useI18n } from '../i18n/I18nContext';
+import { useAuth } from '../context/AuthContext';
 
-const STORAGE_KEY = 'gg_daily_rewards';
 
 // REWARDS data — display text resolved via i18n by type
 const REWARDS = [
@@ -19,20 +19,6 @@ const REWARDS = [
 
 function getToday() {
   return new Date().toISOString().split('T')[0];
-}
-
-function loadState() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return { lastClaimDate: null, streak: 0, claimedToday: false };
-    return JSON.parse(raw);
-  } catch {
-    return { lastClaimDate: null, streak: 0, claimedToday: false };
-  }
-}
-
-function saveState(state) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
 
 function Confetti() {
@@ -80,31 +66,25 @@ function rewardItemLabel(t, type, count) {
 
 export default function DailyRewardsPage() {
   const { t } = useI18n();
-  const [state, setState] = useState(() => loadState());
+  const { currentUser } = useAuth();
+  const [state, setState] = useState({ lastClaimDate: null, streak: 0, todayClaimed: false, cycleDay: 0 });
   const [showConfetti, setShowConfetti] = useState(false);
   const [claimingDay, setClaimingDay] = useState(null);
 
   const today = getToday();
 
   useEffect(() => {
-    RewardsAPI.get().then(apiData => {
-      let s;
-      if (apiData) {
-        s = { lastClaimDate: apiData.lastClaimDate, streak: apiData.streak || 0, todayClaimed: !!apiData.todayClaimed };
-      } else {
-        s = loadState();
-        if (s.lastClaimDate) {
-          const last = new Date(s.lastClaimDate);
-          const now = new Date(today);
-          const diff = Math.floor((now - last) / 86400000);
-          if (diff > 1) { s.streak = 0; s.claimedToday = false; }
-          else if (diff === 1) { s.claimedToday = false; }
-        }
-      }
+    if (!currentUser?.uid) return;
+    RewardsAPI.get(currentUser.uid).then(apiData => {
+      const s = {
+        lastClaimDate: apiData?.lastClaimDate || null,
+        streak: apiData?.streak || 0,
+        todayClaimed: !!apiData?.todayClaimed,
+        cycleDay: apiData?.cycleDay || 0,
+      };
       setState(s);
-      saveState(s);
     });
-  }, []);
+  }, [currentUser?.uid]);
 
   const handleClaim = useCallback((day) => {
     if (state.claimedToday) return;
@@ -122,9 +102,8 @@ export default function DailyRewardsPage() {
         claimedToday: true,
       };
       setState(newState);
-      saveState(newState);
       setClaimingDay(null);
-      RewardsAPI.claim().catch(() => {});
+      if (currentUser?.uid) RewardsAPI.claim(currentUser.uid).catch(() => {});
 
       const reward = REWARDS[day - 1];
       const label = rewardItemLabel(t, reward.type, reward.count);

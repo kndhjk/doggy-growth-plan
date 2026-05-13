@@ -3,10 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useI18n } from '../i18n/I18nContext';
 import { useAuth } from '../context/AuthContext';
-import {
-  collection, query, orderBy, onSnapshot, where, doc,
-} from 'firebase/firestore';
-import { db } from '../services/firebase';
+import { fetchConversations } from '../services/api';
+
+const LOCAL_CONVERSATIONS_KEY = 'gg_local_conversations';
+const readLocalConversations = () => {
+  try { return JSON.parse(localStorage.getItem(LOCAL_CONVERSATIONS_KEY) || '[]'); }
+  catch { return []; }
+};
 
 function timeAgo(ts) {
   if (!ts) return '';
@@ -24,25 +27,53 @@ export default function MessagesPage() {
   const { t } = useI18n();
   const { currentUser } = useAuth();
   const navigate = useNavigate();
+  const isLocal = currentUser?._local;
   const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!currentUser) return;
-    const q = query(collection(db, 'conversations'), orderBy('updatedAt', 'desc'));
-    const unsub = onSnapshot(q, snap => {
-      const convs = snap.docs
-        .map(d => ({ id: d.id, ...d.data() }))
-        .filter(c => c.participants && currentUser.uid in c.participants);
-      setConversations(convs);
-      setLoading(false);
-    });
-    return unsub;
-  }, [currentUser]);
+    if (isLocal) {
+      const refresh = () => {
+        const convs = readLocalConversations()
+          .filter(c => c.participants && currentUser.uid in c.participants)
+          .sort((a, b) => new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0));
+        setConversations(convs);
+        setLoading(false);
+      };
+      refresh();
+      const onStorage = (e) => {
+        if (!e || e.key === LOCAL_CONVERSATIONS_KEY) refresh();
+      };
+      const onFocus = () => refresh();
+      const onVisible = () => { if (document.visibilityState === 'visible') refresh(); };
+      window.addEventListener('storage', onStorage);
+      window.addEventListener('focus', onFocus);
+      document.addEventListener('visibilitychange', onVisible);
+      return () => {
+        window.removeEventListener('storage', onStorage);
+        window.removeEventListener('focus', onFocus);
+        document.removeEventListener('visibilitychange', onVisible);
+      };
+    }
+    let cancelled = false;
+    const refresh = () => {
+      fetchConversations(currentUser.uid)
+        .then(convs => { if (!cancelled) { setConversations(convs); setLoading(false); } })
+        .catch(() => { if (!cancelled) setLoading(false); });
+    };
+    refresh();
+    const timer = setInterval(refresh, 4000);
+    const onFocus = () => refresh();
+    window.addEventListener('focus', onFocus);
+    return () => { cancelled = true; clearInterval(timer); window.removeEventListener('focus', onFocus); };
+  }, [currentUser, isLocal]);
 
   const getOther = (conv) => {
     const otherId = Object.keys(conv.participants || {}).find(k => k !== currentUser?.uid);
-    return otherId ? conv.participants[otherId] : { name: 'Unknown', email: '' };
+    return otherId
+      ? { uid: otherId, ...conv.participants[otherId] }
+      : { uid: '', name: 'Unknown', email: '' };
   };
 
   const isUnread = (conv) => {
@@ -85,7 +116,7 @@ export default function MessagesPage() {
                 key={conv.id}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={() => navigate(`/messages/${conv.id}?other=${encodeURIComponent(other.name)}&sellerId=${conv.otherUid || ''}`)}
+                onClick={() => navigate(`/messages/${conv.id}?other=${encodeURIComponent(other.name)}&sellerId=${other.uid || ''}`)}
                 style={{
                   background: '#fff', borderRadius: 16, padding: '16px 20px',
                   cursor: 'pointer', display: 'flex', gap: 14, alignItems: 'center',

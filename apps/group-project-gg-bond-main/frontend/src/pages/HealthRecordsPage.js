@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { HealthAPI } from '../services/apiLayer';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useI18n } from '../i18n/I18nContext';
+import { useAuth } from '../context/AuthContext';
 import { isMobile } from '../utils/responsive';
 import { translateContent } from '../utils/translate';
 import toast from 'react-hot-toast';
@@ -20,20 +21,6 @@ const CHECKUP_RECORDS = [
 const MEDICINE_RECORDS = [
   { id: 'm1', date: '2026-05-01', title: '感冒药',    vet: null, notes: '连续服用 3 天后康复', type: 'medicine' },
 ];
-
-const STORAGE_KEY = 'gg_health_records';
-
-function loadRecords() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch (_) {}
-  return null;
-}
-
-function saveRecords(records) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
-}
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 const TYPE_META_BASE = {
@@ -298,38 +285,34 @@ export default function HealthRecordsPage() {
     medicine:  { label: t('health.type.medicine'), icon: '💊', color: '#10b981' },
   };
 
+  const { currentUser } = useAuth();
   const [activeTab, setActiveTab] = useState('vaccine');
   const [showModal, setShowModal] = useState(false);
   const [displayRecords, setDisplayRecords] = useState({});
-  const [records, setRecords] = useState(() => {
-    const stored = loadRecords();
-    if (stored) return stored;
-    return {
-      vaccine: VACCINE_RECORDS,
-      checkup: CHECKUP_RECORDS,
-      medicine: MEDICINE_RECORDS,
-    };
-  });
+  const [records, setRecords] = useState({ vaccine: [], checkup: [], medicine: [], dewormer: [] });
 
   useEffect(() => {
-    // Load from API, fall back to localStorage
-    HealthAPI.list().then(data => {
-      if (data && data.length > 0) {
-        // Reorganise by type
-        const byType = { vaccine: [], checkup: [], medicine: [], dewormer: [] };
-        data.forEach(r => {
-          const recType = r.type || 'medicine';
-          if (!byType[recType]) byType[recType] = [];
-          byType[recType].push(r);
-        });
-        // Keep defaults if empty
-        Object.keys(byType).forEach(recType => {
-          if (byType[recType].length === 0 && records[recType]?.length > 0) byType[recType] = records[recType];
-        });
-        setRecords(byType);
-      }
+    if (!currentUser?.uid) {
+      setRecords({
+        vaccine: VACCINE_RECORDS,
+        checkup: CHECKUP_RECORDS,
+        medicine: MEDICINE_RECORDS,
+        dewormer: [],
+      });
+      return;
+    }
+    HealthAPI.list(currentUser.uid).then(data => {
+      const byType = { vaccine: [], checkup: [], medicine: [], dewormer: [] };
+      (data || []).forEach(r => {
+        const recType = r.type || 'medicine';
+        if (!byType[recType]) byType[recType] = [];
+        byType[recType].push(r);
+      });
+      setRecords(byType);
+    }).catch(() => {
+      setRecords({ vaccine: [], checkup: [], medicine: [], dewormer: [] });
     });
-  }, [records]);
+  }, [currentUser?.uid]);
 
   // Translate display content when lang or records change
   useEffect(() => {
@@ -362,16 +345,14 @@ export default function HealthRecordsPage() {
   // Sort by date desc
   const sorted = [...currentRecords].sort((a, b) => new Date(b.date) - new Date(a.date));
 
-  const handleAddRecord = (newRecord) => {
-    const recordWithId = { ...newRecord, id: `r${Date.now()}` };
+  const handleAddRecord = async (newRecord) => {
+    if (!currentUser?.uid) return;
+    const res = await HealthAPI.add(currentUser.uid, newRecord).catch(() => null);
+    const recordWithId = { ...newRecord, id: res?.id || `r${Date.now()}` };
     setRecords(prev => ({
       ...prev,
       [activeTab]: [recordWithId, ...(prev[activeTab] || [])],
     }));
-    // Sync to backend (non-blocking)
-    HealthAPI.add(newRecord).then(res => {
-      if (res?.id) console.log('Health record saved to Firestore:', res.id);
-    }).catch(() => {});
   };
 
   const handleDeleteRecord = (id) => {
@@ -380,8 +361,7 @@ export default function HealthRecordsPage() {
       [activeTab]: (prev[activeTab] || []).filter(r => r.id !== id),
     }));
     toast.success(t('health.delete.success'));
-    // Sync delete to backend (non-blocking)
-    HealthAPI.remove(id).catch(() => {});
+    if (currentUser?.uid) HealthAPI.remove(currentUser.uid, id).catch(() => {});
   };
 
   // Health summary stats

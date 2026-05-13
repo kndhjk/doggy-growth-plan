@@ -5,14 +5,9 @@ import toast from 'react-hot-toast';
 import { useI18n } from '../i18n/I18nContext';
 import { translateContent } from '../utils/translate';
 import { useAuth } from '../context/AuthContext';
-import {
-  collection, doc, addDoc, getDocs, getDoc, deleteDoc,
-  query, where, orderBy, onSnapshot, serverTimestamp, updateDoc,
-  arrayUnion, arrayRemove, increment,
-} from 'firebase/firestore';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { fetchMarketplace } from '../services/api';
-import { db, storage } from '../services/firebase';
+import { fetchMarketplace, createListing as createListingApi, fetchConversations } from '../services/api';
+import { storage } from '../services/firebase';
 
 /* ──────────────────────────────────────────────────────────────────────────
    Helper
@@ -29,13 +24,53 @@ function timeAgo(ts) {
   return `${Math.floor(h / 24)}d ago`;
 }
 
+function categoryLabel(category, t) {
+  if (category === 'pet') return t('marketplace.catPet');
+  if (category === 'dog') return t('marketplace.catDog');
+  if (category === 'cat') return t('marketplace.catCat');
+  return t('marketplace.catPet');
+}
+
+const LOCAL_CONVERSATIONS_KEY = 'gg_local_conversations';
+const readLocalConversations = () => {
+  try { return JSON.parse(localStorage.getItem(LOCAL_CONVERSATIONS_KEY) || '[]'); }
+  catch { return []; }
+};
+const fileToDataUrl = (file) => new Promise((resolve, reject) => {
+  const reader = new FileReader();
+  reader.onload = () => resolve(reader.result);
+  reader.onerror = reject;
+  reader.readAsDataURL(file);
+});
+
+const fileToCompressedDataUrl = (file, maxSize = 1280, quality = 0.82) => new Promise((resolve, reject) => {
+  const reader = new FileReader();
+  reader.onload = () => {
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round(img.width * scale));
+      canvas.height = Math.max(1, Math.round(img.height * scale));
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return reject(new Error('canvas unavailable'));
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.onerror = reject;
+    img.src = reader.result;
+  };
+  reader.onerror = reject;
+  reader.readAsDataURL(file);
+});
+
 /* ──────────────────────────────────────────────────────────────────────────
    CreateListingModal
 ────────────────────────────────────────────────────────────────────────── */
 function CreateListingModal({ onClose, onCreated }) {
   const { t } = useI18n();
   const { currentUser } = useAuth();
-  const [form, setForm] = useState({ title: '', description: '', category: 'dog', price: '', location: '', listingType: 'sale' });
+  const [form, setForm] = useState({ title: '', description: '', category: 'pet', price: '', location: '', listingType: 'sale' });
   const [images, setImages] = useState([]);
   const [previewUrls, setPreviewUrls] = useState([]);
   const [uploading, setUploading] = useState(false);
@@ -53,48 +88,57 @@ function CreateListingModal({ onClose, onCreated }) {
   };
 
   const handleSubmit = async () => {
-    if (!form.title.trim()) return toast.error('Title is required');
-    if (!form.price || isNaN(Number(form.price)) || Number(form.price) <= 0) return toast.error('Enter a valid price');
-    if (!form.location.trim()) return toast.error('Location is required');
-    if (images.length === 0) return toast.error('Add at least one photo');
+    if (!form.title.trim()) return toast.error(t('marketplace.errorTitleRequired'));
+    if (form.listingType !== 'free' && (!form.price || isNaN(Number(form.price)) || Number(form.price) <= 0)) {
+      return toast.error(t('marketplace.errorPriceRequired'));
+    }
+    if (!form.location.trim()) return toast.error(t('marketplace.errorLocationRequired'));
+    if (images.length === 0) return toast.error(t('marketplace.errorPhotoRequired'));
     setUploading(true);
     try {
-      // Upload images to Firebase Storage
-      const uploadPromises = images.map((file, i) => {
-        return new Promise((resolve, reject) => {
-          const storageRef = ref(storage, `marketplace/${currentUser.uid}/${Date.now()}_${i}.jpg`);
-          const task = uploadBytesResumable(storageRef, file);
-          task.on(
-            'state_changed',
-            null,
-            reject,
-            () => getDownloadURL(task.snapshot.ref).then(resolve)
-          );
-        });
-      });
-      const imageUrls = await Promise.all(uploadPromises);
+      let imageUrls;
+      if (currentUser?._local) {
+        imageUrls = await Promise.all(images.map(fileToCompressedDataUrl));
+      } else {
+        try {
+          const uploadPromises = images.map((file, i) => {
+            return new Promise((resolve, reject) => {
+              const storageRef = ref(storage, `marketplace/${currentUser.uid}/${Date.now()}_${i}.jpg`);
+              const task = uploadBytesResumable(storageRef, file);
+              task.on(
+                'state_changed',
+                null,
+                reject,
+                () => getDownloadURL(task.snapshot.ref).then(resolve)
+              );
+            });
+          });
+          imageUrls = await Promise.all(uploadPromises);
+        } catch (uploadErr) {
+          console.warn('Firebase upload failed, falling back to inline marketplace images:', uploadErr);
+          imageUrls = await Promise.all(images.map(fileToCompressedDataUrl));
+        }
+      }
 
-      await addDoc(collection(db, 'marketplace'), {
+      await createListingApi({
         title: form.title.trim(),
         description: form.description.trim(),
         category: form.category,
-        price: form.listingType === 'adoption' ? 0 : Number(form.price),
+        price: form.listingType === 'free' ? 0 : Number(form.price),
         location: form.location.trim(),
         listingType: form.listingType,
         images: imageUrls,
-        sellerId: currentUser.uid,
-        sellerName: currentUser.displayName || currentUser.email || 'Anonymous',
+        sellerId: currentUser.uid || `guest_${Date.now()}`,
+        sellerName: currentUser.displayName || currentUser.email || t('marketplace.anonymousTrader'),
         sellerEmail: currentUser.email || '',
-        createdAt: serverTimestamp(),
-        status: 'active',
       });
 
-      toast.success('Listing created! 🎉');
+      toast.success(t('marketplace.createSuccess'));
       onCreated();
       onClose();
     } catch (err) {
       console.error(err);
-      toast.error('Failed to create listing');
+      toast.error(t('marketplace.createFailed'));
     } finally {
       setUploading(false);
     }
@@ -125,12 +169,12 @@ function CreateListingModal({ onClose, onCreated }) {
         {/* Listing type toggle */}
         <div style={{ display: 'flex', gap: 8, marginBottom: 20, background: '#fdf2f8', borderRadius: 12, padding: 4 }}>
           {[
-            { key: 'sale', label: t('marketplace.forSale') || '出售/领养', color: '#f59e0b' },
-            { key: 'adoption', label: t('marketplace.forAdoption') || '免费领养', color: '#10b981' },
+            { key: 'sale', label: t('marketplace.forSale'), color: '#f59e0b' },
+            { key: 'free', label: t('marketplace.forFree'), color: '#10b981' },
           ].map(opt => (
             <button
               key={opt.key}
-              onClick={() => setForm(f => ({ ...f, listingType: opt.key, price: opt.key === 'adoption' ? '0' : f.price }))}
+              onClick={() => setForm(f => ({ ...f, listingType: opt.key, price: opt.key === 'free' ? '0' : f.price }))}
               style={{
                 flex: 1, padding: '10px', borderRadius: 10, border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 13,
                 background: form.listingType === opt.key ? `linear-gradient(135deg,${opt.color},${opt.color}cc)` : 'transparent',
@@ -138,14 +182,14 @@ function CreateListingModal({ onClose, onCreated }) {
                 transition: 'all 0.2s',
               }}
             >
-              {opt.key === 'sale' ? '💰 出售/送养' : '❤️ 免费领养'}
+              {opt.key === 'sale' ? `💰 ${t('marketplace.forSale')}` : `🎁 ${t('marketplace.forFree')}`}
             </button>
           ))}
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
           <h2 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: '#9d174d' }}>
-            {form.listingType === 'adoption' ? '❤️ 创建免费领养' : t('marketplace.createListing')}
+            {form.listingType === 'free' ? t('marketplace.createFreeListing') : t('marketplace.createListing')}
           </h2>
           <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 24, cursor: 'pointer', color: '#f9a8d4' }}>✕</button>
         </div>
@@ -174,23 +218,23 @@ function CreateListingModal({ onClose, onCreated }) {
               onChange={e => setForm(f => ({ ...f, category: e.target.value }))}
               style={{ ...inputStyle, cursor: 'pointer' }}
             >
+              <option value="pet">{t('marketplace.catPet')}</option>
               <option value="dog">{t('marketplace.catDog')}</option>
               <option value="cat">{t('marketplace.catCat')}</option>
-              <option value="other">{t('marketplace.catOther')}</option>
             </select>
           </div>
           <div style={{ flex: 1 }}>
             <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#9d174d', marginBottom: 6 }}>
-              {form.listingType === 'adoption' ? t('marketplace.adoptionFee') : t('marketplace.priceNZD')} {form.listingType === 'sale' ? '*' : ''}
+              {form.listingType === 'free' ? t('marketplace.freePriceLabel') : t('marketplace.priceNZD')} {form.listingType === 'sale' ? '*' : ''}
             </label>
             <input
               type="number"
               value={form.price}
               onChange={e => setForm(f => ({ ...f, price: e.target.value }))}
-              placeholder={form.listingType === 'adoption' ? '0（免费领养）' : '0'}
+              placeholder={form.listingType === 'free' ? t('marketplace.freePricePlaceholder') : '0'}
               min="0"
               style={inputStyle}
-              disabled={form.listingType === 'adoption'}
+              disabled={form.listingType === 'free'}
             />
           </div>
         </div>
@@ -198,7 +242,7 @@ function CreateListingModal({ onClose, onCreated }) {
         {/* Location */}
         <div style={{ marginBottom: 16 }}>
           <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#9d174d', marginBottom: 6 }}>
-            {t('marketplace.location')} {form.listingType === 'adoption' ? '' : '*'}
+            {t('marketplace.location')} {form.listingType === 'free' ? '' : '*'}
           </label>
           <input
             value={form.location}
@@ -286,6 +330,7 @@ const inputStyle = {
    ListingCard
 ────────────────────────────────────────────────────────────────────────── */
 function ListingCard({ item, onClick }) {
+  const { t } = useI18n();
   return (
     <motion.div
       whileHover={{ scale: 1.03, y: -4 }}
@@ -316,7 +361,7 @@ function ListingCard({ item, onClick }) {
           background: 'rgba(255,255,255,0.9)', color: '#9d174d',
           padding: '3px 10px', borderRadius: 20, fontSize: 12, fontWeight: 600,
         }}>
-          {item.category?.toUpperCase()}
+          {categoryLabel(item.category, t)}
         </div>
       </div>
       <div style={{ padding: '14px 16px' }}>
@@ -437,7 +482,7 @@ function ListingDetailModal({ item, currentUser, onClose, onContact }) {
 
           <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
             <span style={{ background: '#fce7f3', color: '#9d174d', padding: '4px 12px', borderRadius: 20, fontSize: 13, fontWeight: 700 }}>
-              {item.category?.toUpperCase()}
+              {categoryLabel(item.category, t)}
             </span>
             <span style={{ background: '#fce7f3', color: '#9d174d', padding: '4px 12px', borderRadius: 20, fontSize: 13 }}>
               📍 {item.location}
@@ -465,7 +510,7 @@ function ListingDetailModal({ item, currentUser, onClose, onContact }) {
             <div>
               <div style={{ fontSize: 14, fontWeight: 800, color: '#9d174d' }}>{item.sellerName}</div>
               <div style={{ fontSize: 13, color: '#f472b6' }}>{item.sellerEmail}</div>
-              <div style={{ fontSize: 12, color: '#f9a8d4', marginTop: 2 }}>Posted {timeAgo(item.createdAt)}</div>
+              <div style={{ fontSize: 12, color: '#f9a8d4', marginTop: 2 }}>{t('marketplace.postedAt')} {timeAgo(item.createdAt)}</div>
             </div>
           </div>
 
@@ -495,6 +540,7 @@ function ListingDetailModal({ item, currentUser, onClose, onContact }) {
 export default function MarketplacePage() {
   const { t, lang } = useI18n();
   const { currentUser } = useAuth();
+  const isLocal = currentUser?._local;
   const navigate = useNavigate();
 
   const [listings, setListings] = useState([]);
@@ -508,14 +554,15 @@ export default function MarketplacePage() {
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('all');
   const [sort, setSort] = useState('newest');
-  const [listingType, setListingType] = useState('sale'); // 'sale' | 'adoption'
+  const [listingType, setListingType] = useState('sale'); // 'sale' | 'free'
   const [page, setPage] = useState(1);
 
-  // Fetch listings via backend API (no compound index needed)
+  // Fetch listings via shared backend API (same data across devices)
   useEffect(() => {
     setLoading(true);
     let cancelled = false;
-    fetchMarketplace({ type: listingType, category })
+
+    const refresh = () => fetchMarketplace({ type: listingType, category })
       .then(({ listings }) => {
         if (!cancelled) setListings(listings);
       })
@@ -524,29 +571,63 @@ export default function MarketplacePage() {
         if (!cancelled) setListings([]);
       })
       .finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
+
+    refresh();
+    const onFocus = () => refresh();
+    window.addEventListener('focus', onFocus);
+    return () => { cancelled = true; window.removeEventListener('focus', onFocus); };
   }, [category, listingType]);
 
   // Unread count
   useEffect(() => {
     if (!currentUser) return;
-    const q = query(
-      collection(db, 'conversations'),
-    );
-    const unsub = onSnapshot(q, snap => {
-      let count = 0;
-      snap.docs.forEach(d => {
-        const conv = d.data();
-        const otherUid = Object.keys(conv.participants || {}).find(k => k !== currentUser.uid);
-        if (otherUid) {
+
+    if (isLocal) {
+      const refresh = () => {
+        let count = 0;
+        readLocalConversations().forEach(conv => {
+          if (!conv.participants || !(currentUser.uid in conv.participants)) return;
           const lastMsg = conv.lastMessage;
           if (lastMsg && !lastMsg.read && lastMsg.senderId !== currentUser.uid) count++;
-        }
-      });
-      setUnreadCount(count);
-    });
-    return unsub;
-  }, [currentUser]);
+        });
+        setUnreadCount(count);
+      };
+      refresh();
+      const onStorage = (e) => {
+        if (!e || e.key === LOCAL_CONVERSATIONS_KEY) refresh();
+      };
+      const onFocus = () => refresh();
+      const onVisible = () => { if (document.visibilityState === 'visible') refresh(); };
+      window.addEventListener('storage', onStorage);
+      window.addEventListener('focus', onFocus);
+      document.addEventListener('visibilitychange', onVisible);
+      return () => {
+        window.removeEventListener('storage', onStorage);
+        window.removeEventListener('focus', onFocus);
+        document.removeEventListener('visibilitychange', onVisible);
+      };
+    }
+
+    let cancelled = false;
+    const refresh = () => {
+      fetchConversations(currentUser.uid)
+        .then(convs => {
+          if (cancelled) return;
+          let count = 0;
+          convs.forEach(conv => {
+            const lastMsg = conv.lastMessage;
+            if (lastMsg && !lastMsg.read && lastMsg.senderId !== currentUser.uid) count++;
+          });
+          setUnreadCount(count);
+        })
+        .catch(() => {});
+    };
+    refresh();
+    const timer = setInterval(refresh, 4000);
+    const onFocus = () => refresh();
+    window.addEventListener('focus', onFocus);
+    return () => { cancelled = true; clearInterval(timer); window.removeEventListener('focus', onFocus); };
+  }, [currentUser, isLocal]);
 
   // Translate listings when language changes
   useEffect(() => {
@@ -568,10 +649,9 @@ export default function MarketplacePage() {
   const MOCK_ADOPTIONS = [
     {
       id: 'mock_a1',
-      title: '萨摩耶 MM — 微笑天使找新家',
-      description: '2岁萨摩耶弟弟，疫苗齐全，驱虫已做。性格非常温柔，从不咬人，喜欢和小朋友玩。因主人移民无法继续抚养，希望找一个有爱心的新主人。可以上门看狗，必须签署领养协议。',
+      title: '免费转让：未开封幼犬粮 8kg',
+      description: '家里狗狗换了处方粮，这袋幼犬粮还没开封。适合中小型犬，保质期到明年，奥克兰中区自取。',
       category: 'dog',
-      breed: '萨摩耶',
       price: 0,
       location: '奥克兰中区',
       images: [
@@ -582,14 +662,13 @@ export default function MarketplacePage() {
       sellerEmail: 'xiaomei@example.com',
       sellerId: 'mock_seller_1',
       createdAt: { toDate: () => new Date(Date.now() - 86400000 * 2) },
-      listingType: 'adoption',
+      listingType: 'free',
     },
     {
       id: 'mock_a2',
-      title: '金毛弟弟 — 暖男找靠谱人家',
-      description: '1岁半金毛猎犬，健康活泼，已绝育。三针疫苗+狂犬疫苗全打完，体内外驱虫完成。喜欢玩球和游泳，对小孩和其他宠物都很友好。希望领养家庭有稳定住所，能给予足够运动和陪伴。',
+      title: '免费分享：冻干狗零食大礼包',
+      description: '买太多了吃不完，里面有鸡胸冻干、牛肉粒和磨牙棒，适合训练奖励。希望一次带走。',
       category: 'dog',
-      breed: '金毛猎犬',
       price: 0,
       location: '北岸 North Shore',
       images: [
@@ -600,14 +679,13 @@ export default function MarketplacePage() {
       sellerEmail: 'aben@example.com',
       sellerId: 'mock_seller_2',
       createdAt: { toDate: () => new Date(Date.now() - 86400000 * 5) },
-      listingType: 'adoption',
+      listingType: 'free',
     },
     {
       id: 'mock_a3',
-      title: '布偶猫 — 温柔小公主等领养',
-      description: '2岁布偶猫妹妹，健康状况良好，已绝育。性格超级温顺，爱撒娇，最爱被人抱着。会用猫砂盆，不抓沙发，非常适合公寓饲养。要求领养人有稳定收入，给她一个温暖的家。',
+      title: '免费送：成猫主食罐头 24 罐',
+      description: '猫咪挑食换品牌后剩下的主食罐，口味是鸡肉和金枪鱼，日期新鲜，适合多猫家庭。',
       category: 'cat',
-      breed: '布偶猫',
       price: 0,
       location: 'Mount Albert',
       images: [
@@ -617,14 +695,13 @@ export default function MarketplacePage() {
       sellerEmail: 'lili@example.com',
       sellerId: 'mock_seller_3',
       createdAt: { toDate: () => new Date(Date.now() - 86400000 * 1) },
-      listingType: 'adoption',
+      listingType: 'free',
     },
     {
       id: 'mock_a4',
-      title: '田园猫三兄妹 — 一起领养优先',
-      description: '3个月大的三花田园猫宝宝，两母一公，健康活泼。猫妈妈是只很乖的流浪猫，宝宝们都很黏人社会化训练良好。领养需接受上门回访，领养成功后一起打疫苗。',
-      category: 'cat',
-      breed: '中华田园猫',
+      title: '免费转让：宠物用品组合包',
+      description: '包含饮水机、食盆、储粮桶和未开封除臭垫，适合刚养宠物的人直接带走。',
+      category: 'pet',
       price: 0,
       location: 'Epsom',
       images: [
@@ -634,14 +711,13 @@ export default function MarketplacePage() {
       sellerEmail: 'ahua@example.com',
       sellerId: 'mock_seller_4',
       createdAt: { toDate: () => new Date(Date.now() - 86400000 * 3) },
-      listingType: 'adoption',
+      listingType: 'free',
     },
     {
       id: 'mock_a5',
-      title: '边牧女孩 — 超级聪明找运动家庭',
-      description: '3岁边境牧羊犬妹妹，智商排名第一，非常聪明，学东西极快。已完成基础服从训练，会握手、等食、翻滚。因主人工作调动需离开纽西兰，寻找有时间陪伴和训练它的家庭。',
-      category: 'dog',
-      breed: '边境牧羊犬',
+      title: '免费送：猫抓板和逗猫玩具',
+      description: '猫抓板还有 80% 新，附带一包逗猫棒和替换羽毛，适合猫粮买家顺便一起带。',
+      category: 'cat',
       price: 0,
       location: 'Parnell',
       images: [
@@ -651,17 +727,16 @@ export default function MarketplacePage() {
       sellerEmail: 'david@example.com',
       sellerId: 'mock_seller_5',
       createdAt: { toDate: () => new Date(Date.now() - 86400000 * 7) },
-      listingType: 'adoption',
+      listingType: 'free',
     },
   ];
 
   const MOCK_SALES = [
     {
       id: 'mock_s1',
-      title: '柯基弟弟 — 屁股扭扭找新家',
-      description: '6个月柯基弟弟，疫苗齐全，身体健康。性格活泼粘人，屁股扭扭是它的标志技能。已学会定点上厕所，送狗粮、狗窝、玩具。要求领养人有时间陪伴。',
+      title: '进口成犬粮 12kg — 鸡肉配方',
+      description: '全新未开封，大袋装成犬粮，适合中大型犬。因为家里狗狗换品牌低价出。',
       category: 'dog',
-      breed: '柯基',
       price: 800,
       location: 'Mount Eden',
       images: [
@@ -676,10 +751,9 @@ export default function MarketplacePage() {
     },
     {
       id: 'mock_s2',
-      title: '英短蓝猫 — 安静乖巧适合公寓',
-      description: '1岁英短蓝猫弟弟，健康已绝育。性格安静不爱叫，不破坏家具，非常适合公寓或单居室。已打疫苗，体内外驱虫，耳朵干净。要求领养人稳定住所。',
+      title: '猫粮大包 10kg — 室内成猫配方',
+      description: '适合室内成猫，颗粒小、适口性好。刚买不久，因猫咪医生建议换肠胃处方粮，所以转卖。',
       category: 'cat',
-      breed: '英国短毛猫',
       price: 600,
       location: 'New Lynn',
       images: [
@@ -693,10 +767,9 @@ export default function MarketplacePage() {
     },
     {
       id: 'mock_s3',
-      title: '柴犬妹妹 — 表情包本包',
-      description: '8个月柴犬妹妹，疫苗齐全，已绝育。行走的表情包，表情极其丰富。性格独立但粘人，爱干净会自己清理毛发。送全套狗具，接受上门看狗。',
+      title: '低敏狗粮 6kg — 小型犬专用',
+      description: '适合肠胃敏感的小型犬，剩最后两袋，全新未拆。可一起带走也可单买。',
       category: 'dog',
-      breed: '柴犬',
       price: 1200,
       location: 'Epsom',
       images: [
@@ -710,10 +783,9 @@ export default function MarketplacePage() {
     },
     {
       id: 'mock_s4',
-      title: '仓鼠一家 — 萌萌哒小团子',
-      description: '2个月大的仓鼠宝宝，一共5只，金丝熊品种。毛色干净健康，性格温顺会亲人，已断奶可以独立吃鼠粮和辅食。需要整套笼子+跑轮+木屑一起带走。',
-      category: 'other',
-      breed: '金丝熊仓鼠',
+      title: '宠物用品清仓：自动喂食器 + 储粮桶',
+      description: '适合猫狗家庭，自动喂食器功能正常，附带储粮桶和密封夹。搬家前一起出售。',
+      category: 'pet',
       price: 150,
       location: 'Pukekohe',
       images: [
@@ -727,10 +799,9 @@ export default function MarketplacePage() {
     },
     {
       id: 'mock_s5',
-      title: '拉布拉多 — 导盲犬血统找爱家',
-      description: '1岁拉布拉多，祖辈有导盲犬血统，身体非常健康，体型标准。性格温和无攻击性，对小孩和老人特别友好。已完成基础服从训练，包括等待、召回、坐下。',
-      category: 'dog',
-      breed: '拉布拉多猎犬',
+      title: '高蛋白猫零食礼盒',
+      description: '包含冻干、猫条和化毛膏，适合想给猫咪囤零食的人。礼盒装，送人也可以。',
+      category: 'cat',
       price: 1500,
       location: 'Orewa',
       images: [
@@ -746,11 +817,17 @@ export default function MarketplacePage() {
 
 
   // Show mock data when Firestore is empty
-  const showMock = listings.length === 0;
-  const mockItems = listingType === 'adoption' ? MOCK_ADOPTIONS : MOCK_SALES;
-  const rawItems = [...mockItems, ...listings];
+  const showMock = !isLocal && listings.length === 0;
+  const mockItems = listingType === 'free' ? MOCK_ADOPTIONS : MOCK_SALES;
+  const rawItems = showMock ? [...mockItems, ...listings] : listings;
   const allItems = rawItems
-    .filter(l => !search || l.title.toLowerCase().includes(search.toLowerCase()))
+    .filter(l => {
+      if (!search) return true;
+      const q = search.toLowerCase();
+      return [l.title, l.description, l.location, l.category]
+        .filter(Boolean)
+        .some(v => String(v).toLowerCase().includes(q));
+    })
     .sort((a, b) => {
       if (sort === 'price_asc') return Number(a.price) - Number(b.price);
       if (sort === 'price_desc') return Number(b.price) - Number(a.price);
@@ -790,7 +867,7 @@ export default function MarketplacePage() {
             📦 {t('marketplace.title')}
           </h1>
           <p style={{ margin: '4px 0 0', fontSize: 13, color: '#f472b6' }}>
-            {listings.length} {t('marketplace.listings')}
+            {allItems.length} {t('marketplace.listings')}{showMock ? ' · demo' : ''}
           </p>
         </div>
         {/* Messages badge */}
@@ -838,9 +915,9 @@ export default function MarketplacePage() {
           }}
         >
           <option value="all">{t('marketplace.filterAll')}</option>
+          <option value="pet">{t('marketplace.catPet')}</option>
           <option value="dog">{t('marketplace.catDog')}</option>
           <option value="cat">{t('marketplace.catCat')}</option>
-          <option value="other">{t('marketplace.catOther')}</option>
         </select>
         <select
           value={sort}
@@ -895,7 +972,12 @@ export default function MarketplacePage() {
         {showCreate && (
           <CreateListingModal
             onClose={() => setShowCreate(false)}
-            onCreated={() => {}}
+            onCreated={() => {
+              if (isLocal) {
+                const local = readLocalListings().filter(item => item.listingType === listingType && (category === 'all' || item.category === category));
+                setListings(local);
+              }
+            }}
           />
         )}
         {selected && (

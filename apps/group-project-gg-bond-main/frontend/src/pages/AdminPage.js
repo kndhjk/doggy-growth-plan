@@ -2,15 +2,17 @@ import React, { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 
-const ADMIN_KEY = 'ggbond_admin_secure_2026';
+const ADMIN_SESSION_KEY = 'ggbond_admin_key';
 
 async function adminFetch(path, opts = {}) {
+  const adminKey = opts.adminKey || sessionStorage.getItem(ADMIN_SESSION_KEY) || '';
+  const { adminKey: _adminKey, ...rest } = opts;
   const r = await fetch(`/api/admin${path}`, {
-    ...opts,
+    ...rest,
     headers: {
-      'x-admin-key': ADMIN_KEY,
+      'x-admin-key': adminKey,
       'Content-Type': 'application/json',
-      ...(opts.headers || {}),
+      ...(rest.headers || {}),
     },
   });
   if (!r.ok) {
@@ -32,7 +34,8 @@ function LoginPage({ onLogin }) {
     setLoading(true);
     setErr('');
     try {
-      await adminFetch('/stats');
+      await adminFetch('/stats', { adminKey: pw });
+      sessionStorage.setItem(ADMIN_SESSION_KEY, pw);
       onLogin(pw);
     } catch {
       setErr('密码错误，请重试');
@@ -176,12 +179,13 @@ function PetEditModal({ pet, onSave, onClose }) {
 
 // ─── Main Admin ────────────────────────────────────────────────────────────────
 export default function AdminPage() {
-  const [authed, setAuthed] = useState(false);
+  const [authed, setAuthed] = useState(() => !!sessionStorage.getItem(ADMIN_SESSION_KEY));
   const [step, setStep] = useState('dashboard');
   const [stats, setStats] = useState(null);
   const [users, setUsers] = useState([]);
   const [pets, setPets] = useState([]);
   const [activities, setActivities] = useState([]);
+  const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(false);
   const [userSearch, setUserSearch] = useState('');
   const [petSearch, setPetSearch] = useState('');
@@ -219,6 +223,12 @@ export default function AdminPage() {
     setLoading(false);
   }, []);
 
+  const loadListings = useCallback(async (showLoading = true) => {
+    if (showLoading) setLoading(true);
+    try { setListings(await adminFetch('/listings')); } catch { toast.error('加载 listings 失败'); }
+    if (showLoading) setLoading(false);
+  }, []);
+
   const loadAll = useCallback(async () => {
     setLoading(true);
     try {
@@ -240,7 +250,14 @@ export default function AdminPage() {
     else if (t === 'users') await loadUsers();
     else if (t === 'pets') await loadPets();
     else if (t === 'activities') await loadActivities();
-  }, [loadAll, loadUsers, loadPets, loadActivities]);
+    else if (t === 'listings') await loadListings();
+  }, [loadAll, loadUsers, loadPets, loadActivities, loadListings]);
+
+  const logoutAdmin = () => {
+    sessionStorage.removeItem(ADMIN_SESSION_KEY);
+    setAuthed(false);
+    setStep('dashboard');
+  };
 
   // ─── User actions ───────────────────────────────────────────────────────────
   const disableUser = async (uid, currentlyDisabled) => {
@@ -270,6 +287,17 @@ export default function AdminPage() {
       await adminFetch(`/pets/${pet.uid}`, { method: 'DELETE' });
       setPets(prev => prev.filter(p => p.uid !== pet.uid));
       toast.success('🗑️ 宠物已删除');
+    } catch (e) {
+      toast.error(`删除失败: ${e.message}`);
+    }
+    setConfirmModal(null);
+  };
+
+  const deleteListing = async (listing) => {
+    try {
+      await adminFetch(`/listings/${listing.id}`, { method: 'DELETE' });
+      setListings(prev => prev.filter(l => l.id !== listing.id));
+      toast.success('🗑️ Listing 已删除');
     } catch (e) {
       toast.error(`删除失败: ${e.message}`);
     }
@@ -371,11 +399,12 @@ export default function AdminPage() {
             ['pets', `🐕 宠物 (${pets.length})`],
             ['activities', `📋 动态 (${activities.length})`],
             ['broadcast', '📢 广播'],
+            ['listings', `📦 Listings (${listings.length})`],
           ].map(([t, label]) => (
             <NavBtn key={t} label={label} active={step === t} onClick={() => switchTab(t)} />
           ))}
         </div>
-        <button onClick={() => setAuthed(false)}
+        <button onClick={logoutAdmin}
           style={{ marginLeft: 'auto', padding: '7px 16px', borderRadius: 100, border: '2px solid #f3e8ff',
                    background: 'white', color: '#9ca3af', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
           退出
@@ -396,6 +425,9 @@ export default function AdminPage() {
               <StatCard icon="🐾" label="宠物总数" value={stats?.totalPets} color="#f97316" />
               <StatCard icon="🔥" label="今日活跃" value={stats?.activeToday} color="#10b981" />
               <StatCard icon="❤️" label="平均健康" value={stats?.avgHealth != null ? `${stats.avgHealth}%` : '—'} color="#ec4899" />
+              <StatCard icon="📦" label="Listings 总数" value={stats?.totalListings} color="#f59e0b" />
+              <StatCard icon="💰" label="在售" value={stats?.saleListings} color="#10b981" />
+              <StatCard icon="🎁" label="免费转让" value={stats?.adoptionListings} color="#ec4899" />
             </div>
             <div style={{ background: 'white', borderRadius: 20, padding: 24, boxShadow: '0 4px 20px rgba(244,114,182,0.1)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
@@ -661,6 +693,73 @@ export default function AdminPage() {
                          boxShadow: '0 4px 14px rgba(139,92,246,0.3)' }}>
                 📢 发送广播
               </button>
+            </div>
+          </motion.div>
+        )}
+
+        {/* ── Marketplace Listings ────────────────────────────────────────────── */}
+        {step === 'listings' && (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+              <h2 style={{ fontWeight: 900, color: '#1f0933' }}>📦 Marketplace Listings ({listings.length})</h2>
+              <RefreshBtn onClick={() => loadListings(false)} />
+            </div>
+            <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
+              <div style={{ background: 'white', borderRadius: 12, padding: '10px 20px', display: 'flex', gap: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+                <span style={{ fontSize: 13, color: '#6b7280' }}>💰 <strong style={{ color: '#1f0933' }}>{listings.filter(l => l.listingType === 'sale').length}</strong> 在售</span>
+                <span style={{ fontSize: 13, color: '#6b7280' }}>🎁 <strong style={{ color: '#1f0933' }}>{listings.filter(l => l.listingType === 'free').length}</strong> 免费转让</span>
+                <span style={{ fontSize: 13, color: '#6b7280' }}>🐕 <strong style={{ color: '#1f0933' }}>{listings.filter(l => l.category === 'dog').length}</strong> 狗粮</span>
+                <span style={{ fontSize: 13, color: '#6b7280' }}>🐈 <strong style={{ color: '#1f0933' }}>{listings.filter(l => l.category === 'cat').length}</strong> 猫粮</span>
+                <span style={{ fontSize: 13, color: '#6b7280' }}>📦 <strong style={{ color: '#1f0933' }}>{listings.filter(l => l.category === 'pet').length}</strong> 用品</span>
+              </div>
+            </div>
+            <div style={{ background: 'white', borderRadius: 20, overflow: 'hidden', boxShadow: '0 4px 20px rgba(244,114,182,0.1)' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ background: '#f9f5ff', borderBottom: '2px solid #ede9fe' }}>
+                    {['商品名称', '类型', '分类', '价格', '卖家', '操作'].map(h => (
+                      <th key={h} style={{ textAlign: 'left', padding: '12px 16px', fontSize: 12, color: '#7c3aed', fontWeight: 800 }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {listings.length === 0 ? (
+                    <tr><td colSpan={99} style={{ padding: 40, textAlign: 'center', color: '#9ca3af', fontSize: 14 }}>
+                      {loading ? '⏳ 加载中...' : '暂无 listings'}
+                    </td></tr>
+                  ) : listings.map(l => (
+                    <tr key={l.id} style={{ borderBottom: '1px solid #f9f5ff' }}>
+                      <td style={{ padding: '12px 16px', maxWidth: 240 }}>
+                        <div style={{ fontWeight: 700, color: '#1f0933', fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{l.title}</div>
+                        <div style={{ fontSize: 11, color: '#9ca3af', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 220 }}>{l.location}</div>
+                      </td>
+                      <td style={{ padding: '12px 16px' }}>
+                        <span style={{ padding: '3px 10px', borderRadius: 100, fontSize: 12, fontWeight: 700,
+                          background: l.listingType === 'sale' ? '#dcfce7' : '#fce7f3',
+                          color: l.listingType === 'sale' ? '#166534' : '#9d174d' }}>
+                          {l.listingType === 'sale' ? '💰 在售' : '🎁 免费'}
+                        </span>
+                      </td>
+                      <td style={{ padding: '12px 16px', fontSize: 12, color: '#6b7280', textTransform: 'capitalize' }}>
+                        {{ dog: '🐕 狗粮', cat: '🐈 猫粮', pet: '📦 用品' }[l.category] || l.category}
+                      </td>
+                      <td style={{ padding: '12px 16px', fontSize: 13, fontWeight: 700, color: l.price === 0 ? '#10b981' : '#1f0933' }}>
+                        {l.price === 0 ? '免费' : `NZD ${l.price}`}
+                      </td>
+                      <td style={{ padding: '12px 16px', fontSize: 12, color: '#6b7280' }}>{l.sellerName}</td>
+                      <td style={{ padding: '12px 16px' }}>
+                        <ActionBtn label="删除" danger icon="🗑️ " onClick={() => setConfirmModal({
+                          title: '删除 Listing',
+                          message: `确定要删除「${l.title}」吗？此操作不可恢复。`,
+                          confirmLabel: '确认删除',
+                          danger: true,
+                          onConfirm: () => deleteListing(l),
+                        })} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </motion.div>
         )}
