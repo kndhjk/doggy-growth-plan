@@ -1,4 +1,12 @@
-# GG Bond / Doggy Growth Plan — Beginner Handoff Guide (English)
+Welcome to the CS732 project. We look forward to seeing the amazing things you create this semester! This is your team's repository.
+
+Our team members are:
+- Huanhuan Li _(hli758@aucklanduni.ac.nz)_
+- Jiayi Lyu _(jlyu233@aucklanduni.ac.nz)_
+- Xiang Zhang _(hxza940@aucklanduni.ac.nz)_
+- Ming Zhao _(mzha585@aucklanduni.ac.nz)_
+- Xingyan Zhou _(xzho343@aucklanduni.ac.nz)_
+- Kejun Xu _(kxu311@aucklanduni.ac.nz)_
 
 > This is the default README shown on GitHub.  
 > It is written for teammates who are new to React, Firebase, and full-stack project structure, so we can onboard together.
