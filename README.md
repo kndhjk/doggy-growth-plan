@@ -1,6 +1,5 @@
 # GG Bond / Doggy Growth Plan — Beginner Handoff Guide (English)
 
-=======
 Our team members are:
 - Huanhuan Li _(hli758@aucklanduni.ac.nz)_
 - Jiayi Lyu _(jlyu233@aucklanduni.ac.nz)_
@@ -9,18 +8,8 @@ Our team members are:
 - Xingyan Zhou _(xzho343@aucklanduni.ac.nz)_
 - Kejun Xu _(kxu311@aucklanduni.ac.nz)_
 
->>>>>>> origin/main
-> This is the default README shown on GitHub.  
-> It is written for teammates who are new to React, Firebase, and full-stack project structure, so we can onboard together.
-
-**中文版请看：[`README_CN.md`](./README_CN.md)**
-
->>>>>>> origin/main
-
 **English version (default):** `README.md`  
 **中文版 / Chinese version:** `README_CN.md`
-
----
 
 ---
 
