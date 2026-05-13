@@ -1,10 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import {
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  signOut,
-  onAuthStateChanged,
-} from 'firebase/auth';
+import { signOut, onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../services/firebase';
 import {
   isFallbackError,
@@ -45,9 +40,23 @@ export function AuthProvider({ children }) {
     // page-refresh sessions correctly.
     let unsub = () => {};
     try {
-      unsub = onAuthStateChanged(auth, u => {
-        console.log("[Auth] onAuthStateChanged", u ? u.uid : "null");
-        setCurrentUser(withAvatar(u || readCurrentLocalUser()));
+      unsub = onAuthStateChanged(auth, async (u) => {
+        const localUser = readCurrentLocalUser();
+        console.log('[Auth] onAuthStateChanged', u ? u.uid : 'null', 'local=', localUser ? localUser.uid : 'null');
+
+        // Backend session is now the only durable source of truth for online features.
+        // If a stale Firebase session exists, do not let it override the backend uid.
+        if (localUser?.uid) {
+          setCurrentUser(withAvatar(localUser));
+          setLoading(false);
+          return;
+        }
+
+        if (u) {
+          try { await signOut(auth); } catch {}
+        }
+
+        setCurrentUser(null);
         setLoading(false);
       });
     } catch(e) {

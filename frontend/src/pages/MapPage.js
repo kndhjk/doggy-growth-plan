@@ -38,6 +38,40 @@ const PLACES_TYPE = { park: 'park', vet: 'veterinary_care', petstore: 'pet_store
 
 const AUCKLAND = { lat: -36.8485, lng: 174.7633 };
 
+function ensureGoogleMaps(apiKey) {
+  if (!apiKey || apiKey === 'undefined' || !apiKey.trim()) {
+    return Promise.reject(new Error('Missing Google Maps API key'));
+  }
+  if (window.google?.maps?.places) return Promise.resolve(window.google);
+  if (window.googleMapsReady) return window.googleMapsReady;
+
+  window.googleMapsReady = new Promise((resolve, reject) => {
+    const existing = document.getElementById('google-maps-script');
+    if (existing) {
+      existing.addEventListener('load', () => resolve(window.google), { once: true });
+      existing.addEventListener('error', () => reject(new Error('Google Maps script failed to load')), { once: true });
+      return;
+    }
+
+    window.__initGoogleMaps = () => resolve(window.google);
+    window.gm_authFailure = () => {
+      document.documentElement.setAttribute('data-gmaps-failed', 'true');
+      document.dispatchEvent(new Event('gmaps-auth-failure'));
+      reject(new Error('Google Maps auth failure'));
+    };
+
+    const script = document.createElement('script');
+    script.id = 'google-maps-script';
+    script.async = true;
+    script.defer = true;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(apiKey)}&libraries=places&callback=__initGoogleMaps`;
+    script.onerror = () => reject(new Error('Google Maps script failed to load'));
+    document.head.appendChild(script);
+  });
+
+  return window.googleMapsReady;
+}
+
 const DEMO = {
   park: [
     { place_id:'p1', name:'Central Park Pet Zone', vicinity:'123 Sample Road', rating:4.8, isOpen:true,  geometry:{ lat: AUCKLAND.lat+0.004, lng: AUCKLAND.lng+0.003 } },
@@ -145,36 +179,26 @@ export default function MapPage() {
 
   // Initialize Google Map once SDK is loaded
   useEffect(() => {
-    // 1. Check API key presence first — if missing, skip SDK entirely
     const apiKey = process.env.REACT_APP_GOOGLE_MAPS_KEY;
     if (!apiKey || apiKey === 'undefined' || apiKey.trim() === '') {
       setMapsFailed(true);
       return;
     }
 
-    // 2. Check if auth already failed (script may have errored before this effect ran)
     if (document.documentElement.getAttribute('data-gmaps-failed') === 'true') {
       setMapsFailed(true);
       return;
     }
 
-    // 3. Listen for runtime auth failures
     const onAuthFail = () => setMapsFailed(true);
     document.addEventListener('gmaps-auth-failure', onAuthFail);
 
     let cancelled = false;
-    const timeout = setTimeout(() => { if (!cancelled && !mapsReady) setMapsFailed(true); }, 8000);
 
     (async () => {
       try {
-        if (!window.googleMapsReady) { setMapsFailed(true); return; }
-        await window.googleMapsReady;
+        await ensureGoogleMaps(apiKey);
         if (cancelled || !mapContainerRef.current || !window.google?.maps) return;
-        // Re-check auth flag — gm_authFailure may have fired during the await
-        if (document.documentElement.getAttribute('data-gmaps-failed') === 'true') {
-          setMapsFailed(true);
-          return;
-        }
         mapRef.current = new window.google.maps.Map(mapContainerRef.current, {
           center: loc || AUCKLAND,
           zoom: 14,
@@ -185,7 +209,7 @@ export default function MapPage() {
         });
         infoWindowRef.current = new window.google.maps.InfoWindow();
         setMapsReady(true);
-        clearTimeout(timeout);
+        setMapsFailed(false);
       } catch (e) {
         console.warn('[Map] SDK init failed:', e);
         setMapsFailed(true);
@@ -194,10 +218,9 @@ export default function MapPage() {
 
     return () => {
       cancelled = true;
-      clearTimeout(timeout);
       document.removeEventListener('gmaps-auth-failure', onAuthFail);
     };
-  }, []);
+  }, [loc]);
 
   // Re-center on user location change
   useEffect(() => {
@@ -318,11 +341,8 @@ export default function MapPage() {
 
     // 1. Try backend first (production path: Vercel serverless /api/map/nearby)
     try {
-      let token = '';
-      try { token = await auth.currentUser?.getIdToken() || ''; } catch {}
       const r = await fetch(
-        `${process.env.REACT_APP_API_URL||'http://localhost:5000'}/api/map/nearby?lat=${loc.lat}&lng=${loc.lng}&type=${type}`,
-        { headers: token ? { Authorization:`Bearer ${token}` } : {} }
+        `${process.env.REACT_APP_API_URL || ''}/api/map/nearby?lat=${loc.lat}&lng=${loc.lng}&type=${type}`
       );
       if (r.ok) {
         const d = await r.json();

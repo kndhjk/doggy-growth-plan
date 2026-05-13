@@ -1,16 +1,22 @@
 # GG Bond / Doggy Growth Plan — Beginner Handoff Guide (English)
 
+<<<<<<< HEAD
+=======
+Our team members are:
+- Huanhuan Li _(hli758@aucklanduni.ac.nz)_
+- Jiayi Lyu _(jlyu233@aucklanduni.ac.nz)_
+- Xiang Zhang _(hxza940@aucklanduni.ac.nz)_
+- Ming Zhao _(mzha585@aucklanduni.ac.nz)_
+- Xingyan Zhou _(xzho343@aucklanduni.ac.nz)_
+- Kejun Xu _(kxu311@aucklanduni.ac.nz)_
+
+>>>>>>> origin/main
 > This is the default README shown on GitHub.  
 > It is written for teammates who are new to React, Firebase, and full-stack project structure, so we can onboard together.
 
 **中文版请看：[`README_CN.md`](./README_CN.md)**
 
-<<<<<<< HEAD
-**Frontend:** 4.155.227.179  
-**Backend API:** 4.155.227.179/api
-=======
-**🌐 Live Demo: [http://4.155.227.179/](http://4.155.227.179/)**
->>>>>>> 0f204cbf879900c385be6c7f3f12c597cacfb233
+>>>>>>> origin/main
 
 **English version (default):** `README.md`  
 **中文版 / Chinese version:** `README_CN.md`
@@ -421,10 +427,40 @@ sudo systemctl status ggbond-mysql-backup.timer
 sudo systemctl start ggbond-mysql-backup.service
 ls -lh /home/destiny/backups/ggbond-mysql
 ```
+<<<<<<< HEAD
 <br>
 
 # Project Documentation
 <br>
+=======
+
+### Service Persistence (Important)
+
+The backend is now managed by **systemd**, so it survives reboot without relying on `nohup`.
+
+- Service name: `ggbond-backend.service`
+- Backend path on test server: `/home/destiny/backend`
+- MySQL service: `mysql`
+- Database name: `ggbond`
+
+Useful commands:
+
+```bash
+sudo systemctl status ggbond-backend
+sudo systemctl restart ggbond-backend
+sudo systemctl enable ggbond-backend
+curl http://127.0.0.1:5000/health
+```
+
+### Notes
+
+- `listing_type` enum: `'sale'` = for sale, `'free'` = free giveaway
+- `category` enum: `'dog'`, `'cat'`, `'pet'`
+- `status` enum: `'active'`, `'deleted'` (soft delete)
+- `participants` / `last_message` stored as JSON columns
+- `images` stored as JSON array
+- `is_read` replaces `read` (reserved word in MySQL)
+>>>>>>> origin/main
 
 ## 1. Most important first: where is the real project code?
 

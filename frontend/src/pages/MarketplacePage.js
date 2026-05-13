@@ -5,9 +5,7 @@ import toast from 'react-hot-toast';
 import { useI18n } from '../i18n/I18nContext';
 import { translateContent } from '../utils/translate';
 import { useAuth } from '../context/AuthContext';
-import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { fetchMarketplace, createListing as createListingApi, fetchConversations } from '../services/api';
-import { storage } from '../services/firebase';
 
 /* ──────────────────────────────────────────────────────────────────────────
    Helper
@@ -96,29 +94,7 @@ function CreateListingModal({ onClose, onCreated }) {
     if (images.length === 0) return toast.error(t('marketplace.errorPhotoRequired'));
     setUploading(true);
     try {
-      let imageUrls;
-      if (currentUser?._local) {
-        imageUrls = await Promise.all(images.map(fileToCompressedDataUrl));
-      } else {
-        try {
-          const uploadPromises = images.map((file, i) => {
-            return new Promise((resolve, reject) => {
-              const storageRef = ref(storage, `marketplace/${currentUser.uid}/${Date.now()}_${i}.jpg`);
-              const task = uploadBytesResumable(storageRef, file);
-              task.on(
-                'state_changed',
-                null,
-                reject,
-                () => getDownloadURL(task.snapshot.ref).then(resolve)
-              );
-            });
-          });
-          imageUrls = await Promise.all(uploadPromises);
-        } catch (uploadErr) {
-          console.warn('Firebase upload failed, falling back to inline marketplace images:', uploadErr);
-          imageUrls = await Promise.all(images.map(fileToCompressedDataUrl));
-        }
-      }
+      const imageUrls = await Promise.all(images.map(file => fileToCompressedDataUrl(file, 1280, 0.82)));
 
       await createListingApi({
         title: form.title.trim(),

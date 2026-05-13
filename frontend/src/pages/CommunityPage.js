@@ -214,6 +214,10 @@ export default function CommunityPage() {
 
   const publish = async () => {
     if (!draft.trim()) return;
+    if (!currentUser?.uid) {
+      toast.error(t('community.toast.loginRequired') || 'Please sign in before posting');
+      return;
+    }
     const avatarEmoji = breedEmoji(pet?.breed) || '🐾';
     const base = {
       content:    draft.trim(),
@@ -234,10 +238,16 @@ export default function CommunityPage() {
       setPosts(next);
     } else {
       try {
-        await createCommunityPost({
+        const created = await createCommunityPost({
           ...base,
           authorUid: currentUser.uid,
         });
+        setPosts(prev => [{
+          ...base,
+          id: String(created?.id || `temp-${Date.now()}`),
+          authorUid: currentUser.uid,
+          createdAt: new Date().toISOString(),
+        }, ...prev]);
       } catch {
         toast.error(t('community.toast.publishFail'));
         setBusy(false); return;
@@ -303,6 +313,12 @@ export default function CommunityPage() {
       </div>
 
       <div style={{ flex:1, overflowY:'auto', padding:'12px 16px 16px' }}>
+        {!currentUser?.uid && tab === 0 && (
+          <div style={{ ...card, marginBottom:12, textAlign:'center', color:'#9ca3af', fontSize:13 }}>
+            {t('community.toast.loginRequired') || 'Please sign in before posting or commenting.'}
+          </div>
+        )}
+
         {tab === 0 && comp && (
           <div style={{ ...card, marginBottom:12 }}>
             <p style={{ fontSize:12, color:'#f472b6', fontWeight:700, marginBottom:8 }}>
