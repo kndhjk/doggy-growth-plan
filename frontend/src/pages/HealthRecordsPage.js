@@ -293,12 +293,7 @@ export default function HealthRecordsPage() {
 
   useEffect(() => {
     if (!currentUser?.uid) {
-      setRecords({
-        vaccine: VACCINE_RECORDS,
-        checkup: CHECKUP_RECORDS,
-        medicine: MEDICINE_RECORDS,
-        dewormer: [],
-      });
+      setRecords({ vaccine: [], checkup: [], medicine: [], dewormer: [] });
       return;
     }
     HealthAPI.list(currentUser.uid).then(data => {
@@ -346,13 +341,21 @@ export default function HealthRecordsPage() {
   const sorted = [...currentRecords].sort((a, b) => new Date(b.date) - new Date(a.date));
 
   const handleAddRecord = async (newRecord) => {
-    if (!currentUser?.uid) return;
+    if (!currentUser?.uid) {
+      toast.error(t('health.loginRequired') || 'Please sign in before saving health records');
+      return;
+    }
     const res = await HealthAPI.add(currentUser.uid, newRecord).catch(() => null);
-    const recordWithId = { ...newRecord, id: res?.id || `r${Date.now()}` };
+    if (!res?.id) {
+      toast.error(t('common.error') || 'Save failed');
+      return;
+    }
+    const recordWithId = { ...newRecord, id: res.id };
     setRecords(prev => ({
       ...prev,
-      [activeTab]: [recordWithId, ...(prev[activeTab] || [])],
+      [newRecord.type || activeTab]: [recordWithId, ...(prev[newRecord.type || activeTab] || [])],
     }));
+    setActiveTab(newRecord.type || activeTab);
   };
 
   const handleDeleteRecord = (id) => {
@@ -414,6 +417,12 @@ export default function HealthRecordsPage() {
           )}
         </div>
       </div>
+
+      {!currentUser?.uid && (
+        <div style={{ margin:'16px 20px 0', background:'rgba(255,255,255,0.85)', border:'1px solid rgba(244,114,182,0.15)', borderRadius:14, padding:'12px 14px', color:'#9d174d', fontSize:13, fontWeight:600 }}>
+          {t('health.loginRequired') || 'Please sign in to save and sync health records.'}
+        </div>
+      )}
 
       {/* Add button */}
       <div style={{ padding: '16px 20px 0', textAlign: 'right' }}>
