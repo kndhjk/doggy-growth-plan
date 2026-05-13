@@ -14,9 +14,41 @@
 
 ## DB. MySQL 数据库结构（ER 图）
 
-后端使用 **MySQL 8.0** 作为持久化数据库，所有表均在 `ggbond` 库中。
+后端使用 **MySQL 8.0** 作为持久化数据库系统。  
+所有数据表均存储在 `ggbond` 数据库中。
 
-### 连接信息
+---
+
+### 数据库设计概述
+
+整个数据库围绕两个核心实体进行设计：
+
+- `users`
+- `pets`
+
+每个用户拥有一只宠物，其余所有系统功能都围绕这两个核心实体展开。
+
+```text
+users 1 —— owns —— 1 pets
+```
+
+这种设计方式使平台能够围绕“用户与虚拟宠物之间的关系”组织所有成长、互动与功能模块。
+
+整个数据库被划分为多个功能模块：
+
+- 宠物照护系统
+- 训练系统
+- 成就系统
+- 每日奖励系统
+- 市场系统
+- 背包系统
+- 聊天系统
+
+这种模块化结构提升了系统的可扩展性、可维护性和整体清晰度。
+
+---
+
+### 数据库连接配置
 
 ```env
 DB_HOST=localhost
@@ -25,129 +57,340 @@ DB_PASS=ggbond_app_pass_2026
 DB_NAME=ggbond
 ```
 
+---
+
 ### ER 图
 
-```
-┌─────────────────┐       ┌─────────────────┐
-│     users       │       │     pets        │
-├─────────────────┤       ├─────────────────┤
-│ uid (PK)        │───1:N─│ uid (FK)        │
-│ email           │       │ id (PK)         │
-│ display_name    │       │ name            │
-│ created_at      │       │ breed            │
-│ disabled        │       │ birthday         │
-└─────────────────┘       │ photo_url       │
-        │                 │ health          │
-        │ 1:N             │ happiness       │
-        ▼                 │ hunger          │
-┌─────────────────┐       │ created_at      │
-│ marketplace_    │       └─────────────────┘
-│ listings        │               │
-├─────────────────┤               │ 1:N
-│ id (PK, AI)    │               ▼
-│ title           │       ┌─────────────────┐
-│ description     │       │ pet_activities │
-│ category        │       ├─────────────────┤
-│ price           │       │ uid (FK)        │
-│ location        │       │ pet_id (FK)     │
-│ listing_type    │       │ activity_type   │
-│ images (JSON)   │       │ performed_at    │
-│ seller_id       │       └─────────────────┘
-│ seller_name     │
-│ seller_email    │       ┌─────────────────┐
-│ status          │       │ health_records │
-│ created_at      │       ├─────────────────┤
-└─────────────────┘       │ uid (FK)       │
-        │                 │ title          │
-        │ 1:N             │ notes          │
-        ▼                 │ vet            │
-┌─────────────────┐       │ record_date    │
-│  conversations  │       └─────────────────┘
-├─────────────────┤
-│ id (PK)        │       ┌─────────────────┐
-│ participants    │       │   inventory     │
-│   (JSON)       │       ├─────────────────┤
-│ last_message    │       │ uid (FK)       │
-│   (JSON)       │       │ name           │
-│ created_at      │       │ description    │
-│ updated_at      │       │ quantity       │
-└─────────────────┘       │ category       │
-        │                 └─────────────────┘
-        │ 1:N
-        ▼
-┌─────────────────┐
-│    messages     │
-├─────────────────┤
-│ id (PK, AI)    │
-│ conversation_id │───N:1─→ conversations.id
-│ sender_id      │
-│ sender_name    │
-│ text           │
-│ is_read        │
-│ created_at     │
-└─────────────────┘
+<p align="center">
+  <img src="./docs/screenshots/ggbond-er-diagram.png" alt="ER Diagram" width="900" />
+</p>
 
-┌─────────────────┐       ┌─────────────────┐
-│ community_posts │       │   comments     │
-├─────────────────┤       ├─────────────────┤
-│ id (PK, AI)    │───1:N─│ post_id (FK)   │
-│ uid (FK)       │       │ uid (FK)       │
-│ pet_name       │       │ content        │
-│ pet_breed      │       │ created_at     │
-│ content        │       └─────────────────┘
-│ image_url      │
-│ likes          │
-│ comment_count  │
-│ created_at     │
-└─────────────────┘
+<p align="center">
+  <em>图：GG Bond 虚拟宠物成长平台完整 Chen ER 图。</em>
+</p>
+
+该 ER 图展示了用户、宠物、市场列表、背包、奖励、成就、训练系统、聊天系统以及宠物活动追踪模块之间的关系。
+
+---
+
+### 核心用户与宠物系统
+
+`users` 表用于存储用户账号信息，例如认证信息和用户资料。
+
+`pets` 表用于存储用户拥有的虚拟宠物资料，包括：
+
+- 宠物名称
+- 品种
+- 生日
+- 健康值
+- 快乐值
+- 饥饿值
+
+#### 主要数据表
+
+| 数据表 | 用途 |
+|---|---|
+| `users` | 用户账号 |
+| `pets` | 虚拟宠物资料 |
+
+#### 关系
+
+```text
+users 1 —— owns —— 1 pets
 ```
 
-### 表清单
+每个用户拥有一只宠物。
 
-| 表名 | 说明 | 关键字段 |
-|------|------|---------|
-| `users` | 用户账户 | `uid (PK)` |
-| `pets` | 宠物档案（属于用户） | `uid (FK)`, `id (PK)` |
-| `marketplace_listings` | 商品 listing（粮/用品） | `seller_id`, `listing_type` |
-| `conversations` | 聊天会话 | `id (PK)` |
-| `messages` | 聊天消息 | `conversation_id (FK)` |
-| `community_posts` | 社区帖子 | `uid (FK)` |
-| `comments` | 帖子评论 | `post_id (FK)` |
-| `health_records` | 宠物健康记录 | `uid (FK)` |
-| `inventory` | 用户宠物用品库存 | `uid (FK)` |
-| `pet_activities` | 宠物每日活动日志 | `uid (FK)`, `pet_id (FK)` |
+---
 
-### MySQL 一键恢复
+### 宠物照护系统
 
-我们还加了一键恢复脚本。
+宠物照护系统用于管理宠物的日常成长与健康状态。
 
-- 恢复脚本：`/home/destiny/backend/restore-mysql.sh`
-- 默认恢复源：`ggbond-latest.sql.gz`
-- 也支持手动指定 `.sql` 或 `.sql.gz` 文件路径
+该模块记录：
 
-示例：
+- 日常活动
+- 健康日志
+- 宠物状态变化
+
+#### 主要数据表
+
+| 数据表 | 用途 |
+|---|---|
+| `pet_activities` | 记录宠物日常活动 |
+| `health_records` | 存储宠物健康与医疗历史 |
+
+#### 关系
+
+```text
+pets 1 —— has —— N pet_activities
+pets 1 —— has —— N health_records
+```
+
+一只宠物可以随着时间产生多条活动记录和健康记录。
+
+例如：
+
+- 喂食
+- 散步
+- 玩耍
+- 看兽医
+- 用药记录
+
+---
+
+### 训练系统
+
+训练系统允许宠物学习技能，并记录训练进度。
+
+该模块采用 **模板表 + 记录表** 的结构。
+
+#### 主要数据表
+
+| 数据表 | 用途 |
+|---|---|
+| `training_skills` | 定义可训练技能 |
+| `pet_training_progress` | 存储宠物训练进度 |
+
+`training_skills` 表作为模板表，存储所有可复用的训练技能，例如：
+
+- Sit
+- Shake Hands
+- Lie Down
+- Stay
+
+`pet_training_progress` 表用于记录某只宠物对某项技能的具体训练进度。
+
+#### 关系
+
+```text
+pets 1 —— has —— N pet_training_progress
+training_skills 1 —— defines —— N pet_training_progress
+```
+
+这种结构将可复用的系统技能定义与用户专属的训练进度数据分离开来。
+
+---
+
+### 成就系统
+
+成就系统用于追踪宠物成长过程中的里程碑和游戏成就。
+
+该模块同样采用 **模板表 + 记录表** 的结构。
+
+#### 主要数据表
+
+| 数据表 | 用途 |
+|---|---|
+| `achievements` | 成就定义 |
+| `pet_achievements` | 宠物成就解锁记录 |
+
+`achievements` 表用于存储预设成就，例如：
+
+- First Meal
+- First Walk
+- Brave Pup
+- Social Pup
+
+`pet_achievements` 表用于记录某只宠物是否解锁某个成就。
+
+#### 关系
+
+```text
+pets 1 —— unlocks —— N pet_achievements
+achievements 1 —— defines —— N pet_achievements
+```
+
+这种设计使成就可以被系统中所有宠物复用。
+
+---
+
+### 每日奖励系统
+
+每日奖励系统用于管理登录奖励和连续签到进度。
+
+#### 主要数据表
+
+| 数据表 | 用途 |
+|---|---|
+| `daily_rewards` | 奖励定义 |
+| `user_reward_claims` | 用户奖励领取历史 |
+
+`daily_rewards` 表定义奖励模板，例如：
+
+- 第 1 天金币奖励
+- 第 2 天食物奖励
+- 第 3 天特殊物品奖励
+
+`user_reward_claims` 表存储用户实际领取奖励的记录。
+
+#### 关系
+
+```text
+users 1 —— claims —— N user_reward_claims
+daily_rewards 1 —— defines —— N user_reward_claims
+```
+
+这种结构将奖励定义与用户个人领取历史分离开来。
+
+---
+
+### 市场系统
+
+市场系统允许用户发布宠物相关物品列表。
+
+#### 主要数据表
+
+| 数据表 | 用途 |
+|---|---|
+| `marketplace_listings` | 市场商品列表 |
+
+列表内容可能包括：
+
+- 食物
+- 玩具
+- 宠物用品
+- 免费赠送物品
+
+#### 关系
+
+```text
+users 1 —— creates —— N marketplace_listings
+```
+
+一个用户可以创建多个市场商品列表。
+
+---
+
+### 背包系统
+
+背包系统用于存储用户拥有的物品。
+
+#### 主要数据表
+
+| 数据表 | 用途 |
+|---|---|
+| `inventory` | 用户背包物品 |
+
+背包物品可能包括：
+
+- 食物
+- 药品
+- 玩具
+- 礼物
+
+#### 关系
+
+```text
+users 1 —— owns —— N inventory
+```
+
+一个用户可以拥有多个背包物品。
+
+---
+
+### 聊天系统
+
+聊天系统用于支持用户之间的交流。
+
+该模块由两类主要数据组成：
+
+- `conversations`
+- `messages`
+
+#### 主要数据表
+
+| 数据表 | 用途 |
+|---|---|
+| `conversations` | 聊天会话容器 |
+| `messages` | 具体聊天消息 |
+
+#### 关系
+
+```text
+users M —— participates_in —— M conversations
+conversations 1 —— contains —— N messages
+users 1 —— sends —— N messages
+```
+
+一个用户可以参与多个聊天会话。  
+一个聊天会话可以包含多条消息。  
+每条消息都由一个用户发送。
+
+这种“会话 + 消息”的结构可以避免一次性加载所有消息，提高聊天系统的可扩展性。
+
+---
+
+### 数据表总览
+
+| 数据表 | 功能说明 |
+|---|---|
+| `users` | 用户账号 |
+| `pets` | 虚拟宠物资料 |
+| `pet_activities` | 宠物日常活动记录 |
+| `health_records` | 宠物健康记录 |
+| `training_skills` | 技能模板 |
+| `pet_training_progress` | 宠物训练进度 |
+| `achievements` | 成就模板 |
+| `pet_achievements` | 成就解锁记录 |
+| `daily_rewards` | 奖励模板 |
+| `user_reward_claims` | 用户奖励领取历史 |
+| `marketplace_listings` | 市场商品列表 |
+| `inventory` | 用户背包 |
+| `conversations` | 聊天会话 |
+| `messages` | 聊天消息 |
+
+---
+
+### MySQL 数据恢复
+
+系统提供了一键数据库恢复脚本，用于快速恢复数据库。
+
+#### 恢复脚本
 
 ```bash
-# 从最近一次备份恢复
+/home/destiny/backend/restore-mysql.sh
+```
+
+#### 使用示例
+
+```bash
+# 从最新备份恢复
 /home/destiny/backend/restore-mysql.sh
 
 # 从指定备份恢复
 /home/destiny/backend/restore-mysql.sh /home/destiny/backups/ggbond-mysql/ggbond-2026-05-12-111425.sql.gz
 ```
 
-### MySQL 自动备份（每日）
+---
 
-我们还加了 MySQL 自动备份，避免重启、崩溃或错误部署后数据丢失。
+### MySQL 自动备份
 
-- 备份脚本：`/home/destiny/backend/backup-mysql.sh`
-- 备份目录：`/home/destiny/backups/ggbond-mysql`
-- systemd service：`ggbond-mysql-backup.service`
-- systemd timer：`ggbond-mysql-backup.timer`
-- 计划时间：**每天 UTC 03:20**
-- 保留策略：**仅保留最近 14 份**
-- 最新软链：`ggbond-latest.sql.gz`
+系统已启用每日自动备份，用于防止服务器重启、系统崩溃、部署失败或误删除导致的数据丢失。
 
-常用命令：
+#### 备份配置
+
+```text
+Backup script:
+/home/destiny/backend/backup-mysql.sh
+
+Backup folder:
+/home/destiny/backups/ggbond-mysql
+
+systemd service:
+ggbond-mysql-backup.service
+
+systemd timer:
+ggbond-mysql-backup.timer
+
+Schedule:
+daily at 03:20 UTC
+
+Retention:
+latest 14 backups
+```
+
+#### 常用命令
 
 ```bash
 sudo systemctl status ggbond-mysql-backup.timer
@@ -155,32 +398,86 @@ sudo systemctl start ggbond-mysql-backup.service
 ls -lh /home/destiny/backups/ggbond-mysql
 ```
 
-### 服务持久化（重要）
+<br>
+---
 
-后端现在由 **systemd** 托管，不再依赖 `nohup`，服务器重启后也会自动拉起。
+## 数据库维护（Database Maintenance）
 
-- 服务名：`ggbond-backend.service`
-- 测试服务器后端路径：`/home/destiny/backend`
-- MySQL 服务：`mysql`
-- 数据库名：`ggbond`
+项目包含自动化数据库维护工具，用于提升系统可靠性、数据恢复能力以及部署安全性。
 
-常用命令：
+该模块主要负责：
+
+- 数据库恢复
+- 自动备份
+- 备份保留管理
+- 灾难恢复支持
+
+---
+
+### MySQL 数据恢复
+
+系统提供了一键数据库恢复脚本，用于快速恢复数据库。
+
+#### 恢复脚本
 
 ```bash
-sudo systemctl status ggbond-backend
-sudo systemctl restart ggbond-backend
-sudo systemctl enable ggbond-backend
-curl http://127.0.0.1:5000/health
+/home/destiny/backend/restore-mysql.sh
 ```
 
-### 字段说明
+#### 使用示例
 
-- `listing_type` 枚举：`'sale'` = 出售，`'free'` = 免费转让
-- `category` 枚举：`'dog'` / `'cat'` / `'pet'`
-- `status` 枚举：`'active'` / `'deleted'`（软删除）
-- `participants` / `last_message` 以 JSON 列存储
-- `images` 以 JSON 数组存储
-- `is_read` 为避免 MySQL 保留字冲突（MySQL 不允许 `read` 作为列名）
+```bash
+# 从最新备份恢复
+/home/destiny/backend/restore-mysql.sh
+
+# 从指定备份恢复
+/home/destiny/backend/restore-mysql.sh /home/destiny/backups/ggbond-mysql/ggbond-2026-05-12-111425.sql.gz
+```
+
+---
+
+### MySQL 自动备份
+
+系统启用了每日自动备份，用于防止以下情况导致的数据丢失：
+
+- 服务器重启
+- 系统崩溃
+- 部署失败
+- 误删除
+
+#### 备份配置
+
+```text
+Backup script:
+/home/destiny/backend/backup-mysql.sh
+
+Backup folder:
+/home/destiny/backups/ggbond-mysql
+
+systemd service:
+ggbond-mysql-backup.service
+
+systemd timer:
+ggbond-mysql-backup.timer
+
+Schedule:
+daily at 03:20 UTC
+
+Retention:
+latest 14 backups
+```
+
+#### 常用命令
+
+```bash
+sudo systemctl status ggbond-mysql-backup.timer
+sudo systemctl start ggbond-mysql-backup.service
+ls -lh /home/destiny/backups/ggbond-mysql
+```
+<br>
+
+# 项目文档
+<br>
 
 ## 1. 先说最重要的：代码到底在哪？
 

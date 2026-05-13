@@ -1,19 +1,16 @@
-Welcome to the CS732 project. We look forward to seeing the amazing things you create this semester! This is your team's repository.
-
-Our team members are:
-- Huanhuan Li _(hli758@aucklanduni.ac.nz)_
-- Jiayi Lyu _(jlyu233@aucklanduni.ac.nz)_
-- Xiang Zhang _(hxza940@aucklanduni.ac.nz)_
-- Ming Zhao _(mzha585@aucklanduni.ac.nz)_
-- Xingyan Zhou _(xzho343@aucklanduni.ac.nz)_
-- Kejun Xu _(kxu311@aucklanduni.ac.nz)_
+# GG Bond / Doggy Growth Plan — Beginner Handoff Guide (English)
 
 > This is the default README shown on GitHub.  
 > It is written for teammates who are new to React, Firebase, and full-stack project structure, so we can onboard together.
 
 **中文版请看：[`README_CN.md`](./README_CN.md)**
 
+<<<<<<< HEAD
+**Frontend:** 4.155.227.179  
+**Backend API:** 4.155.227.179/api
+=======
 **🌐 Live Demo: [http://4.155.227.179/](http://4.155.227.179/)**
+>>>>>>> 0f204cbf879900c385be6c7f3f12c597cacfb233
 
 **English version (default):** `README.md`  
 **中文版 / Chinese version:** `README_CN.md`
@@ -24,9 +21,38 @@ Our team members are:
 
 ## DB. MySQL Database Schema (ER Diagram)
 
-The backend uses **MySQL 8.0** as the persistent database. All tables are in the `ggbond` database.
+The backend uses **MySQL 8.0** as the persistent database. All tables are stored in the `ggbond` database.
 
-### Connection
+---
+
+### 1. Database Design Overview
+
+The database is designed around two core entities:
+
+- `users`
+- `pets`
+
+Each user owns one pet, and the rest of the system extends from these two core entities.
+
+```text
+users 1 —— owns —— 1 pets
+```
+
+The database is divided into several functional modules:
+
+- Pet Care System
+- Training System
+- Achievement System
+- Rewards System
+- Marketplace System
+- Inventory System
+- Chat System
+
+This modular structure improves scalability, maintainability, and system clarity.
+
+---
+
+### 2. Database Connection
 
 ```env
 DB_HOST=localhost
@@ -35,107 +61,317 @@ DB_PASS=ggbond_app_pass_2026
 DB_NAME=ggbond
 ```
 
+---
+
 ### ER Diagram
 
-```
-┌─────────────────┐       ┌─────────────────┐
-│     users       │       │     pets        │
-├─────────────────┤       ├─────────────────┤
-│ uid (PK)        │───1:N─│ uid (FK)        │
-│ email           │       │ id (PK)         │
-│ display_name    │       │ name            │
-│ created_at      │       │ breed            │
-│ disabled        │       │ birthday         │
-└─────────────────┘       │ photo_url       │
-        │                 │ health          │
-        │ 1:N             │ happiness       │
-        ▼                 │ hunger          │
-┌─────────────────┐       │ created_at      │
-│ marketplace_     │       └─────────────────┘
-│ listings        │               │
-├─────────────────┤               │ 1:N
-│ id (PK, AI)    │               ▼
-│ title           │       ┌─────────────────┐
-│ description     │       │ pet_activities │
-│ category        │       ├─────────────────┤
-│ price           │       │ uid (FK)        │
-│ location        │       │ pet_id (FK)     │
-│ listing_type    │       │ activity_type   │
-│ images (JSON)   │       │ performed_at    │
-│ seller_id       │       └─────────────────┘
-│ seller_name     │
-│ seller_email    │       ┌─────────────────┐
-│ status          │       │ health_records │
-│ created_at      │       ├─────────────────┤
-└─────────────────┘       │ uid (FK)       │
-        │                 │ title          │
-        │ 1:N             │ notes          │
-        ▼                 │ vet            │
-┌─────────────────┐       │ record_date    │
-│  conversations  │       └─────────────────┘
-├─────────────────┤
-│ id (PK)        │       ┌─────────────────┐
-│ participants    │       │   inventory     │
-│   (JSON)       │       ├─────────────────┤
-│ last_message    │       │ uid (FK)       │
-│   (JSON)       │       │ name           │
-│ created_at      │       │ description    │
-│ updated_at      │       │ quantity       │
-└─────────────────┘       │ category       │
-        │                 └─────────────────┘
-        │ 1:N
-        ▼
-┌─────────────────┐
-│    messages     │
-├─────────────────┤
-│ id (PK, AI)    │
-│ conversation_id │───N:1─→ conversations.id
-│ sender_id      │
-│ sender_name    │
-│ text           │
-│ is_read        │
-│ created_at     │
-└─────────────────┘
+<p align="center">
+  <img src="./docs/screenshots/ggbond-er-diagram.png" alt="ER Diagram" width="900" />
+</p>
 
-┌─────────────────┐       ┌─────────────────┐
-│ community_posts │       │   comments     │
-├─────────────────┤       ├─────────────────┤
-│ id (PK, AI)    │───1:N─│ post_id (FK)   │
-│ uid (FK)       │       │ uid (FK)       │
-│ pet_name       │       │ content        │
-│ pet_breed      │       │ created_at     │
-│ content        │       └─────────────────┘
-│ image_url      │
-│ likes          │
-│ comment_count  │
-│ created_at     │
-└─────────────────┘
+<p align="center">
+  <em>Figure: Complete Chen ER Diagram for the GG Bond Virtual Pet Growth Platform.</em>
+</p>
+
+The ER diagram illustrates the relationships between users, pets, marketplace listings, inventory, rewards, achievements, training systems, conversations, and pet activity tracking.
+
+---
+
+---
+
+### 4. Core User & Pet System
+
+The `users` table stores account-level information such as authentication and profile data.
+
+The `pets` table stores the virtual pet owned by the user, including:
+
+- pet name
+- breed
+- birthday
+- health status
+- happiness
+- hunger
+
+#### Main Tables
+
+| Table | Purpose |
+|---|---|
+| `users` | User accounts |
+| `pets` | Virtual pet profiles |
+
+#### Relationship
+
+```text
+users 1 —— owns —— 1 pets
 ```
 
-### Table Summary
+Each user owns one pet profile.
 
-| Table | Description | Key Columns |
-|-------|-------------|-------------|
-| `users` | User accounts | `uid (PK)` |
-| `pets` | Pet profiles linked to users | `uid (FK)`, `id (PK)` |
-| `marketplace_listings` | Product listings (food/supplies) | `seller_id`, `listing_type` |
-| `conversations` | Chat conversations | `id (PK)` |
-| `messages` | Chat messages per conversation | `conversation_id (FK)` |
-| `community_posts` | Community posts | `uid (FK)` |
-| `comments` | Comments on community posts | `post_id (FK)` |
-| `health_records` | Pet health records | `uid (FK)` |
-| `inventory` | User pet supplies inventory | `uid (FK)` |
-| `pet_activities` | Daily activity log | `uid (FK)`, `pet_id (FK)` |
+---
 
-### MySQL Restore (One Command)
+### 5. Pet Care System
 
-We also added a one-command restore script.
+The Pet Care System manages the pet’s daily growth and wellbeing.
 
-- Restore script: `/home/destiny/backend/restore-mysql.sh`
-- Default source: `ggbond-latest.sql.gz`
-- Custom source supported: pass a `.sql` or `.sql.gz` file path
+This module records:
 
-Examples:
+- daily activities
+- health logs
+- pet status progression
+
+#### Main Tables
+
+| Table | Purpose |
+|---|---|
+| `pet_activities` | Records pet daily activities |
+| `health_records` | Stores pet medical and health history |
+
+#### Relationships
+
+```text
+pets 1 —— has —— N pet_activities
+pets 1 —— has —— N health_records
+```
+
+A pet can have many activity logs and health records over time.
+
+Examples include:
+
+- feeding
+- walking
+- playing
+- vet visits
+- medication records
+
+---
+
+### 6. Training System
+
+The Training System allows pets to learn skills and track training progress.
+
+This module uses a **template-record structure**.
+
+#### Main Tables
+
+| Table | Purpose |
+|---|---|
+| `training_skills` | Defines available training skills |
+| `pet_training_progress` | Stores pet training progress |
+
+The `training_skills` table acts as a template table containing skills such as:
+
+- Sit
+- Shake Hands
+- Lie Down
+- Stay
+
+The `pet_training_progress` table stores each pet’s progress for a specific skill.
+
+#### Relationships
+
+```text
+pets 1 —— has —— N pet_training_progress
+training_skills 1 —— defines —— N pet_training_progress
+```
+
+This structure separates reusable skill definitions from user-specific progress data.
+
+---
+
+### 7. Achievement System
+
+The Achievement System tracks milestones and gameplay accomplishments.
+
+This module also follows a template-record structure.
+
+#### Main Tables
+
+| Table | Purpose |
+|---|---|
+| `achievements` | Achievement definitions |
+| `pet_achievements` | Pet achievement unlock records |
+
+The `achievements` table stores predefined achievements such as:
+
+- First Meal
+- First Walk
+- Brave Pup
+- Social Pup
+
+The `pet_achievements` table stores whether a pet has unlocked a specific achievement.
+
+#### Relationships
+
+```text
+pets 1 —— unlocks —— N pet_achievements
+achievements 1 —— defines —— N pet_achievements
+```
+
+This design allows achievements to be reusable across all pets.
+
+---
+
+### 8. Daily Rewards System
+
+The Rewards System manages login rewards and streak progression.
+
+#### Main Tables
+
+| Table | Purpose |
+|---|---|
+| `daily_rewards` | Reward definitions |
+| `user_reward_claims` | User reward claim history |
+
+The `daily_rewards` table defines reward templates such as:
+
+- Day 1 Coins
+- Day 2 Food
+- Day 3 Bonus Items
+
+The `user_reward_claims` table stores actual user claim records.
+
+#### Relationships
+
+```text
+users 1 —— claims —— N user_reward_claims
+daily_rewards 1 —— defines —— N user_reward_claims
+```
+
+This structure separates reward definitions from user-specific reward history.
+
+---
+
+### 9. Marketplace System
+
+The Marketplace System allows users to publish listings for pet-related items.
+
+#### Main Tables
+
+| Table | Purpose |
+|---|---|
+| `marketplace_listings` | Marketplace listings |
+
+Listings may include:
+
+- food
+- toys
+- pet supplies
+- giveaways
+
+#### Relationship
+
+```text
+users 1 —— creates —— N marketplace_listings
+```
+
+A user can create many marketplace listings.
+
+---
+
+### 10. Inventory System
+
+The Inventory System stores the items owned by a user.
+
+#### Main Tables
+
+| Table | Purpose |
+|---|---|
+| `inventory` | User inventory items |
+
+Inventory items may include:
+
+- food
+- medicine
+- toys
+- gifts
+
+#### Relationship
+
+```text
+users 1 —— owns —— N inventory
+```
+
+A user can own multiple inventory items.
+
+---
+
+### 11. Chat System
+
+The Chat System supports communication between users.
+
+It consists of:
+
+- conversations
+- messages
+
+#### Main Tables
+
+| Table | Purpose |
+|---|---|
+| `conversations` | Conversation containers |
+| `messages` | Individual chat messages |
+
+#### Relationships
+
+```text
+users M —— participates_in —— M conversations
+conversations 1 —— contains —— N messages
+users 1 —— sends —— N messages
+```
+
+A user can participate in multiple conversations.
+
+A conversation can contain multiple messages.
+
+Each message is sent by a user.
+
+---
+
+### 12. Full Table Summary
+
+| Table | Description |
+|---|---|
+| `users` | User accounts |
+| `pets` | Virtual pet profiles |
+| `pet_activities` | Daily activity records |
+| `health_records` | Pet health records |
+| `training_skills` | Training skill templates |
+| `pet_training_progress` | Pet training progress |
+| `achievements` | Achievement templates |
+| `pet_achievements` | Achievement unlock records |
+| `daily_rewards` | Reward templates |
+| `user_reward_claims` | User reward claim history |
+| `marketplace_listings` | Marketplace listings |
+| `inventory` | User inventory |
+| `conversations` | Chat conversations |
+| `messages` | Chat messages |
+<br>
+---
+
+## Database Maintenance
+
+The project includes automated database maintenance utilities to improve reliability, recovery capability, and deployment safety.
+
+This module focuses on:
+
+- database recovery
+- automatic backups
+- backup retention
+- disaster recovery support
+
+---
+
+### MySQL Restore
+
+The system provides a one-command restore script for quick database recovery.
+
+#### Restore Script
+
+```bash
+/home/destiny/backend/restore-mysql.sh
+```
+
+#### Examples
 
 ```bash
 # restore from latest backup
@@ -145,52 +381,50 @@ Examples:
 /home/destiny/backend/restore-mysql.sh /home/destiny/backups/ggbond-mysql/ggbond-2026-05-12-111425.sql.gz
 ```
 
-### MySQL Backup (Daily)
+---
 
-We also added automatic MySQL backups so data is not lost after reboot, crash, or bad deploy.
+### MySQL Automatic Backup
 
-- Backup script: `/home/destiny/backend/backup-mysql.sh`
-- Backup folder: `/home/destiny/backups/ggbond-mysql`
-- systemd service: `ggbond-mysql-backup.service`
-- systemd timer: `ggbond-mysql-backup.timer`
-- Schedule: **daily at 03:20 UTC**
-- Retention: **latest 14 backups**
-- Latest symlink: `ggbond-latest.sql.gz`
+The system enables daily automatic backups to prevent data loss caused by:
 
-Useful commands:
+- server reboot
+- system crash
+- failed deployment
+- accidental deletion
+
+#### Backup Configuration
+
+```text
+Backup script:
+/home/destiny/backend/backup-mysql.sh
+
+Backup folder:
+/home/destiny/backups/ggbond-mysql
+
+systemd service:
+ggbond-mysql-backup.service
+
+systemd timer:
+ggbond-mysql-backup.timer
+
+Schedule:
+daily at 03:20 UTC
+
+Retention:
+latest 14 backups
+```
+
+#### Useful Commands
 
 ```bash
 sudo systemctl status ggbond-mysql-backup.timer
 sudo systemctl start ggbond-mysql-backup.service
 ls -lh /home/destiny/backups/ggbond-mysql
 ```
+<br>
 
-### Service Persistence (Important)
-
-The backend is now managed by **systemd**, so it survives reboot without relying on `nohup`.
-
-- Service name: `ggbond-backend.service`
-- Backend path on test server: `/home/destiny/backend`
-- MySQL service: `mysql`
-- Database name: `ggbond`
-
-Useful commands:
-
-```bash
-sudo systemctl status ggbond-backend
-sudo systemctl restart ggbond-backend
-sudo systemctl enable ggbond-backend
-curl http://127.0.0.1:5000/health
-```
-
-### Notes
-
-- `listing_type` enum: `'sale'` = for sale, `'free'` = free giveaway
-- `category` enum: `'dog'`, `'cat'`, `'pet'`
-- `status` enum: `'active'`, `'deleted'` (soft delete)
-- `participants` / `last_message` stored as JSON columns
-- `images` stored as JSON array
-- `is_read` replaces `read` (reserved word in MySQL)
+# Project Documentation
+<br>
 
 ## 1. Most important first: where is the real project code?
 
