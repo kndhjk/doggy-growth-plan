@@ -415,7 +415,7 @@ sudo systemctl status ggbond-mysql-backup.timer
 sudo systemctl start ggbond-mysql-backup.service
 ls -lh /home/destiny/backups/ggbond-mysql
 ```
-<<<<<<< HEAD
+
 <br>
 
 # Project Documentation
