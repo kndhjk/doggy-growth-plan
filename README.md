@@ -1,6 +1,5 @@
 # GG Bond / Doggy Growth Plan — Beginner Handoff Guide (English)
 
-<<<<<<< HEAD
 =======
 Our team members are:
 - Huanhuan Li _(hli758@aucklanduni.ac.nz)_
