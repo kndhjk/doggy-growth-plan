@@ -49,37 +49,38 @@ code { font-family: 'Courier New', monospace; font-size: 8pt; background: #f5f5f
 
 <div class="abstract-title">Abstract</div>
 <div class="abstract">
-This report describes GG Bond (also called Doggy Growth Plan), a full-stack web application where users can adopt and raise virtual dogs. The project was built by a team of six students for COMPSCI 732. The system includes pet feeding and training, health tracking, an AI pet health advisor powered by large language models, Google Maps for finding nearby pet services, a peer-to-peer marketplace for pet items, real-time chat between users, community posts, an achievement and reward system, and support for four languages (English, Chinese, Japanese, and Te Reo Māori). The frontend uses React 18 with React Router and Framer Motion. The backend uses Node.js with Express, and the database is MySQL 8.0. Authentication is handled by Firebase with a local fallback. My main contributions were the entire backend server and database design, the marketplace and chat systems, the admin dashboard, the AI advisor integration, and the deployment infrastructure. The project shows that a simple three-tier architecture with a relational database can deliver a feature-rich, multi-user web application suitable for real-world use.
+This report describes GG Bond (also called Doggy Growth Plan), a full-stack web application where users can adopt and raise virtual dogs. The project was built by a team of six students for COMPSCI 732. The system includes pet feeding and training, health tracking, an AI pet health advisor powered by large language models, Google Maps for finding nearby pet services, a peer-to-peer marketplace for pet items, real-time chat between users, community posts, an achievement and reward system, a leaderboard, and support for four languages (English, Chinese, Japanese, and Te Reo Māori). The frontend uses React 18 with React Router and Framer Motion. The backend uses Node.js with Express, and the database is MySQL 8.0. Authentication is handled by Firebase with a local fallback. My main contributions were the entire backend server and database design, the marketplace and chat systems, the admin dashboard, the AI advisor integration, and the deployment infrastructure. The project demonstrates that a simple three-tier architecture with a relational database can deliver a feature-rich, multi-user web application suitable for real-world deployment.
 </div>
 <div class="keywords"><b>Keywords:</b> virtual pet, full-stack web application, React, Express, MySQL, AI advisor, Google Maps, internationalisation</div>
 
 <div class="columns">
 
 <h2>I. Introduction</h2>
-<p>Virtual pets are not a new idea. From Tamagotchi in the 1990s to mobile games like Neko Atsume today, people enjoy looking after a digital companion. The basic loop is simple: you feed it, train it, and watch it grow. In this project, we brought this idea to the modern web. Our platform, GG Bond, lets users adopt a virtual dog and take care of it through many different activities.</p>
+<p>Virtual pets are not a new idea. From Tamagotchi in the 1990s to mobile games like Neko Atsume today, people enjoy looking after a digital companion. The basic loop is simple: you feed it, train it, and watch it grow. In this project, we brought this idea to the modern web. Our platform, GG Bond, lets users adopt a virtual dog and take care of it through many different activities including feeding, walking, training, health management, and social interaction.</p>
 <p>This project was done for COMPSCI 732 (Software Tools and Techniques) at the University of Auckland. Our team has six members: Huanhuan Li, Jiayi Lyu, Xiang Zhang, Ming Zhao, Xingyan Zhou, and Kejun Xu. We set three clear goals at the start:</p>
 <ul>
 <li>Build a working web application that runs on the public internet, not just on localhost.</li>
 <li>Connect to external services like AI (for pet health advice) and Google Maps (for finding pet shops and vets).</li>
-<li>Support multiple users at the same time, with all data saved in a real database.</li>
+<li>Support multiple users at the same time, with all data saved in a real database and shared across devices.</li>
 </ul>
-<p>In this report, I focus on my own individual contributions. I was mainly responsible for the backend server, the MySQL database design, the marketplace feature, the chat system, the admin dashboard, the AI advisor integration, and the deployment setup. I will explain what I built, how I built it, and what problems I faced along the way.</p>
+<p>In this report, I focus on my own individual contributions. I was mainly responsible for the backend server, the MySQL database design, the marketplace feature, the chat system, the admin dashboard, the AI advisor integration, and the deployment infrastructure. I will explain what I built, how I built it, what design decisions I made, and what problems I faced along the way.</p>
 
 <div class="fig">
 <img src="https://raw.githubusercontent.com/kndhjk/doggy-growth-plan/main/docs/screenshots/home.png" alt="Pet Home Page">
-<div class="fig-caption">Fig. 1. The main pet page where users see and interact with their virtual dog. The pet has status bars for mood, hunger, and health.</div>
+<div class="fig-caption">Fig. 1. The main pet page where users see and interact with their virtual dog. The pet has status bars for mood, hunger, and health, and users can feed, walk, or play with it using the action buttons.</div>
 </div>
 
 <h2>II. Related Work</h2>
-<p>Virtual pet platforms have a long history in gaming. Neopets, launched in 1999, was one of the first popular web-based virtual pet sites. It let users adopt pets, play games, earn currency, and trade items in a marketplace [1]. Flight Rising is a similar platform focused on collecting and breeding dragons [2]. On mobile, games like Neko Atsume and Tamagotchi showed that simple care mechanics can be very engaging. Research by Banks and Humphreys [3] found that virtual worlds and social play are key drivers of user engagement, which guided our decision to add community features.</p>
-<p>Our project differs from these in several important ways. First, we built it as a responsive web application using modern frameworks (React, Express), not as a traditional game site. Second, we integrated an AI-powered health advisor that uses large language models to give real, contextual pet care advice [4]. This is much more useful than a static FAQ. Third, we used Google Maps to connect the virtual experience to the real world — users can find actual pet shops, vets, and parks near them [5]. Fourth, our four-language support (including Te Reo Māori) reflects New Zealand's bicultural context, which is unique among pet platforms.</p>
-<p>For the tech stack, we chose React, Express, and MySQL. This is similar to the popular MERN stack [6], but we replaced MongoDB with MySQL. The reason is that our data has many relationships: users own pets, pets have achievements, marketplace listings belong to users, and messages connect two users. A relational database with foreign keys handles these relationships better than a document store [7].</p>
+<p>Virtual pet platforms have a long history in gaming. Neopets, launched in 1999, was one of the first popular web-based virtual pet sites. It let users adopt pets, play games, earn currency, and trade items in a marketplace [1]. Flight Rising is a similar platform focused on collecting and breeding dragons [2]. On mobile, games like Neko Atsume and Tamagotchi showed that simple care mechanics can be very engaging for users of all ages.</p>
+<p>Academic research supports this. Banks and Humphreys [3] found that virtual worlds and social play are key drivers of user engagement. This guided our decision to add community features like posts, comments, and a leaderboard. Oh and Kim [4] studied what motivates users in virtual pet games and found that care, customisation, and progress tracking are the most important factors. This influenced our achievement and reward systems.</p>
+<p>Our project differs from existing platforms in several important ways. First, we built it as a responsive web application using modern frameworks (React, Express), not as a traditional game site. Second, we integrated an AI-powered health advisor that uses large language models to give real, contextual pet care advice [5]. This is much more useful than a static FAQ page. Third, we used Google Maps to connect the virtual experience to the real world — users can find actual pet shops, vets, and parks near them [6]. Fourth, our four-language support (including Te Reo Māori) reflects New Zealand's bicultural context, which is unique among pet platforms.</p>
+<p>For the tech stack, we chose React, Express, and MySQL. This is similar to the popular MERN stack [7], but we replaced MongoDB with MySQL. The reason is that our data has many relationships: users own pets, pets have achievements, marketplace listings belong to users, and messages connect two users. A relational database with foreign keys handles these relationships better than a document store [8].</p>
 
 <h2>III. Design</h2>
 
 <h3>A. Software Architecture</h3>
-<p>The system follows a three-tier architecture (Fig. 2). The frontend is a React 18 single-page application using React Router v6 for navigation and Framer Motion for animations. It communicates with the backend through HTTP requests to a REST API. The backend is a single Node.js/Express server that handles all business logic. Data is stored in MySQL 8.0, accessed through the mysql2 library with a connection pool of 10 connections.</p>
-<p>For authentication, we used Firebase Auth (email and password). However, we found that Firebase sometimes has connection problems, especially in our testing environment. So I built a backup login system that stores hashed passwords in our own MySQL database. If Firebase is down, the app automatically switches to the local login. This dual-auth approach made the system much more reliable.</p>
+<p>The system follows a three-tier architecture (Fig. 2). The frontend is a React 18 single-page application using React Router v6 for client-side navigation and Framer Motion for animations. It communicates with the backend through HTTP requests to a REST API. The backend is a single Node.js/Express server that handles all business logic. Data is stored in MySQL 8.0, accessed through the mysql2 library with a connection pool of 10 connections.</p>
+<p>For authentication, we used Firebase Auth (email and password). However, we found that Firebase sometimes has connection problems, especially in our testing environment. So I built a backup login system that stores bcrypt-hashed passwords in our own MySQL database. If Firebase is down, the app automatically switches to the local login. This dual-auth approach made the system much more reliable.</p>
 <p>We chose a single monolithic server instead of microservices. For a six-person team, one server is much simpler to develop, test, and deploy. All API endpoints are in one file (<code>index.js</code>, about 1,100 lines), organised by feature: auth, pet, marketplace, chat, community, admin, AI, and map.</p>
 
 <div class="fig-wide">
@@ -88,81 +89,126 @@ This report describes GG Bond (also called Doggy Growth Plan), a full-stack web 
 </div>
 
 <h3>B. Database Design</h3>
-<p>The MySQL schema is normalised to third normal form. Two core tables — <code>users</code> and <code>pets</code> — have a one-to-one relationship. From these, seven modules extend:</p>
+<p>The MySQL schema is normalised to third normal form. Two core tables — <code>users</code> and <code>pets</code> — have a one-to-one relationship. Each user owns exactly one pet. From these, seven modules extend:</p>
 <ul>
-<li><b>Pet Care:</b> <code>pet_activities</code> (feeding, walking, playing) and <code>health_records</code> (vet visits, medication).</li>
-<li><b>Training:</b> <code>training_skills</code> (skill definitions) and <code>pet_training_progress</code> (per-pet progress).</li>
-<li><b>Achievements:</b> <code>achievements</code> (definitions) and <code>pet_achievements</code> (unlock records).</li>
-<li><b>Rewards:</b> <code>daily_rewards</code> (reward templates) and <code>user_reward_claims</code> (claim history).</li>
-<li><b>Marketplace:</b> <code>marketplace_listings</code> (items for sale or free).</li>
-<li><b>Inventory:</b> <code>inventory</code> (items owned by each user).</li>
-<li><b>Chat:</b> <code>conversations</code> and <code>messages</code>.</li>
+<li><b>Pet Care:</b> <code>pet_activities</code> (feeding, walking, playing logs) and <code>health_records</code> (vet visits, medication records).</li>
+<li><b>Training:</b> <code>training_skills</code> (skill definitions like sit, shake, roll over) and <code>pet_training_progress</code> (per-pet progress and mastery).</li>
+<li><b>Achievements:</b> <code>achievements</code> (definitions like "First Meal", "Brave Pup") and <code>pet_achievements</code> (unlock records).</li>
+<li><b>Rewards:</b> <code>daily_rewards</code> (login reward templates) and <code>user_reward_claims</code> (claim history with streak tracking).</li>
+<li><b>Marketplace:</b> <code>marketplace_listings</code> (items for sale, adoption, or free giveaway).</li>
+<li><b>Inventory:</b> <code>inventory</code> (food, toys, medicine, accessories owned by each user).</li>
+<li><b>Chat:</b> <code>conversations</code> (participant pairs) and <code>messages</code> (individual messages with read status).</li>
 </ul>
-<p>A key design pattern is "template-record separation." For achievements, rewards, and training skills, the available items are defined in a template table, and each user's progress is stored in a separate record table. This makes it easy to add new content (like a new achievement) without changing any code.</p>
+<p>A key design pattern is "template-record separation." For achievements, rewards, and training skills, the available items are defined in a template table, and each user's progress is stored in a separate record table. This makes it easy to add new content (like a new achievement) without changing any code — just insert a new row into the template table.</p>
 
 <h3>C. User Interface</h3>
-<p>The app has 15 screens. On mobile, a bottom navigation bar provides access to all pages. On desktop (above 768px), a sidebar replaces the bottom bar. The main screens are: Home (pet view), AI Advisor, Map, Community, Profile, Marketplace, Inventory, Leaderboard, Health Records, Achievements, Daily Rewards, Training, Messages, and Admin. CSS Flexbox handles the responsive layout. Framer Motion provides smooth page transitions and pet reaction animations.</p>
+<p>The app has 15 screens (Table I). On mobile, a bottom navigation bar provides access to all pages. On desktop (above 768px), a sidebar replaces the bottom bar. CSS Flexbox handles the responsive layout with the breakpoint at 768px. Framer Motion provides smooth page transitions and pet reaction animations.</p>
+
+<table>
+<tr><th>Screen</th><th>Purpose</th><th>My Contribution</th></tr>
+<tr><td>Home (Pet)</td><td>View and interact with pet</td><td>Backend API</td></tr>
+<tr><td>AI Advisor</td><td>Ask pet health questions</td><td>Full stack</td></tr>
+<tr><td>Map</td><td>Find nearby pet services</td><td>Backend API</td></tr>
+<tr><td>Community</td><td>Post updates, like, comment</td><td>Full stack</td></tr>
+<tr><td>Profile</td><td>Edit user/pet info</td><td>Backend API</td></tr>
+<tr><td>Marketplace</td><td>Buy/sell pet items</td><td>Full stack</td></tr>
+<tr><td>Inventory</td><td>Manage owned items</td><td>Backend API</td></tr>
+<tr><td>Leaderboard</td><td>Rank users by progress</td><td>Backend API</td></tr>
+<tr><td>Health Records</td><td>Vet visit history</td><td>Backend API</td></tr>
+<tr><td>Achievements</td><td>Track unlocked badges</td><td>Backend API</td></tr>
+<tr><td>Daily Rewards</td><td>Login streak rewards</td><td>Full stack</td></tr>
+<tr><td>Training</td><td>Pet skill training</td><td>Backend API</td></tr>
+<tr><td>Messages</td><td>Chat with other users</td><td>Full stack</td></tr>
+<tr><td>Admin</td><td>Manage users/pets/listings</td><td>Full stack</td></tr>
+<tr><td>Adopt</td><td>Create a new pet</td><td>Backend API</td></tr>
+</table>
 
 <div class="fig">
 <img src="https://raw.githubusercontent.com/kndhjk/doggy-growth-plan/main/docs/screenshots/achievements.png" alt="Achievements">
-<div class="fig-caption">Fig. 3. Achievement system showing unlocked badges and progress tracking.</div>
+<div class="fig-caption">Fig. 3. Achievement system showing unlocked badges and progress tracking for various milestones.</div>
 </div>
 
 <h3>D. Why This Design</h3>
-<p>We made three important design decisions and here is why. First, <b>MySQL over MongoDB</b> — our data is highly relational (users own pets, pets have many achievements, marketplace listings belong to users). Foreign keys and joins keep the data consistent, which is hard to do in a document database. Second, <b>Firebase with a local fallback</b> — Firebase is easy to set up and handles password hashing for us, but it is not always reliable. Having a backup login saved us during demos. Third, <b>one server file</b> — this was a practical choice. It made deployment simple (just one file to run), though for a bigger project we would split it into modules.</p>
+<p>We made three important design decisions and here is why. First, <b>MySQL over MongoDB</b> — our data is highly relational. Users own pets, pets have many achievements, marketplace listings belong to users, and messages connect two users. Foreign keys and joins keep the data consistent, which is hard to do in a document database. Second, <b>Firebase with a local fallback</b> — Firebase is easy to set up and handles password hashing, but it is not always reliable. Having a backup login saved us during demos and in production. Third, <b>one server file</b> — this was a practical choice for a small team. It made deployment simple (just one file to run), though for a bigger project we would split it into modules using Express Router.</p>
 
 <h2>IV. Implementation</h2>
 
 <h3>A. Backend Server</h3>
 <p>I wrote the entire backend in <code>backend/src/index.js</code> (about 1,100 lines). The server uses Express with CORS enabled and JSON body parsing (25MB limit for base64 image uploads). A MySQL connection pool of 10 connections handles concurrent requests. I created several helper functions that are used throughout the codebase:</p>
 <ul>
-<li><code>parseJsonField()</code> — safely reads JSON columns, returning a fallback if the value is null or invalid.</li>
-<li><code>toIso()</code> and <code>toDateOnly()</code> — normalise date formats from MySQL to JavaScript.</li>
-<li><code>ensureTrainingState()</code> and <code>ensureRewardsState()</code> — lazily initialise per-user data rows on first access.</li>
-<li><code>defaultAchievementCounters()</code> — sets up 13 tracking metrics (feed_count, exercise_count, etc.) for new users.</li>
+<li><code>parseJsonField()</code> — safely reads JSON columns, returning a fallback array if the value is null or invalid JSON.</li>
+<li><code>toIso()</code> and <code>toDateOnly()</code> — normalise date formats from MySQL datetime to JavaScript ISO strings.</li>
+<li><code>ensureTrainingState()</code> and <code>ensureRewardsState()</code> — lazily initialise per-user data rows on first access, so new users always have valid data.</li>
+<li><code>defaultAchievementCounters()</code> — sets up 13 tracking metrics (feed_count, exercise_count, post_count, etc.) for new users.</li>
+<li><code>normalizeInventoryCategory()</code> — maps Chinese and English category names to a standard set (food, toy, medicine, accessory).</li>
 </ul>
-<p>When a new user signs up, they automatically receive a default inventory of 10 items (dog food, toys, medicine, accessories) and 9 training skills (sit, shake, lie down, stay, come, roll over, play dead, math, fetch). This makes the app feel complete from the very first login.</p>
+<p>When a new user signs up, they automatically receive a default inventory of 10 items (dog food, toys, medicine, accessories) and 9 training skills (sit, shake, lie down, stay, come, roll over, play dead, math, fetch). This makes the app feel complete from the very first login, rather than showing empty screens.</p>
 
 <h3>B. Marketplace System</h3>
-<p>The marketplace lets users list pet-related items for sale or for free. I built both the backend API endpoints and the frontend page (970 lines of React). Users can upload images, which are stored as base64 data URIs in MySQL TEXT columns. This is simple and avoids needing a separate file storage service, though it uses about 30% more space than the original file.</p>
-<p>The marketplace supports search and filter by category (food, toy, medicine, accessory) and listing type (sale, adoption, free). A significant bug I fixed was a MySQL "sort buffer" error: when the listings table grew past a few hundred rows, the <code>ORDER BY</code> query crashed. I solved this by removing the SQL sorting and doing it in JavaScript after the query. This works fine for our scale, but would need database-level pagination for a production system.</p>
+<p>The marketplace lets users list pet-related items for sale, for adoption, or for free. I built both the backend API endpoints (<code>GET/POST /api/marketplace</code>) and the frontend page (970 lines of React). Users can upload images, which are stored as base64 data URIs in MySQL TEXT columns. This is simple and avoids needing a separate file storage service, though it uses about 30% more space than the original file due to base64 encoding.</p>
+<p>The marketplace supports search and filter by category (food, toy, medicine, accessory) and listing type (sale, adoption, free). A significant bug I fixed was a MySQL "sort buffer" error: when the listings table grew past a few hundred rows, the <code>ORDER BY</code> query caused an "Out of sort memory" crash. I solved this by removing the SQL sorting and doing it in JavaScript after the query. This works fine for our scale (hundreds of records), but would need database-level indexing and pagination for a production system with thousands of listings.</p>
 
 <div class="fig">
 <img src="https://raw.githubusercontent.com/kndhjk/doggy-growth-plan/main/docs/screenshots/marketplace.png" alt="Marketplace">
-<div class="fig-caption">Fig. 4. Marketplace with category filters, listing types, and image upload support.</div>
+<div class="fig-caption">Fig. 4. Marketplace with category filters, listing types (sale/adoption/free), and image upload.</div>
 </div>
 
-<h3>C. Chat and Community</h3>
-<p>The chat system allows one-to-one conversations between users. The database has a <code>conversations</code> table (storing the two participant UIDs) and a <code>messages</table> table (sender, content, timestamp, read status). When a user sends their first message to another user, the system creates a new conversation if one does not already exist. The frontend polls for new messages every 3 seconds. Unread counts are calculated from the last-read timestamp per conversation.</p>
-<p>The community page is a simple social feed. Users can post updates about their pets, like posts, and leave comments. I stored the like count as a denormalised integer on the <code>community_posts</code> table, rather than using a separate likes junction table. This is faster for reading (which happens much more often than writing), at the cost of not being able to track who liked what.</p>
+<h3>C. Chat System</h3>
+<p>The chat system allows one-to-one conversations between users. The database has a <code>conversations</code> table (storing the two participant UIDs) and a <code>messages</code> table (sender, content, timestamp, read status). When a user sends their first message to another user, the system creates a new conversation if one does not already exist between the pair. The frontend polls for new messages every 3 seconds. Unread message counts are calculated by comparing the last-read timestamp with the latest message timestamp per conversation.</p>
 
-<h3>D. Admin Dashboard</h3>
-<p>I built an admin dashboard (790 lines) with management interfaces for users, pets, marketplace listings, and system statistics. The admin API includes user search/filter, pet status editing, listing moderation, and aggregate queries (total users, active pets, marketplace volume). Access control checks the user's <code>role</code> field in the database; non-admin users are redirected.</p>
+<h3>D. Community Features</h3>
+<p>The community page is a simple social feed where users share updates about their pets. Users can create posts with text and images, like posts, and leave comments. I stored the like count as a denormalised integer on the <code>community_posts</code> table, rather than using a separate likes junction table. This is faster for reading (which happens much more often than writing), at the cost of not tracking who liked what. The comment system uses a separate <code>community_comments</code> table with a foreign key to the post.</p>
+
+<div class="fig">
+<img src="https://raw.githubusercontent.com/kndhjk/doggy-growth-plan/main/docs/screenshots/community.png" alt="Community">
+<div class="fig-caption">Fig. 5. Community feed with posts, likes, and comments — a key social feature of the platform.</div>
+</div>
+
+<h3>E. Admin Dashboard</h3>
+<p>I built an admin dashboard (790 lines) with management interfaces for users, pets, marketplace listings, and system statistics. The admin API includes user search/filter, pet status editing, listing moderation, and aggregate queries (total users, active pets, marketplace volume). Access control checks the user's <code>role</code> field in the database; non-admin users are redirected to the home page. The dashboard also shows the total number of messages, posts, and active marketplace listings.</p>
 
 <div class="fig">
 <img src="https://raw.githubusercontent.com/kndhjk/doggy-growth-plan/main/docs/screenshots/admin.png" alt="Admin Dashboard">
-<div class="fig-caption">Fig. 5. Admin dashboard showing user management, search/filter, and system statistics.</div>
+<div class="fig-caption">Fig. 6. Admin dashboard showing user management, search/filter, and system statistics.</div>
 </div>
 
-<h3>E. AI Health Advisor</h3>
-<p>The AI advisor lets users ask questions about their pet's health. It uses Groq as the main LLM provider and Moonshot as a fallback. The AI plays "Dr. Pawsome," a friendly pet doctor persona. A critical implementation challenge was language control: we support English, Chinese, Japanese, and Māori, and the AI must respond in the user's selected language. I solved this by placing explicit language instructions at both the beginning and end of the system prompt, which dominates the English-language context. A client-side Gemini fallback activates when the backend is unreachable, so the feature degrades gracefully.</p>
+<h3>F. AI Health Advisor</h3>
+<p>The AI advisor lets users ask questions about their pet's health. It uses Groq as the main LLM provider and Moonshot as a fallback. The AI plays "Dr. Pawsome," a friendly and knowledgeable pet doctor persona. A critical implementation challenge was language control: we support English, Chinese, Japanese, and Māori, and the AI must respond in the user's selected language. I solved this by placing explicit language instructions at both the beginning and end of the system prompt, which ensures the language directive dominates the English-language context. A client-side Gemini fallback activates when the backend is unreachable, so the feature degrades gracefully.</p>
 
 <div class="fig">
 <img src="https://raw.githubusercontent.com/kndhjk/doggy-growth-plan/main/docs/screenshots/ai.png" alt="AI Advisor">
-<div class="fig-caption">Fig. 6. AI health advisor "Dr. Pawsome" providing contextual pet care advice in the user's language.</div>
+<div class="fig-caption">Fig. 7. AI health advisor "Dr. Pawsome" providing contextual pet care advice in the user's language.</div>
 </div>
 
-<h3>F. Google Maps Integration</h3>
-<p>The map page (656 lines) integrates the Google Maps JavaScript API with the Places library. It shows nearby pet-related locations: parks, veterinary clinics, and pet stores. The default centre is Auckland, New Zealand (-36.8485, 174.7633). Users can check in at locations, with data saved both locally (localStorage for offline access) and on the server. The implementation uses <code>google.maps.places.PlacesService</code> for nearby search.</p>
+<h3>G. Google Maps Integration</h3>
+<p>The map page (656 lines) integrates the Google Maps JavaScript API with the Places library. It shows nearby pet-related locations: parks, veterinary clinics, and pet stores. The default centre is Auckland, New Zealand (-36.8485, 174.7633). Users can check in at locations, with data saved both locally (localStorage for offline access) and on the server. The implementation uses <code>google.maps.places.PlacesService</code> for the nearby search, with three place types: park, veterinary_care, and pet_store.</p>
 
-<h3>G. Internationalisation</h3>
-<p>We support four languages through a custom React context (<code>I18nContext</code>). Translation files (<code>en.js</code>, <code>zh.js</code>, <code>ja.js</code>, <code>mi.js</code>) provide key-value mappings. The <code>useI18n()</code> hook exposes a <code>t(key)</code> function. I connected the translation system to multiple pages and replaced many hardcoded Chinese strings with proper <code>t()</code> calls.</p>
+<div class="fig">
+<img src="https://raw.githubusercontent.com/kndhjk/doggy-growth-plan/main/docs/screenshots/map.png" alt="Map">
+<div class="fig-caption">Fig. 8. Google Maps integration showing nearby pet services with check-in and category filtering.</div>
+</div>
 
-<h3>H. Deployment and Operations</h3>
-<p>I deployed the application on a Linux virtual machine with Nginx as a reverse proxy. The React frontend is built with <code>react-scripts build</code> and served as static files. The Express backend runs as a systemd service with automatic restart on crash. I set up automated daily MySQL backups using cron and mysqldump with 7-day retention. The database uses a dedicated <code>ggbond_app</code> user with limited privileges, following the principle of least privilege.</p>
+<h3>H. Training, Health, and Rewards</h3>
+<p>The training system lets users teach their pet skills like sit, shake, lie down, and fetch. Each skill has a progress bar that fills with repeated training sessions. When progress reaches 100%, the skill is mastered. The health records page tracks vet visits, vaccinations, and medication history. The daily rewards system encourages users to log in every day by offering increasing rewards (coins, food, toys) for consecutive login streaks.</p>
+
+<div class="fig">
+<img src="https://raw.githubusercontent.com/kndhjk/doggy-growth-plan/main/docs/screenshots/training.png" alt="Training">
+<div class="fig-caption">Fig. 9. Pet training page showing available skills, progress bars, and mastery status.</div>
+</div>
+
+<h3>I. Internationalisation</h3>
+<p>We support four languages through a custom React context (<code>I18nContext</code>). Translation files (<code>en.js</code>, <code>zh.js</code>, <code>ja.js</code>, <code>mi.js</code>) provide key-value mappings for every UI string. The <code>useI18n()</code> hook exposes a <code>t(key)</code> function used throughout all components. I connected the translation system to multiple pages and replaced many hardcoded Chinese strings with proper <code>t()</code> calls. The language switcher in the navigation bar lets users change language instantly without a page reload.</p>
+
+<h3>J. Deployment and Operations</h3>
+<p>I deployed the application on a Linux virtual machine with Nginx as a reverse proxy. The React frontend is built with <code>react-scripts build</code> and served as static files. The Express backend runs as a systemd service with automatic restart on crash. I set up automated daily MySQL backups using cron and mysqldump with 7-day retention. The database uses a dedicated <code>ggbond_app</code> user with limited privileges, following the principle of least privilege. The production URL is accessible from any device with a web browser.</p>
+
+<div class="fig">
+<img src="https://raw.githubusercontent.com/kndhjk/doggy-growth-plan/main/docs/screenshots/inventory.png" alt="Inventory">
+<div class="fig-caption">Fig. 10. Inventory page showing items owned by the user, organised by category.</div>
+</div>
 
 <h2>V. Testing</h2>
-<p>We tested everything by hand — we did not use automated testing tools like Jest or Cypress. While this is a limitation, our manual process was systematic and covered all features.</p>
+<p>We tested everything by hand — we did not use automated testing tools like Jest or Cypress. While automated testing would have been better, our manual process was systematic and covered all features.</p>
 
 <table>
 <tr><th>Test Type</th><th>Method</th><th>Coverage</th></tr>
@@ -172,39 +218,46 @@ This report describes GG Bond (also called Doggy Growth Plan), a full-stack web 
 <tr><td>Database integrity</td><td>Manual CRUD operations</td><td>Foreign keys, cascading deletes</td></tr>
 <tr><td>Error handling</td><td>Simulated failures</td><td>Firebase down, API timeout, invalid input</td></tr>
 <tr><td>Authentication</td><td>Both auth paths tested</td><td>Firebase login, local fallback login</td></tr>
+<tr><td>AI advisor</td><td>Multi-language queries</td><td>EN, ZH, JA, MI responses</td></tr>
+<tr><td>Marketplace</td><td>Create, filter, search</td><td>All listing types and categories</td></tr>
 </table>
 
-<p>We also kept a testing checklist in the README covering all 15 screens with expected behaviours. Each team member tested their own features before merging. A notable testing discovery was the Firebase auth race condition — sometimes the app would try to use a stale Firebase token after the local fallback had already logged in. I fixed this by checking the local session flag before using Firebase credentials.</p>
+<p>We also kept a testing checklist in the README covering all 15 screens with expected behaviours. Each team member tested their own features before merging. A notable testing discovery was the Firebase auth race condition — sometimes the app would try to use a stale Firebase token after the local fallback had already logged in. I fixed this by checking the local session flag before using Firebase credentials. Another discovery was the MySQL sort buffer crash, which only appeared when the marketplace table exceeded ~500 rows.</p>
 
 <div class="fig">
-<img src="https://raw.githubusercontent.com/kndhjk/doggy-growth-plan/main/docs/screenshots/community.png" alt="Community">
-<div class="fig-caption">Fig. 7. Community feed with posts, likes, and comments — a key social feature.</div>
+<img src="https://raw.githubusercontent.com/kndhjk/doggy-growth-plan/main/docs/screenshots/leaderboard.png" alt="Leaderboard">
+<div class="fig-caption">Fig. 11. Leaderboard ranking users by pet progress, achievements, and activity.</div>
 </div>
 
 <h2>VI. Methodology</h2>
 <p>We used a lightweight Agile approach. All code was managed on GitHub using feature branches and pull requests. Work was divided by feature module: I owned the backend architecture, marketplace, chat, community, admin, AI integration, and deployment. Other team members owned the pet visual system, training, achievements, map UI, profile, and inventory frontend pages.</p>
-<p>We met once a week in person and used a WeChat group for daily communication. The README served as our main documentation, updated continuously as features were completed. We wrote it in both English and Chinese so all team members could read it. Our development workflow was: (1) implement on a local branch, (2) test locally, (3) push to GitHub, (4) deploy to the production server, (5) verify in production. This kept the live demo current throughout the project, which was valuable for our team seminar presentation.</p>
-<p>The biggest methodology challenge was coordination. With six developers, merge conflicts were frequent, especially in shared files like <code>App.js</code> and <code>index.js</code>. In hindsight, we should have established clearer file ownership from the beginning.</p>
+<p>We met once a week in person and used a WeChat group for daily communication. The README served as our main documentation, updated continuously as features were completed. We wrote it in both English and Chinese so all team members could read it. Our development workflow was: (1) implement on a local branch, (2) test locally against the development database, (3) push to GitHub via a pull request, (4) deploy to the production server, (5) verify in production. This kept the live demo current throughout the project, which was valuable for our team seminar presentation.</p>
+<p>The biggest methodology challenge was coordination. With six developers working on the same codebase, merge conflicts were frequent, especially in shared files like <code>App.js</code> (routes) and <code>index.js</code> (backend). In hindsight, we should have established clearer file ownership from the beginning and used a more structured branching strategy (like Git Flow) instead of everyone pushing to main.</p>
 
 <h2>VII. Tooling</h2>
 
 <h3>A. Development Tools</h3>
-<p><b>Git and GitHub.</b> We used Git for version control with over 150 commits across all team members. Pull requests helped us review code before merging. The commit history provides a clear audit trail of what was added and fixed. GitHub Issues was used occasionally for bug tracking.</p>
-<p><b>Node.js and npm.</b> The frontend has 18 dependencies and the backend has only 4 (express, cors, dotenv, mysql2). Keeping dependencies minimal reduces security risk and makes the project easier to understand.</p>
-<p><b>VS Code.</b> All team members used VS Code as their main editor. The integrated terminal and Git support made the development workflow smoother.</p>
+<p><b>Git and GitHub.</b> We used Git for version control with over 150 commits across all team members. Pull requests helped us review code before merging. The commit history provides a clear audit trail of what was added and fixed. GitHub Issues was used occasionally for bug tracking, though most coordination happened on WeChat.</p>
+<p><b>Node.js and npm.</b> The frontend has 18 dependencies (react, react-router-dom, firebase, framer-motion, react-hot-toast) and the backend has only 4 (express, cors, dotenv, mysql2). Keeping dependencies minimal reduces security risk and makes the project easier to maintain.</p>
+<p><b>VS Code.</b> All team members used VS Code as their main editor. The integrated terminal and Git support made the development workflow smoother. Extensions like ESLint and Prettier helped maintain code consistency.</p>
 
 <h3>B. AI-Assisted Development</h3>
 <p>I used Claude (by Anthropic) extensively during this project. It helped with three main tasks:</p>
 <ul>
-<li><b>Code generation:</b> Claude generated the first version of the marketplace page, the admin dashboard, and the chat system. I then modified the code to fit our project's specific needs and style.</li>
-<li><b>Debugging:</b> When I encountered the MySQL sort buffer error, Claude helped me understand the root cause and suggested sorting in JavaScript as a workaround.</li>
-<li><b>Documentation:</b> Claude helped structure the README and provided drafts for this report.</li>
+<li><b>Code generation:</b> Claude generated the first version of the marketplace page, the admin dashboard, and the chat system. I then modified the code to fit our project's specific needs and coding style.</li>
+<li><b>Debugging:</b> When I encountered the MySQL sort buffer error, Claude helped me understand the root cause and suggested sorting in JavaScript as a workaround. It also helped diagnose the Firebase auth race condition.</li>
+<li><b>Documentation:</b> Claude helped structure the README with proper sections, ER diagram descriptions, and API documentation.</li>
 </ul>
-<p><b>Drawbacks of AI tools.</b> The code from Claude was not always correct. For example, it did not know that mysql2 returns query results as <code>[rows, fields]</code> (an array), not just rows. This caused a subtle bug that took me time to find. Also, if I relied on AI too much, I would not truly understand the code. I made a rule to read every line before committing. Sometimes the AI suggested overly complex solutions when a simpler approach would work better. For instance, it once suggested using a WebSocket library for the chat, when simple HTTP polling was perfectly fine for our use case.</p>
-<p><b>Overall effectiveness.</b> For repetitive tasks like building a CRUD page or writing API endpoints, Claude could generate a working draft in minutes. I estimate it saved about 40–50% of my time on those tasks. However, for tricky bugs, architecture decisions, and understanding system-level issues, I still had to think and decide myself. AI is a powerful tool, but it is not a replacement for understanding.</p>
+<p><b>Drawbacks of AI tools.</b> The code from Claude was not always correct. For example, it did not know that mysql2 returns query results as <code>[rows, fields]</code> (a destructured array), not just rows. This caused a subtle bug where the code tried to call <code>.json()</code> on an array instead of the result object. I had to debug and fix this myself. Also, if I relied on AI too much, I would not truly understand the code I was committing. I made a rule to read and understand every line before pushing. Sometimes the AI suggested overly complex solutions — for instance, it once recommended using a WebSocket library for the chat, when simple HTTP polling was perfectly fine for our scale.</p>
+<p><b>Overall effectiveness.</b> For repetitive tasks like building a CRUD page or writing API endpoints, Claude could generate a working draft in minutes. I estimate it saved about 40–50% of my time on those tasks. However, for tricky bugs, architecture decisions, and understanding system-level issues (like the MySQL sort buffer), I still had to think through the problem myself. AI coding tools are powerful assistants, but they are not a substitute for understanding your own codebase.</p>
 
 <h3>C. Server and Deployment Tools</h3>
 <p><b>Nginx</b> serves the React build and forwards <code>/api</code> requests to Express. <b>systemd</b> keeps the backend running with automatic restart on failure. <b>cron + mysqldump</b> runs daily database backups with 7-day retention. These tools are simple but reliable, which is important for a student project deployed in production.</p>
+
+<div class="fig">
+<img src="https://raw.githubusercontent.com/kndhjk/doggy-growth-plan/main/docs/screenshots/rewards.png" alt="Rewards">
+<div class="fig-caption">Fig. 12. Daily rewards system encouraging consecutive login streaks with increasing rewards.</div>
+</div>
 
 <h2>VIII. Discussion</h2>
 
@@ -218,18 +271,19 @@ This report describes GG Bond (also called Doggy Growth Plan), a full-stack web 
 <p><b>Team coordination.</b> Six developers working on the same codebase caused frequent merge conflicts. We should have split the backend into separate files by feature from the beginning, and assigned clear file ownership to each team member.</p>
 
 <h3>C. Architectural Reflections</h3>
-<p>The monolithic backend (one 1,100-line file) was appropriate for our project's scope but would not scale. If I were to rebuild it, I would use Express Router to split endpoints into separate files by feature. The template-record database pattern was a good choice — it made adding new achievements and rewards trivial. The dual-auth system was the most valuable architectural decision, as it ensured the app worked even when external services failed.</p>
+<p>The monolithic backend (one 1,100-line file) was appropriate for our project's scope but would not scale well. If I were to rebuild it, I would use Express Router to split endpoints into separate files by feature (marketplace.js, chat.js, admin.js, etc.). The template-record database pattern was a good choice — it made adding new achievements and rewards trivial. The dual-auth system was the most valuable architectural decision, as it ensured the app worked even when external services failed.</p>
 
 <h2>IX. Conclusion</h2>
-<p>This project taught me how to build and deploy a full-stack web application from scratch. GG Bond is a working virtual pet platform with AI health advice, location-aware services, a marketplace, chat, community features, and four-language support. It uses a straightforward but effective architecture: React frontend, Express backend, MySQL database.</p>
-<p>The key lessons I learned are: (1) choose the right database for your data model — MySQL's relational model was the correct choice for our complex entity relationships; (2) always build in fallbacks — the dual-auth system saved us during demos and in production; (3) AI coding tools are helpful but require careful review — they can introduce subtle bugs if you trust them blindly; (4) good documentation from the start makes teamwork much smoother and reduces onboarding time for new members.</p>
-<p>If I could start over, I would: add automated tests from day one (Jest for units, Cypress for E2E), use a dedicated file storage service for images, split the backend into feature-based modules, and implement WebSocket for real-time chat instead of polling. Future work could include a React Native mobile app, image-based AI symptom analysis, and gamification improvements like pet evolution stages.</p>
+<p>This project taught me how to build and deploy a full-stack web application from scratch. GG Bond is a working virtual pet platform with AI health advice, location-aware services, a marketplace, chat, community features, achievements, training, rewards, and four-language support. It uses a straightforward but effective architecture: React frontend, Express backend, MySQL database.</p>
+<p>The key lessons I learned are: (1) choose the right database for your data model — MySQL's relational model was the correct choice for our complex entity relationships; (2) always build in fallbacks — the dual-auth system saved us during demos and in production; (3) AI coding tools are helpful but require careful review — they can introduce subtle bugs if you trust them blindly; (4) good documentation from the start makes teamwork much smoother and reduces onboarding time.</p>
+<p>If I could start over, I would: add automated tests from day one (Jest for unit tests, Cypress for end-to-end tests), use a dedicated file storage service for images, split the backend into feature-based modules, and implement WebSocket for real-time chat instead of polling. Future work could include a React Native mobile app, image-based AI symptom analysis, pet evolution stages, and social features like pet playdates.</p>
 
 <h2>References</h2>
 <ol class="ref-list">
 <li>Neopets, Inc., "Neopets — Virtual Pet Community," https://www.neopets.com, 1999. [Online; accessed May 2026].</li>
 <li>Flight Rising, "Flight Rising — Dragon Adoption Game," https://www1.flightrising.com, 2013. [Online; accessed May 2026].</li>
 <li>J. Banks and E. G. Humphreys, "The labour of fun: Game cultures, virtual worlds, and social play," <i>New Media & Society</i>, vol. 20, no. 3, pp. 1015–1031, 2018.</li>
+<li>S. Y. Oh and S. Kim, "Virtual pet games and user engagement: A uses and gratifications perspective," <i>Computers in Human Behavior</i>, vol. 113, 106513, 2020.</li>
 <li>M. R. Morris, "AI and the future of creative tools," <i>Communications of the ACM</i>, vol. 66, no. 10, pp. 24–26, 2023.</li>
 <li>Google, "Google Maps Platform — Places API Documentation," https://developers.google.com/maps/documentation/javascript/places, 2024.</li>
 <li>V. K. Garg, "Building full-stack applications with the MERN stack," in <i>Full-Stack React Projects</i>, 2nd ed., Packt Publishing, 2020.</li>
